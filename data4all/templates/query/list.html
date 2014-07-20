@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block head %}
+<script src="/static/js/query/list.js"> </script>
+{% endblock %}
+{% block content %}
+<table class="table table-bordered table-hover">
+    <tr>
+        <th>ID</th>
+        <th>Title</th>
+        <th>Status</th>
+        <th>Owner</th>
+    </tr>
+    <tbody>
+    {% for query in queries %}
+        <tr>
+            <td>{{query.id}}</td>
+            <td>{{query.title}}</td>
+            <td>{{query.status}}</td>
+            <td>{{query.owner}}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+<div class="center">
+    <ul class="pagination">
+      <li><a href="#">&laquo;</a></li>
+      <li class="active"><a href="#">1</a></li>
+      <li><a href="#">2</a></li>
+      <li><a href="#">3</a></li>
+      <li><a href="#">4</a></li>
+      <li><a href="#">5</a></li>
+      <li><a href="#">&raquo;</a></li>
+    </ul>
+</div>
+{% endblock %}

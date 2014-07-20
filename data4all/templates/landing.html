@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block content %}
+        <div class="jumbotron">
+            <div class="container">
+                <h1>Data4All</h1>
+                <h3>Because SQL doesn't need SSH</h3>
+                <p>
+                    {% if user %}
+                    <a class="btn btn-primary btn-lg" role="button" href="/query/new">New Query</a>
+                    {% else %}
+                    <a class="btn btn-primary btn-lg" role="button">Login via WikiTech</a>
+                    {% endif %}
+                </p>
+            </div>
+
+        </div>
+{% endblock %}

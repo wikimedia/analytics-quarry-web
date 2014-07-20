@@ -1,5 +1,19 @@
+{% extends "base.html" %}
 {% block head %}
-<script src="/static/codemirror-compressed.js"> </script>
+<link rel="stylesheet" href="/static/codemirror-4.3/lib/codemirror.css">
+<link rel="stylesheet" href="/static/codemirror-4.3/theme/monokai.css">
+<script src="/static/codemirror-4.3/lib/codemirror.js"> </script>
+<script src="/static/codemirror-4.3/mode/sql/sql.js"> </script>
+<script src="/static/js/query/new.js"> </script>
 {% endblock %}
 {% block content %}
+<div>
+    <div class="row">
+        <div>SQL</div>
+        <textarea id="code">SELECT * FROM page LIMIT 10</textarea>
+    </div>
+    <div class="row well">
+        <div class="col-md-4">Status: Not run yet</div>
+        <a href="#" id="run-code" class="btn btn-primary pull-right">Submit Query</a>
+    </div>
 {% endblock %}

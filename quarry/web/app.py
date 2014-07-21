@@ -5,7 +5,7 @@ from flask_mwoauth import MWOAuth
 
 
 app = Flask(__name__)
-app.config.from_pyfile("config.py", silent=False)
+app.config.from_pyfile("../config.py", silent=False)
 app.config['DEBUG'] = True
 app.secret_key = 'glkafsjglskhfgflsgkh'
 

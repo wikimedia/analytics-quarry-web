@@ -2,6 +2,7 @@
 {% block head %}
 <link rel="stylesheet" href="/static/vendor/codemirror-4.3/lib/codemirror.css">
 <link rel="stylesheet" href="/static/vendor/codemirror-4.3/theme/monokai.css">
+<link rel="stylesheet" href="/static/css/query/new.css">
 <script src="/static/vendor/codemirror-4.3/lib/codemirror.js"> </script>
 <script src="/static/vendor/codemirror-4.3/mode/sql/sql.js"> </script>
 <script src="/static/js/query/new.js"> </script>
@@ -9,7 +10,7 @@
 {% block content %}
 <div>
     <div class="row">
-        <div>SQL</div>
+        <h3>SQL</h3>
         <textarea id="code">SELECT * FROM page LIMIT 10</textarea>
     </div>
     <div class="row well">
@@ -17,8 +18,10 @@
     </div>
 
     <div class="row">
-        <div>Last run results. (Last run 2h ago) <a href="#" class="pull-right">Download CSV</a></div>
-        <table class="table table-bordered table-hover">
+        <h3>Results
+            <a href="#" class="btn btn-xs btn-success pull-right">Download CSV</a>
+        </h3>
+        <table id="query-results-sampled" class="table table-bordered table-hover">
             <tr>
                 <th>page_id</th>
                 <th>page_namespace</th>

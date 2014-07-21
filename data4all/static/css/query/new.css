@@ -1,3 +1,7 @@
 table#query-results-sampled {
     margin-top: 20px;
 }
+
+.CodeMirror {
+    font-family: Monaco, Consolas, "Ubuntu Mono", monospace;
+}

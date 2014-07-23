@@ -44,7 +44,7 @@ def login_done():
     user = User.get_by_id(wiki_id)
     if user is None:
         user = User(wiki_id, user_name)
-        User.save(user)
+        user.save()
     session['user_id'] = user.id
     return redirect("/")
 

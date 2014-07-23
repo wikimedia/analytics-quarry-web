@@ -18,11 +18,10 @@ class User(object):
             return None
         return cls(result[0], result[1])
 
-    @classmethod
-    def save(cls, user):
+    def save(self):
         with g.conn.cursor() as cur:
             cur.execute(
                 """INSERT INTO user (id, username) VALUES (?, ?)
                 ON DUPLICATE KEY UPDATE username=?""",
-                (user.id, user.username, user.username)
+                (self.id, self.username, self.username)
             )

@@ -1,6 +1,6 @@
 from flask import Flask, render_template, redirect, session, g
 from flask_mwoauth import MWOAuth
-from models import db
+import oursql
 from models.user import User
 
 
@@ -16,13 +16,18 @@ app.register_blueprint(mwoauth.bp)
 
 def get_user():
     if 'user_id' in session:
-        return db.session.query(User).filter_by(id=session['user_id']).first()
+        return User.get_by_id(session['user_id'])
     else:
         return None
 
 
 @app.before_request
-def set_user():
+def setup_context():
+    g.conn = oursql.connect(
+        host=app.config['DB_HOST'],
+        db=app.config['DB_NAME'],
+        user=app.config['DB_USER'],
+        passwd=app.config['DB_PASSWORD'])
     g.user = get_user()
 
 
@@ -36,11 +41,10 @@ def login_done():
     user_name = mwoauth.get_current_user()
     user_info = mwoauth.request({'action': 'query', 'meta': 'userinfo'})
     wiki_id = user_info['query']['userinfo']['id']
-    user = db.session.query(User).filter_by(id=wiki_id).first()
+    user = User.get_by_id(wiki_id)
     if user is None:
-        user = User(id=wiki_id, name=user_name)
-        db.session.add(user)
-        db.session.commit()
+        user = User(wiki_id, user_name)
+        User.save(user)
     session['user_id'] = user.id
     return redirect("/")
 

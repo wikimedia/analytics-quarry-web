@@ -7,5 +7,6 @@ flask-mwoauth==0.1.31
 httplib2==0.9
 itsdangerous==0.24
 oauth2==1.5.211
+oursql==0.9.3.1
 requests==2.3.0
 wsgiref==0.1.2

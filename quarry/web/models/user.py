@@ -1,13 +1,28 @@
-from sqlalchemy import Column, Integer, String
-import db
+from flask import g
 
 
-class User(db.Model):
-    __tablename__ = 'users'
-    id = Column(Integer, primary_key=True)
-    name = Column(String(255))
+class User(object):
+    def __init__(self, id, username):
+        self.id = id
+        self.username = username
 
-    def __repr__(self):
-        return '<User(id=%d, name="%s")' % (
-            self.id, self.name
-        )
+    @classmethod
+    def get_by_id(cls, id):
+        with g.conn.cursor() as cur:
+            cur.execute(
+                'SELECT id, username FROM user WHERE id=?',
+                (id, )
+            )
+            result = cur.fetchone()
+        if result is None:
+            return None
+        return cls(result[0], result[1])
+
+    @classmethod
+    def save(cls, user):
+        with g.conn.cursor() as cur:
+            cur.execute(
+                """INSERT INTO user (id, username) VALUES (?, ?)
+                ON DUPLICATE KEY UPDATE username=?""",
+                (user.id, user.username, user.username)
+            )

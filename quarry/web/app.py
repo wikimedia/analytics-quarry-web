@@ -1,5 +1,3 @@
-import os
-
 from flask import Flask, render_template, redirect, session, g
 from flask_mwoauth import MWOAuth
 from models import db
@@ -26,11 +24,6 @@ def get_user():
 @app.before_request
 def set_user():
     g.user = get_user()
-
-
-@app.route("/static/<path:path>")
-def static_proxy(path):
-    return app.send_static_file(os.path.join('static', path))
 
 
 @app.route("/")

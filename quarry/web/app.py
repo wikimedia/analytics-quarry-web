@@ -1,7 +1,9 @@
 import os
 
-from flask import Flask, render_template
+from flask import Flask, render_template, redirect, session, g
 from flask_mwoauth import MWOAuth
+from models import db
+from models.user import User
 
 
 app = Flask(__name__)
@@ -14,6 +16,18 @@ mwoauth = MWOAuth(consumer_key=app.config['OAUTH_CONSUMER_TOKEN'],
 app.register_blueprint(mwoauth.bp)
 
 
+def get_user():
+    if 'user_id' in session:
+        return db.session.query(User).filter_by(id=session['user_id']).first()
+    else:
+        return None
+
+
+@app.before_request
+def set_user():
+    g.user = get_user()
+
+
 @app.route("/static/<path:path>")
 def static_proxy(path):
     return app.send_static_file(os.path.join('static', path))
@@ -21,14 +35,26 @@ def static_proxy(path):
 
 @app.route("/")
 def index():
-    user = mwoauth.get_current_user()
-    return render_template("landing.html", user=user)
+    return render_template("landing.html", user=g.user)
+
+
+@app.route("/login/done")
+def login_done():
+    user_name = mwoauth.get_current_user()
+    user_info = mwoauth.request({'action': 'query', 'meta': 'userinfo'})
+    wiki_id = user_info['query']['userinfo']['id']
+    user = db.session.query(User).filter_by(id=wiki_id).first()
+    if user is None:
+        user = User(id=wiki_id, name=user_name)
+        db.session.add(user)
+        db.session.commit()
+    session['user_id'] = user.id
+    return redirect("/")
 
 
 @app.route("/query/new")
 def new_query():
-    user = mwoauth.get_current_user()
-    return render_template("query/new.html", user=user)
+    return render_template("query/new.html", user=g.user)
 
 
 @app.route("/query/all")

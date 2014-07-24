@@ -110,11 +110,24 @@ class QueryRun(object):
     STATUS_COMPLETE = 4
     STATUS_SUPERSEDED = 5
 
+    STATUS_MESSAGES = [
+        'queued',
+        'scheduled',
+        'running',
+        'killed',
+        'complete',
+        'superseded'
+    ]
+
     def __init__(self, id=None, query_rev_id=None, status=None, timestamp=None):
         self.id = id
         self.query_rev_id = query_rev_id
         self.status = status
         self.timestamp = timestamp
+
+    @property
+    def status_message(self):
+        return QueryRun.STATUS_MESSAGES[self.status]
 
     @classmethod
     def get_by_id(cls, id):
@@ -148,10 +161,47 @@ class QueryRun(object):
     @property
     def query_rev(self):
         if not hasattr(self, '_query_rev'):
-            self._query = QueryRevision.get_by_id(self.query_rev_id)
-        return self._query
+            self._query_rev = QueryRevision.get_by_id(self.query_rev_id)
+        return self._query_rev
 
     @query_rev.setter
     def query_rev(self, value):
         self._query_rev = value
         self.query_rev_id = value.id
+
+    @classmethod
+    def get_augmented_list(cls, limit=25):
+        results = []
+        sql = """SELECT query_run.id as run_id, query_run.status as status, query_run.timestamp as run_timestamp,
+              query_revision.id as rev_id, query_revision.text as text, query_revision.timestamp as rev_timestamp,
+              query.id as query_id, query.user_id as user_id, query.last_touched as query_timestamp
+              FROM query_run JOIN query_revision ON query_rev_id = query_revision.id
+              JOIN query ON query.id = query_id
+              ORDER BY query_run.timestamp DESC
+              LIMIT ?"""
+        with g.conn.cursor() as cur:
+            cur.execute(sql, (limit, ))
+            row = cur.fetchone()
+            while row is not None:
+                q_run = QueryRun(
+                    id=row[0],
+                    status=row[1],
+                    timestamp=row[2]
+                )
+                q_rev = QueryRevision(
+                    id=row[3],
+                    text=row[4],
+                    timestamp=row[5]
+                )
+                q = Query(
+                    id=row[6],
+                    user_id=row[7],
+                    last_touched=row[8]
+                )
+                q.latest_rev = q_rev
+                q_rev.query = q
+                q_run.query_rev = q_rev
+                results.append(q_run)
+                row = cur.fetchone()
+
+        return results

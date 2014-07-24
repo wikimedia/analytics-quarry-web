@@ -1,4 +1,4 @@
-{% set active_page = "query-all" %}
+{% set active_page = "query-runs-all" %}
 {% extends "base.html" %}
 {% block head %}
 <script src="/static/js/query/list.js"> </script>
@@ -6,31 +6,20 @@
 {% block content %}
 <table class="table table-bordered table-hover">
     <tr>
-        <th>ID</th>
-        <th>Title</th>
+        <th>SQL</th>
+        <th>Author</th>
         <th>Status</th>
-        <th>Owner</th>
+        <th>Timestamp</th>
     </tr>
     <tbody>
-    {% for query in queries %}
+    {% for qr in query_runs %}
         <tr>
-            <td>{{query.id}}</td>
-            <td>{{query.title}}</td>
-            <td>{{query.status}}</td>
-            <td>{{query.owner}}</td>
+            <td><a href="/query/{{qr.query_rev.query.id}}">{{qr.query_rev.text}}</a></td>
+            <td>{{qr.query_rev.query.user.username}}</td>
+            <td>{{qr.status_message}}</td>
+            <td>{{qr.timestamp}}</td>
         </tr>
     {% endfor %}
     </tbody>
 </table>
-<div class="center">
-    <ul class="pagination">
-      <li><a href="#">&laquo;</a></li>
-      <li class="active"><a href="#">1</a></li>
-      <li><a href="#">2</a></li>
-      <li><a href="#">3</a></li>
-      <li><a href="#">4</a></li>
-      <li><a href="#">5</a></li>
-      <li><a href="#">&raquo;</a></li>
-    </ul>
-</div>
 {% endblock %}

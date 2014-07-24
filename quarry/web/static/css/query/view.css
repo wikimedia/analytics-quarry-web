@@ -8,6 +8,7 @@ table#query-results-sampled {
 }
 
 .CodeMirror-scroll {
-  overflow-y: hidden;
-  overflow-x: auto;
+    overflow-y: hidden;
+    overflow-x: auto;
+    min-height: 250px;
 }

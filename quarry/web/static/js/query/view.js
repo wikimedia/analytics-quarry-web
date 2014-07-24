@@ -10,7 +10,12 @@ $( function() {
             text: editor.getValue(),
             query_id: vars.query_id
         }).done( function( data ) {
-            alert( data );
+            var d = JSON.parse(data);
+            $.post( "/api/query/run", {
+                query_rev_id: d.id,
+            }).done( function( data ) {
+                alert( data );
+            });
         } );
     } );
 

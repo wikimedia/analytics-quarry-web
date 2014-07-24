@@ -100,3 +100,58 @@ class QueryRevision(object):
                 (self.query_id, self.text)
             )
             self.id = cur.lastrowid
+
+
+class QueryRun(object):
+    STATUS_QUEUED = 0
+    STATUS_SCHEDULED = 1
+    STATUS_RUNNING = 2
+    STATUS_KILLED = 3
+    STATUS_COMPLETE = 4
+    STATUS_SUPERSEDED = 5
+
+    def __init__(self, id=None, query_rev_id=None, status=None, timestamp=None):
+        self.id = id
+        self.query_rev_id = query_rev_id
+        self.status = status
+        self.timestamp = timestamp
+
+    @classmethod
+    def get_by_id(cls, id):
+        with g.conn.cursor() as cur:
+            cur.execute(
+                """SELECT id, query_rev_id, status, timestamp
+                FROM query_run WHERE id = ?""",
+                (id, )
+            )
+            result = cur.fetchone()
+        if result is None:
+            return None
+
+        return cls(result[0], result[1], result[2], result[3])
+
+    def save_new(self):
+        with g.conn.cursor() as cur:
+            cur.execute(
+                "INSERT INTO query_run (query_rev_id) VALUES (?)",
+                (self.query_rev_id, )
+            )
+            self.id = cur.lastrowid
+
+    def save(self):
+        with g.conn.cursor() as cur:
+            cur.execute(
+                "UPDATE query RUN SET status=?",
+                (self.status, )
+            )
+
+    @property
+    def query_rev(self):
+        if not hasattr(self, '_query_rev'):
+            self._query = QueryRevision.get_by_id(self.query_rev_id)
+        return self._query
+
+    @query_rev.setter
+    def query_rev(self, value):
+        self._query_rev = value
+        self.query_rev_id = value.id

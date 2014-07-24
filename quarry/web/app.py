@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, session, g, request, url_for
 from flask_mwoauth import MWOAuth
 import oursql
 from models.user import User
-from models.query import Query, QueryRevision
+from models.query import Query, QueryRevision, QueryRun
 import json
 
 
@@ -85,7 +85,19 @@ def api_new_query():
     query_rev.save_new()
     query.latest_rev = query_rev
     query.save()
-    return json.dumps({'id': query.id})
+    return json.dumps({'id': query_rev.id})
+
+
+@app.route('/api/query/run', methods=['POST'])
+def api_run_query():
+    if g.user is None:
+        return "Authentication required", 401
+    print request.form.get('query_rev_id', '')
+    query_rev = QueryRevision.get_by_id(request.form['query_rev_id'])
+    query_run = QueryRun()
+    query_run.query_rev = query_rev
+    query_run.save_new()
+    return json.dumps({'id': query_run.id})
 
 
 @app.route("/query/all")

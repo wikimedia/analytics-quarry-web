@@ -4,4 +4,10 @@ table#query-results-sampled {
 
 .CodeMirror {
     font-family: Monaco, Consolas, "Ubuntu Mono", monospace;
+    height: auto;
+}
+
+.CodeMirror-scroll {
+  overflow-y: hidden;
+  overflow-x: auto;
 }

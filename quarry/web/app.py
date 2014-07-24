@@ -17,10 +17,21 @@ app.register_blueprint(mwoauth.bp)
 
 
 def get_user():
-    if 'user_id' in session:
-        return User.get_by_id(session['user_id'])
+    if 'user_id' not in session:
+        user_name = mwoauth.get_current_user()
+        if user_name:
+            user_info = mwoauth.request({'action': 'query', 'meta': 'userinfo'})
+            wiki_id = user_info['query']['userinfo']['id']
+            user = User.get_by_id(wiki_id)
+            if user is None:
+                user = User(wiki_id, user_name)
+                user.save()
+            session['user_id'] = user.id
+        else:
+            user = None
     else:
-        return None
+        user = User.get_by_id(session['user_id'])
+    return user
 
 
 @app.before_request
@@ -38,23 +49,10 @@ def index():
     return render_template("landing.html", user=g.user)
 
 
-@app.route("/login/done")
-def login_done():
-    user_name = mwoauth.get_current_user()
-    user_info = mwoauth.request({'action': 'query', 'meta': 'userinfo'})
-    wiki_id = user_info['query']['userinfo']['id']
-    user = User.get_by_id(wiki_id)
-    if user is None:
-        user = User(wiki_id, user_name)
-        user.save()
-    session['user_id'] = user.id
-    return redirect("/")
-
-
 @app.route("/query/new")
 def new_query():
     if g.user is None:
-        return "Authentication required", 401
+        return redirect("/login?next=/query/new")
     query = Query()
     query.user = g.user
     query.save_new()

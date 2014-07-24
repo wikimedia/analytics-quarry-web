@@ -6,17 +6,19 @@
 <link rel="stylesheet" href="/static/css/query/new.css">
 <script src="/static/vendor/codemirror-4.3/lib/codemirror.js"> </script>
 <script src="/static/vendor/codemirror-4.3/mode/sql/sql.js"> </script>
-<script src="/static/js/query/new.js"> </script>
+<script src="/static/js/query/view.js"> </script>
 {% endblock %}
 {% block content %}
 <div>
     <div class="row">
         <h3>SQL</h3>
-        <textarea id="code">SELECT * FROM page LIMIT 10</textarea>
+        <textarea id="code">{% if query.latest_rev %}{{ query.latest_rev.text }}{%endif%}</textarea>
     </div>
+    {% if jsvars.can_edit %}
     <div class="row well">
         <a href="#" id="run-code" class="btn btn-primary pull-right">Submit Query</a>
     </div>
+    {% endif %}
 
     <div class="row">
         <h3>Results

@@ -6,6 +6,11 @@
 <!DOCTYPE html>
 <html>
 <head>
+    {% if jsvars %}
+    <script>
+        var vars = {{jsvars|tojson}};
+    </script>
+    {% endif %}
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="/static/vendor/bootstrap.min.css">
 

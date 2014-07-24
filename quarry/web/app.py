@@ -1,7 +1,9 @@
-from flask import Flask, render_template, redirect, session, g
+from flask import Flask, render_template, redirect, session, g, request, url_for
 from flask_mwoauth import MWOAuth
 import oursql
 from models.user import User
+from models.query import Query, QueryRevision
+import json
 
 
 app = Flask(__name__)
@@ -51,7 +53,41 @@ def login_done():
 
 @app.route("/query/new")
 def new_query():
-    return render_template("query/new.html", user=g.user)
+    if g.user is None:
+        return "Authentication required", 401
+    query = Query()
+    query.user = g.user
+    query.save_new()
+    return redirect(url_for('query_show', query_id=query.id))
+
+
+@app.route("/query/<int:query_id>")
+def query_show(query_id):
+    query = Query.get_by_id(query_id)
+    can_edit = g.user is not None and g.user.id == query.user_id
+    jsvars = {
+        'query_id': query.id,
+        'can_edit': can_edit
+    }
+    return render_template(
+        "query/view.html",
+        user=g.user,
+        query=query,
+        jsvars=jsvars
+    )
+
+
+@app.route('/api/query/new', methods=['POST'])
+def api_new_query():
+    if g.user is None:
+        return "Authentication required", 401
+    text = request.form['text']
+    query = Query.get_by_id(request.form['query_id'])
+    query_rev = QueryRevision(query_id=query.id, text=text)
+    query_rev.save_new()
+    query.latest_rev = query_rev
+    query.save()
+    return json.dumps({'id': query.id})
 
 
 @app.route("/query/all")

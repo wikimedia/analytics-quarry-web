@@ -3,11 +3,12 @@ from user import User
 
 
 class Query(object):
-    def __init__(self, id=None, user_id=None, latest_rev_id=None, last_touched=None):
+    def __init__(self, id=None, user_id=None, latest_rev_id=None, last_touched=None, title=None):
         self.id = id
         self.user_id = user_id
         self.last_touched = last_touched
         self.latest_rev_id = latest_rev_id
+        self.title = title
 
     @property
     def user(self):
@@ -34,23 +35,23 @@ class Query(object):
     def save_new(self):
         with g.conn.cursor() as cur:
             cur.execute(
-                'INSERT INTO query (user_id, latest_rev) VALUES (?, ?)',
-                (self.user_id, self.latest_rev_id)
+                'INSERT INTO query (user_id, latest_rev, title) VALUES (?, ?, ?)',
+                (self.user_id, self.latest_rev_id, self.title)
             )
             self.id = cur.lastrowid
 
     def save(self):
         with g.conn.cursor() as cur:
             cur.execute(
-                'UPDATE query SET latest_rev = ? WHERE id = ?',
-                (self.latest_rev_id, self.id)
+                'UPDATE query SET latest_rev = ?, title = ? WHERE id = ?',
+                (self.latest_rev_id, self.title, self.id)
             )
 
     @classmethod
     def get_by_id(cls, id):
         with g.conn.cursor() as cur:
             cur.execute(
-                """SELECT id, user_id, latest_rev, last_touched
+                """SELECT id, user_id, latest_rev, last_touched, title
                 FROM query WHERE id = ?""",
                 (id, )
             )
@@ -58,7 +59,7 @@ class Query(object):
         if result is None:
             return None
 
-        return cls(result[0], result[1], result[2], result[3])
+        return cls(result[0], result[1], result[2], result[3], result[4])
 
 
 class QueryRevision(object):
@@ -172,13 +173,20 @@ class QueryRun(object):
     @classmethod
     def get_augmented_list(cls, limit=25):
         results = []
-        sql = """SELECT query_run.id as run_id, query_run.status as status, query_run.timestamp as run_timestamp,
-              query_revision.id as rev_id, query_revision.text as text, query_revision.timestamp as rev_timestamp,
-              query.id as query_id, query.user_id as user_id, query.last_touched as query_timestamp
-              FROM query_run JOIN query_revision ON query_rev_id = query_revision.id
-              JOIN query ON query.id = query_id
-              ORDER BY query_run.timestamp DESC
-              LIMIT ?"""
+        sql = """
+        SELECT
+            query_run.id as run_id, query_run.status as status,
+            query_run.timestamp as run_timestamp,
+            query_revision.id as rev_id, query_revision.text as text,
+            query_revision.timestamp as rev_timestamp,
+            query.id as query_id, query.user_id as user_id,
+            query.last_touched as query_timestamp, query.title as query_title
+        FROM
+            query_run JOIN query_revision ON query_rev_id = query_revision.id
+            JOIN query ON query.id = query_id
+        ORDER BY
+            query_run.timestamp DESC
+        LIMIT ?"""
         with g.conn.cursor() as cur:
             cur.execute(sql, (limit, ))
             row = cur.fetchone()
@@ -196,7 +204,8 @@ class QueryRun(object):
                 q = Query(
                     id=row[6],
                     user_id=row[7],
-                    last_touched=row[8]
+                    last_touched=row[8],
+                    title=row[9]
                 )
                 q.latest_rev = q_rev
                 q_rev.query = q

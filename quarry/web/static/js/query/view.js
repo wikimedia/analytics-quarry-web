@@ -5,6 +5,21 @@ $( function() {
         readOnly: !vars.can_edit
     });
 
+    if (vars.can_edit) {
+        $('#title').editable(function(value, settings) {
+            $.post( "/api/query/meta", {
+                query_id: vars.query_id,
+                title: value
+            } ).done( function( data ) {
+                alert( data );
+            } );
+            return value;
+        }, {
+            tooltip: 'Click to edit',
+            height: 'None',
+        } );
+    }
+
     $('#run-code').click( function() {
         $.post( "/api/query/new", {
             text: editor.getValue(),

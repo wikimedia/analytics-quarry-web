@@ -4,6 +4,7 @@ import oursql
 from models.user import User
 from models.query import Query, QueryRevision, QueryRun
 import json
+import time
 
 
 app = Flask(__name__)
@@ -55,6 +56,7 @@ def new_query():
         return redirect("/login?next=/query/new")
     query = Query()
     query.user = g.user
+    query.title = "%s's awesome query #%s" % (g.user.username, int(time.time()))
     query.save_new()
     return redirect(url_for('query_show', query_id=query.id))
 
@@ -86,6 +88,17 @@ def api_new_query():
     query.latest_rev = query_rev
     query.save()
     return json.dumps({'id': query_rev.id})
+
+
+@app.route('/api/query/meta', methods=['POST'])
+def api_set_meta():
+    if g.user is None:
+        return "Authentication required", 401
+    query = Query.get_by_id(request.form['query_id'])
+    if 'title' in request.form:
+        query.title = request.form['title']
+    query.save()
+    return json.dumps({'id': query.id})
 
 
 @app.route('/api/query/run', methods=['POST'])

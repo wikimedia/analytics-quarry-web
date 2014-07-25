@@ -4,12 +4,16 @@
 <link rel="stylesheet" href="/static/vendor/codemirror-4.3/lib/codemirror.css">
 <link rel="stylesheet" href="/static/vendor/codemirror-4.3/theme/monokai.css">
 <link rel="stylesheet" href="/static/css/query/view.css">
+<script src="/static/vendor/jquery.jeditable.js"> </script>
 <script src="/static/vendor/codemirror-4.3/lib/codemirror.js"> </script>
 <script src="/static/vendor/codemirror-4.3/mode/sql/sql.js"> </script>
 <script src="/static/js/query/view.js"> </script>
 {% endblock %}
 {% block content %}
 <div>
+    <div class="row" id="title-container">
+        <h2 id='title'>{{query.title}}</h2>
+    </div>
     <div class="row">
         <h3>SQL</h3>
         <textarea id="code">{% if query.latest_rev %}{{ query.latest_rev.text }}{%endif%}</textarea>

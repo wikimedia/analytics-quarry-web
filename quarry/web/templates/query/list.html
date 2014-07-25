@@ -6,7 +6,7 @@
 {% block content %}
 <table class="table table-bordered table-hover">
     <tr>
-        <th>SQL</th>
+        <th>Title</th>
         <th>Author</th>
         <th>Status</th>
         <th>Timestamp</th>
@@ -14,7 +14,7 @@
     <tbody>
     {% for qr in query_runs %}
         <tr>
-            <td><a href="/query/{{qr.query_rev.query.id}}">{{qr.query_rev.text}}</a></td>
+            <td><a href="/query/{{qr.query_rev.query.id}}">{{qr.query_rev.query.title}}</a></td>
             <td>{{qr.query_rev.query.user.username}}</td>
             <td>{{qr.status_message}}</td>
             <td>{{qr.timestamp}}</td>

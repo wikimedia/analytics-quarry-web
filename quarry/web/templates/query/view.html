@@ -19,11 +19,18 @@
         <h3>SQL</h3>
         <textarea id="code">{% if query.latest_rev %}{{ query.latest_rev.text }}{%endif%}</textarea>
     </div>
-    {% if jsvars.can_edit %}
     <div class="row well">
-        <a href="#" id="run-code" class="btn btn-primary pull-right">Submit Query</a>
-    </div>
+    {% if jsvars.can_edit %}
+        <div class='col-md-8'>
+            By running queries you agree to the <a href="https://wikitech.wikimedia.org/wiki/Wikitech:Labs_Terms_of_use">Labs ToS</a> and you irrevocably agree to release your contributions under <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>.
+        </div>
+        <div cass='col-md-4 last'>
+            <a href="#" id="run-code" class="btn btn-primary pull-right">Submit Query</a>
+        </div>
+    {% else %}
+        All SQL code is licensed under <a href="https://creativecommons.org/licenses/by-sa/3.0/">CC BY-SA 3.0</a>.
     {% endif %}
+    </div>
 
     <div id="query-result-container"class="row">
         <div id="query-result-success">

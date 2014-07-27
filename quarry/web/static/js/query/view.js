@@ -58,12 +58,20 @@ $( function() {
                     $("#query-result-error").hide();
 
                     $("#query-result-success").show();
+                    $("#query-result-killed").hide();
                 } else if (d.result === 'error') {
                     $("#error-time").text(d.time.toFixed(4) + "s");
                     $("#query-error-message").text(d.error);
                     $("#query-progress").hide();
                     $("#query-result-error").show();
                     $("#query-result-success").hide();
+                    $("#query-result-killed").hide();
+                } else if (d.result === 'killed' ) {
+                    $("#killed-time").text(d.time.toFixed(4) + "s");
+                    $("#query-progress").hide();
+                    $("#query-result-error").hide();
+                    $("#query-result-success").hide();
+                    $("#query-result-killed").show();
                 }
             } ).fail( function() {
                 setTimeout( checkOutput, 5000 );

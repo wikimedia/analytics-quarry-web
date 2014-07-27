@@ -3,11 +3,12 @@ from flask_mwoauth import MWOAuth
 import pymysql
 from models.user import User
 from models.query import Query, QueryRevision, QueryRun
-from models.queryresult import QuerySuccessResult, QueryErrorResult
+from models.queryresult import QuerySuccessResult, QueryErrorResult, QueryKilledResult
 import json
 import time
 import os
 from celery import Celery
+from celery.exceptions import SoftTimeLimitExceeded
 
 
 app = Flask(__name__)
@@ -50,29 +51,52 @@ def make_result(cur):
 
 
 @celery.task
-def run_query(query_run_id):
-    qrun = QueryRun.get_by_id(query_run_id)
-    qrun.status = QueryRun.STATUS_RUNNING
-    qrun.save()
-    start_time = time.clock()
+def kill_query(thread_id):
     cur = g.replica.cursor()
     try:
-        cur.execute(qrun.query_rev.text)
-        total_time = time.clock() - start_time
-        result = []
-        result.append(make_result(cur))
-        while cur.nextset():
-            result.append(make_result(cur))
-        qresult = QuerySuccessResult(qrun, total_time, result, app.config['OUTPUT_PATH_TEMPLATE'])
-        qrun.status = QueryRun.STATUS_COMPLETE
-    except pymysql.DatabaseError as e:
-        total_time = time.clock() - start_time
-        qresult = QueryErrorResult(qrun, total_time, app.config['OUTPUT_PATH_TEMPLATE'], e.args[1])
-        qrun.status = QueryRun.STATUS_FAILED
+        cur.execute("KILL QUERY %s", thread_id)
+    except pymysql.InternalError as e:
+        if e.args[0] == 1094:  # Error code for 'no such thread'
+            print 'Query already killed'
+        else:
+            raise
     finally:
         cur.close()
-    qresult.output()
-    qrun.save()
+
+
+@celery.task
+def run_query(query_run_id):
+    qrun = QueryRun.get_by_id(query_run_id)
+    try:
+        qrun = QueryRun.get_by_id(query_run_id)
+        qrun.status = QueryRun.STATUS_RUNNING
+        qrun.save()
+        start_time = time.clock()
+        cur = g.replica.cursor()
+        try:
+            cur.execute(qrun.query_rev.text)
+            result = []
+            result.append(make_result(cur))
+            while cur.nextset():
+                result.append(make_result(cur))
+            total_time = time.clock() - start_time
+            qresult = QuerySuccessResult(qrun, total_time, result, app.config['OUTPUT_PATH_TEMPLATE'])
+            qrun.status = QueryRun.STATUS_COMPLETE
+        except pymysql.DatabaseError as e:
+            total_time = time.clock() - start_time
+            qresult = QueryErrorResult(qrun, total_time, app.config['OUTPUT_PATH_TEMPLATE'], e.args[1])
+            qrun.status = QueryRun.STATUS_FAILED
+        finally:
+            cur.close()
+        qresult.output()
+        qrun.save()
+    except SoftTimeLimitExceeded:
+        total_time = time.clock() - start_time
+        kill_query.delay(g.replica.thread_id())
+        qrun.state = QueryRun.STATUS_KILLED
+        qrun.save()
+        qresult = QueryKilledResult(qrun, total_time, app.config['OUTPUT_PATH_TEMPLATE'])
+        qresult.output()
 
 
 def get_user():

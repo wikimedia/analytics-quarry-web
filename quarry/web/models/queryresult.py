@@ -45,3 +45,14 @@ class QueryErrorResult(QueryResult):
             'error': self.error
         }
         super(QueryErrorResult, self).output()
+
+
+class QueryKilledResult(QueryResult):
+    def __init__(self, query_run, total_time, path_template):
+        super(QueryKilledResult, self).__init__(query_run, path_template, total_time)
+
+    def output(self):
+        self.output_data = {
+            'result': 'killed'
+        }
+        super(QueryKilledResult, self).output()

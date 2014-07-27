@@ -17,6 +17,6 @@ table#query-results-sampled {
     overflow-x: scroll;
 }
 
-#query-result-success, #query-result-error, #query-progress {
+#query-result-success, #query-result-error, #query-progress, #query-result-killed {
     display: none;
 }

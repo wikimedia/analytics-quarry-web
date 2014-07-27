@@ -105,7 +105,8 @@ def setup_replica():
         db=app.config['REPLICA_DB'],
         user=app.config['REPLICA_USER'],
         passwd=app.config['REPLICA_PASSWORD'],
-        port=app.config['REPLICA_PORT']
+        port=app.config['REPLICA_PORT'],
+        charset='utf8'
     )
 
 
@@ -115,7 +116,8 @@ def setup_db():
         db=app.config['DB_NAME'],
         user=app.config['DB_USER'],
         passwd=app.config['DB_PASSWORD'],
-        autocommit=True
+        autocommit=True,
+        charset='utf8'
     )
 
 

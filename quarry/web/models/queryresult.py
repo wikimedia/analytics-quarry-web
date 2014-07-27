@@ -18,7 +18,7 @@ class QueryResult(object):
         if not os.path.exists(os.path.dirname(path)):
             os.makedirs(os.path.dirname(path))
         with open(path, 'w') as f:
-            f.write(json.dumps(self.output_data))
+            json.dump(self.output_data, f)
 
 
 class QuerySuccessResult(QueryResult):

@@ -29,9 +29,63 @@ $( function() {
             $.post( "/api/query/run", {
                 query_rev_id: d.id,
             }).done( function( data ) {
-                alert( data );
+                var d =  JSON.parse(data);
+                vars.output_url = d.output_url;
+                $("#query-progress").show();
+                $("#query-result-error").hide();
+                $("#query-result-success").hide();
+                checkOutput();
             });
         } );
+
+        return false;
     } );
 
+    function checkOutput() {
+        if (vars.output_url) {
+            $.get( vars.output_url ).done( function( data ) {
+                var d = JSON.parse(data);
+                if (d.result === 'ok') {
+                    $("#query-result-success table").remove();
+                    $.each(d.data, function( i, item ) {
+                        var table = swig.render(query_success_template,
+                            { locals: item }
+                        );
+                        $("#query-result-success").append(table);
+                    } );
+                    $("#success-time").text(d.time.toFixed(4) + "s");
+                    $("#query-progress").hide();
+                    $("#query-result-error").hide();
+
+                    $("#query-result-success").show();
+                } else if (d.result === 'error') {
+                    $("#error-time").text(d.time.toFixed(4) + "s");
+                    $("#query-error-message").text(d.error);
+                    $("#query-progress").hide();
+                    $("#query-result-error").show();
+                    $("#query-result-success").hide();
+                }
+            } ).fail( function() {
+                setTimeout( checkOutput, 5000 );
+            } );
+        }
+    }
+
+    checkOutput();
+
+    var query_success_template = "" +
+        "<table class='table table-bordered table-hover'>" +
+            "<tr>" +
+            "{% for c in headers %}" +
+                "<th>{{ c }}</th>" +
+            "{% endfor %}" +
+            "</tr>" +
+            "{% for r in rows %}" +
+            "<tr>" +
+                "{% for d in r %}" +
+                "<td>{{ d }}</td>" +
+                "{% endfor %}" +
+            "</tr>" +
+            "{% endfor %}" +
+        "</table>";
 } );

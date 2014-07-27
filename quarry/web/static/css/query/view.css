@@ -12,3 +12,11 @@ table#query-results-sampled {
     overflow-x: auto;
     min-height: 250px;
 }
+
+#query-result-container {
+    overflow-x: scroll;
+}
+
+#query-result-success, #query-result-error, #query-progress {
+    display: none;
+}

@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="/static/vendor/codemirror-4.3/theme/monokai.css">
 <link rel="stylesheet" href="/static/css/query/view.css">
 <script src="/static/vendor/jquery.jeditable.js"> </script>
+<script src="/static/vendor/swig.min.js"> </script>
 <script src="/static/vendor/codemirror-4.3/lib/codemirror.js"> </script>
 <script src="/static/vendor/codemirror-4.3/mode/sql/sql.js"> </script>
 <script src="/static/js/query/view.js"> </script>
@@ -24,32 +25,21 @@
     </div>
     {% endif %}
 
-    <div class="row">
-        <h3>Results
-            <a href="#" class="btn btn-xs btn-success pull-right">Download CSV</a>
-        </h3>
-        <table id="query-results-sampled" class="table table-bordered table-hover">
-            <tr>
-                <th>page_id</th>
-                <th>page_namespace</th>
-                <th>page_title</th>
-                <th>page_is_redirect</th>
-                <th>page_touched</th>
-                <th>page_latest</th>
-                <th>page_len</th>
-            </tr>
-            {% for i in range(50) %}
-            <tr>
-                <td>{{i}}</td>
-                <td>0</td>
-                <td>Random Page {{i}}</td>
-                <td>0</td>
-                <td>4321231255</td>
-                <td>53215</td>
-                <td>{{5 * i}}</td>
-            </tr>
-            {% endfor %}
-        </table>
+    <div id="query-result-container"class="row">
+        <div id="query-result-success">
+            <h3>Results
+                <a href="#" class="btn btn-xs btn-success pull-right">Download CSV</a>
+                <small id="success-time"></small>
+            </h3>
+        </div>
+        <div id="query-result-error">
+            <h3>Error! <small id="error-time"></span></h3>
+            <pre id="query-error-message"></pre>
+        </div>
+        <div id="query-progress">
+            <h3>Query running...</h3>
+        </div>
     </div>
+
 
 {% endblock %}

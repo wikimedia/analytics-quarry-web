@@ -33,29 +33,38 @@ class Query(object):
         self.latest_rev_id = latest_rev.id
 
     def save_new(self):
-        with g.conn.cursor() as cur:
+        try:
+            cur = g.conn.cursor()
             cur.execute(
-                'INSERT INTO query (user_id, latest_rev, title) VALUES (?, ?, ?)',
+                'INSERT INTO query (user_id, latest_rev, title) VALUES (%s, %s, %s)',
                 (self.user_id, self.latest_rev_id, self.title)
             )
             self.id = cur.lastrowid
+        finally:
+            cur.close()
 
     def save(self):
-        with g.conn.cursor() as cur:
+        try:
+            cur = g.conn.cursor()
             cur.execute(
-                'UPDATE query SET latest_rev = ?, title = ? WHERE id = ?',
+                'UPDATE query SET latest_rev = %s, title = %s WHERE id = %s',
                 (self.latest_rev_id, self.title, self.id)
             )
+        finally:
+            cur.close()
 
     @classmethod
     def get_by_id(cls, id):
-        with g.conn.cursor() as cur:
+        try:
+            cur = g.conn.cursor()
             cur.execute(
                 """SELECT id, user_id, latest_rev, last_touched, title
-                FROM query WHERE id = ?""",
+                FROM query WHERE id = %s""",
                 (id, )
             )
             result = cur.fetchone()
+        finally:
+            cur.close()
         if result is None:
             return None
 
@@ -82,30 +91,36 @@ class QueryRevision(object):
 
     @classmethod
     def get_by_id(cls, id):
-        with g.conn.cursor() as cur:
+        try:
+            cur = g.conn.cursor()
             cur.execute(
                 """SELECT id, text, query_id, timestamp
-                FROM query_revision WHERE id = ?""",
+                FROM query_revision WHERE id = %s""",
                 (id, )
             )
             result = cur.fetchone()
+        finally:
+            cur.close()
         if result is None:
             return None
 
         return cls(result[0], result[1], result[2], result[3])
 
     def save_new(self):
-        with g.conn.cursor() as cur:
+        try:
+            cur = g.conn.cursor()
             cur.execute(
-                "INSERT INTO query_revision (query_id, text) VALUES ( ?, ? )",
+                "INSERT INTO query_revision (query_id, text) VALUES ( %s, %s )",
                 (self.query_id, self.text)
             )
             self.id = cur.lastrowid
+        finally:
+            cur.close()
 
 
 class QueryRun(object):
     STATUS_QUEUED = 0
-    STATUS_SCHEDULED = 1
+    STATUS_FAILED = 1
     STATUS_RUNNING = 2
     STATUS_KILLED = 3
     STATUS_COMPLETE = 4
@@ -113,7 +128,7 @@ class QueryRun(object):
 
     STATUS_MESSAGES = [
         'queued',
-        'scheduled',
+        'failed',
         'running',
         'killed',
         'complete',
@@ -132,32 +147,41 @@ class QueryRun(object):
 
     @classmethod
     def get_by_id(cls, id):
-        with g.conn.cursor() as cur:
+        try:
+            cur = g.conn.cursor()
             cur.execute(
                 """SELECT id, query_rev_id, status, timestamp
-                FROM query_run WHERE id = ?""",
+                FROM query_run WHERE id = %s""",
                 (id, )
             )
             result = cur.fetchone()
+        finally:
+            cur.close()
         if result is None:
             return None
 
         return cls(result[0], result[1], result[2], result[3])
 
     def save_new(self):
-        with g.conn.cursor() as cur:
+        try:
+            cur = g.conn.cursor()
             cur.execute(
-                "INSERT INTO query_run (query_rev_id) VALUES (?)",
+                "INSERT INTO query_run (query_rev_id) VALUES (%s)",
                 (self.query_rev_id, )
             )
             self.id = cur.lastrowid
+        finally:
+            cur.close()
 
     def save(self):
-        with g.conn.cursor() as cur:
+        try:
+            cur = g.conn.cursor()
             cur.execute(
-                "UPDATE query RUN SET status=?",
-                (self.status, )
+                "UPDATE query_run RUN SET status=%s WHERE id=%s",
+                (self.status, self.id)
             )
+        finally:
+            cur.close()
 
     @property
     def query_rev(self):
@@ -169,6 +193,25 @@ class QueryRun(object):
     def query_rev(self, value):
         self._query_rev = value
         self.query_rev_id = value.id
+
+    @classmethod
+    def get_latest_run(cls, query_rev_id):
+        try:
+            cur = g.conn.cursor()
+            cur.execute(
+                """SELECT id, query_rev_id, status, timestamp
+                FROM query_run WHERE query_rev_id = %s
+                ORDER BY timestamp DESC
+                LIMIT 1""",
+                (query_rev_id, )
+            )
+            result = cur.fetchone()
+        finally:
+            cur.close()
+        if result is None:
+            return None
+
+        return cls(result[0], result[1], result[2], result[3])
 
     @classmethod
     def get_augmented_list(cls, limit=25):
@@ -186,8 +229,9 @@ class QueryRun(object):
             JOIN query ON query.id = query_id
         ORDER BY
             query_run.timestamp DESC
-        LIMIT ?"""
-        with g.conn.cursor() as cur:
+        LIMIT %s"""
+        try:
+            cur = g.conn.cursor()
             cur.execute(sql, (limit, ))
             row = cur.fetchone()
             while row is not None:
@@ -212,5 +256,7 @@ class QueryRun(object):
                 q_run.query_rev = q_rev
                 results.append(q_run)
                 row = cur.fetchone()
+        finally:
+            cur.close()
 
         return results

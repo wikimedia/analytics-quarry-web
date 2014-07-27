@@ -1,10 +1,13 @@
 from flask import Flask, render_template, redirect, session, g, request, url_for
 from flask_mwoauth import MWOAuth
-import oursql
+import pymysql
 from models.user import User
 from models.query import Query, QueryRevision, QueryRun
+from models.queryresult import QuerySuccessResult, QueryErrorResult
 import json
 import time
+import os
+from celery import Celery
 
 
 app = Flask(__name__)
@@ -15,6 +18,61 @@ app.secret_key = 'glkafsjglskhfgflsgkh'
 mwoauth = MWOAuth(consumer_key=app.config['OAUTH_CONSUMER_TOKEN'],
                   consumer_secret=app.config['OAUTH_SECRET_TOKEN'])
 app.register_blueprint(mwoauth.bp)
+
+
+def make_celery(app):
+    celery = Celery('quarry.web.app', broker=app.config['CELERY_BROKER_URL'])
+    celery.conf.update(app.config)
+    TaskBase = celery.Task
+
+    class ContextTask(TaskBase):
+        abstract = True
+
+        def __call__(self, *args, **kwargs):
+            with app.app_context():
+                setup_db()
+                setup_replica()
+                return TaskBase.__call__(self, *args, **kwargs)
+
+    celery.Task = ContextTask
+    return celery
+
+celery = make_celery(app)
+
+
+def make_result(cur):
+    if cur.description is None:
+        return None
+    return {
+        'headers': [c[0] for c in cur.description],
+        'rows': cur.fetchall()
+    }
+
+
+@celery.task
+def run_query(query_run_id):
+    qrun = QueryRun.get_by_id(query_run_id)
+    qrun.status = QueryRun.STATUS_RUNNING
+    qrun.save()
+    start_time = time.clock()
+    cur = g.replica.cursor()
+    try:
+        cur.execute(qrun.query_rev.text)
+        total_time = time.clock() - start_time
+        result = []
+        result.append(make_result(cur))
+        while cur.nextset():
+            result.append(make_result(cur))
+        qresult = QuerySuccessResult(qrun, total_time, result, app.config['OUTPUT_PATH_TEMPLATE'])
+        qrun.status = QueryRun.STATUS_COMPLETE
+    except pymysql.DatabaseError as e:
+        total_time = time.clock() - start_time
+        qresult = QueryErrorResult(qrun, total_time, app.config['OUTPUT_PATH_TEMPLATE'], e.args[1])
+        qrun.status = QueryRun.STATUS_FAILED
+    finally:
+        cur.close()
+    qresult.output()
+    qrun.save()
 
 
 def get_user():
@@ -37,11 +95,31 @@ def get_user():
 
 @app.before_request
 def setup_context():
-    g.conn = oursql.connect(
+    setup_db()
+    setup_user()
+
+
+def setup_replica():
+    g.replica = pymysql.connect(
+        host=app.config['REPLICA_HOST'],
+        db=app.config['REPLICA_DB'],
+        user=app.config['REPLICA_USER'],
+        passwd=app.config['REPLICA_PASSWORD'],
+        port=app.config['REPLICA_PORT']
+    )
+
+
+def setup_db():
+    g.conn = pymysql.connect(
         host=app.config['DB_HOST'],
         db=app.config['DB_NAME'],
         user=app.config['DB_USER'],
-        passwd=app.config['DB_PASSWORD'])
+        passwd=app.config['DB_PASSWORD'],
+        autocommit=True
+    )
+
+
+def setup_user():
     g.user = get_user()
 
 
@@ -69,6 +147,12 @@ def query_show(query_id):
         'query_id': query.id,
         'can_edit': can_edit
     }
+
+    # Check if there's a run?
+    query_run = QueryRun.get_latest_run(query.latest_rev_id)
+    if query_run is not None:
+        jsvars['output_url'] = url_for('api_query_output', user_id=query.user_id, run_id=query_run.id)
+
     return render_template(
         "query/view.html",
         user=g.user,
@@ -90,6 +174,15 @@ def api_new_query():
     return json.dumps({'id': query_rev.id})
 
 
+@app.route('/api/query/output/<int:user_id>/<int:run_id>', methods=['GET'])
+def api_query_output(user_id, run_id):
+    path = app.config['OUTPUT_PATH_TEMPLATE'] % (user_id, run_id)
+    if os.path.exists(path):
+        return open(path).read()
+    else:
+        return '', 404
+
+
 @app.route('/api/query/meta', methods=['POST'])
 def api_set_meta():
     if g.user is None:
@@ -105,12 +198,14 @@ def api_set_meta():
 def api_run_query():
     if g.user is None:
         return "Authentication required", 401
-    print request.form.get('query_rev_id', '')
     query_rev = QueryRevision.get_by_id(request.form['query_rev_id'])
     query_run = QueryRun()
     query_run.query_rev = query_rev
     query_run.save_new()
-    return json.dumps({'id': query_run.id})
+    run_query.delay(query_run.id)
+    return json.dumps({
+        'output_url': url_for('api_query_output', user_id=g.user.id, run_id=query_run.id)
+    })
 
 
 @app.route("/query/runs/all")

@@ -1,5 +1,5 @@
 from flask import g
-import json
+import pickle
 
 
 class User(object):
@@ -7,15 +7,15 @@ class User(object):
         self.id = id
         self.username = username
 
-    def to_json(self):
-        return json.dumps({
+    def serialize(self):
+        return pickle.dumps({
             'id': self.id,
             'username': self.username
         })
 
     @classmethod
-    def from_json(cls, json_data):
-        data = json.loads(json_data)
+    def unserialize(cls, json_data):
+        data = pickle.loads(json_data)
         return cls(data['id'], data['username'])
 
     @staticmethod
@@ -26,7 +26,7 @@ class User(object):
     def get_by_id(cls, id):
         user_data = g.redis.get(cls.get_cache_key(id))
         if user_data:
-            return User.from_json(user_data)
+            return User.unserialize(user_data)
         try:
             cur = g.conn.cursor()
             cur.execute(
@@ -39,7 +39,7 @@ class User(object):
         if result is None:
             return None
         user = cls(result[0], result[1])
-        g.redis.set(cls.get_cache_key(id), user.to_json())
+        g.redis.set(cls.get_cache_key(id), user.serialize())
         return user
 
     def save(self):

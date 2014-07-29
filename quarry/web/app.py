@@ -32,6 +32,7 @@ def make_celery(app):
 
         def __call__(self, *args, **kwargs):
             with app.app_context():
+                setup_redis()
                 setup_db()
                 setup_replica()
                 return TaskBase.__call__(self, *args, **kwargs)

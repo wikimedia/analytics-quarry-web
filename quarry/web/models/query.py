@@ -1,5 +1,6 @@
 from flask import g
 from user import User
+import pickle
 
 
 class Query(object):
@@ -9,6 +10,24 @@ class Query(object):
         self.last_touched = last_touched
         self.latest_rev_id = latest_rev_id
         self.title = title
+
+    def serialize(self):
+        return pickle.dumps({
+            'id': self.id,
+            'user_id': self.user_id,
+            'last_touched': self.last_touched,
+            'latest_rev_id': self.latest_rev_id,
+            'title': self.title
+        })
+
+    @classmethod
+    def unserialize(cls, json_data):
+        data = pickle.loads(json_data)
+        return cls(**data)
+
+    @staticmethod
+    def get_cache_key(id):
+        return 'query:id:%s' % (id, )
 
     @property
     def user(self):
@@ -50,11 +69,15 @@ class Query(object):
                 'UPDATE query SET latest_rev = %s, title = %s WHERE id = %s',
                 (self.latest_rev_id, self.title, self.id)
             )
+            g.redis.delete(Query.get_cache_key(self.id))
         finally:
             cur.close()
 
     @classmethod
     def get_by_id(cls, id):
+        query_data = g.redis.get(cls.get_cache_key(id))
+        if query_data:
+            return Query.unserialize(query_data)
         try:
             cur = g.conn.cursor()
             cur.execute(
@@ -68,7 +91,9 @@ class Query(object):
         if result is None:
             return None
 
-        return cls(result[0], result[1], result[2], result[3], result[4])
+        query = cls(result[0], result[1], result[2], result[3], result[4])
+        g.redis.set(cls.get_cache_key(id), query.serialize())
+        return query
 
 
 class QueryRevision(object):
@@ -77,6 +102,22 @@ class QueryRevision(object):
         self.query_id = query_id
         self.text = text
         self.timestamp = timestamp
+
+    def serialize(self):
+        return pickle.dumps({
+            'id': self.id,
+            'query_id': self.query_id,
+            'text': self.text,
+            'timestamp': self.timestamp
+        })
+
+    @classmethod
+    def unserialize(cls, data):
+        return cls(**pickle.loads(data))
+
+    @staticmethod
+    def get_cache_key(id):
+        return "queryrev:id:%s" % (id, )
 
     @property
     def query(self):
@@ -91,6 +132,9 @@ class QueryRevision(object):
 
     @classmethod
     def get_by_id(cls, id):
+        queryrev_data = g.redis.get(QueryRevision.get_cache_key(id))
+        if queryrev_data:
+            return QueryRevision.unserialize(queryrev_data)
         try:
             cur = g.conn.cursor()
             cur.execute(
@@ -104,7 +148,9 @@ class QueryRevision(object):
         if result is None:
             return None
 
-        return cls(result[0], result[1], result[2], result[3])
+        qrev = cls(result[0], result[1], result[2], result[3])
+        g.redis.set(QueryRevision.get_cache_key(id), qrev.serialize())
+        return qrev
 
     def save_new(self):
         try:
@@ -141,12 +187,31 @@ class QueryRun(object):
         self.status = status
         self.timestamp = timestamp
 
+    def serialize(self):
+        return pickle.dumps({
+            'id': self.id,
+            'query_rev_id': self.query_rev_id,
+            'status': self.status,
+            'timestamp': self.timestamp
+        })
+
+    @classmethod
+    def unserialize(self, json_data):
+        return QueryRun(**pickle.loads(json_data))
+
+    @staticmethod
+    def get_cache_key(id):
+        return "queryrun:id:%s" % (id, )
+
     @property
     def status_message(self):
         return QueryRun.STATUS_MESSAGES[self.status]
 
     @classmethod
     def get_by_id(cls, id):
+        qrun_data = g.redis.get(QueryRun.get_cache_key(id))
+        if qrun_data:
+            return QueryRun.unserialize(qrun_data)
         try:
             cur = g.conn.cursor()
             cur.execute(
@@ -160,7 +225,9 @@ class QueryRun(object):
         if result is None:
             return None
 
-        return cls(result[0], result[1], result[2], result[3])
+        qrun = cls(result[0], result[1], result[2], result[3])
+        g.redis.set(QueryRun.get_cache_key(id), qrun.serialize())
+        return qrun
 
     def save_new(self):
         try:
@@ -180,6 +247,7 @@ class QueryRun(object):
                 "UPDATE query_run RUN SET status=%s WHERE id=%s",
                 (self.status, self.id)
             )
+            g.redis.delete(QueryRun.get_cache_key(self.id))
         finally:
             cur.close()
 

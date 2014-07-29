@@ -7,6 +7,7 @@ from models.queryresult import QuerySuccessResult, QueryErrorResult, QueryKilled
 import json
 import time
 import os
+import redis
 from celery import Celery
 from celery.exceptions import SoftTimeLimitExceeded
 
@@ -119,8 +120,17 @@ def get_user():
 
 @app.before_request
 def setup_context():
+    setup_redis()
     setup_db()
     setup_user()
+
+
+def setup_redis():
+    g.redis = redis.StrictRedis(
+        host=app.config['REDIS_HOST'],
+        port=app.config['REDIS_PORT'],
+        db=app.config['REDIS_DB']
+    )
 
 
 def setup_replica():

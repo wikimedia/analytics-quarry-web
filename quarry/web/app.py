@@ -13,6 +13,7 @@ from celery.exceptions import SoftTimeLimitExceeded
 
 
 app = Flask(__name__)
+app.config.from_pyfile("../default_config.py", silent=False)
 app.config.from_pyfile("../config.py", silent=False)
 app.config['DEBUG'] = True
 app.secret_key = 'glkafsjglskhfgflsgkh'

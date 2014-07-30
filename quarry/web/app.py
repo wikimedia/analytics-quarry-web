@@ -10,6 +10,7 @@ import os
 import redis
 from celery import Celery
 from celery.exceptions import SoftTimeLimitExceeded
+from redissession import RedisSessionInterface
 
 
 app = Flask(__name__)
@@ -17,6 +18,7 @@ app.config.from_pyfile("../default_config.py", silent=False)
 app.config.from_pyfile("../config.py", silent=False)
 app.config['DEBUG'] = True
 app.secret_key = 'glkafsjglskhfgflsgkh'
+app.session_interface = RedisSessionInterface()
 
 mwoauth = MWOAuth(consumer_key=app.config['OAUTH_CONSUMER_TOKEN'],
                   consumer_secret=app.config['OAUTH_SECRET_TOKEN'])

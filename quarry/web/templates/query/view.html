@@ -11,7 +11,7 @@
 <script src="/static/js/query/view.js"> </script>
 {% endblock %}
 {% block content %}
-<div>
+<div class="{% if jsvars.can_edit %}edit{% else %}no-edit{% endif %}">
     <div class="row" id="title-container">
         <h2 id='title'>{{query.title}}</h2>
     </div>
@@ -20,16 +20,15 @@
         <textarea id="code">{% if query.latest_rev %}{{ query.latest_rev.text }}{%endif%}</textarea>
     </div>
     <div class="row well">
-    {% if jsvars.can_edit %}
-        <div class='col-md-8'>
+        <div class='col-md-8 only-edit'>
             By running queries you agree to the <a href="https://wikitech.wikimedia.org/wiki/Wikitech:Labs_Terms_of_use">Labs ToS</a> and you irrevocably agree to release your SQL under <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 License</a>.
         </div>
-        <div cass='col-md-4 last'>
+        <div cass='col-md-4 last only-edit'>
             <a href="#" id="run-code" class="btn btn-primary pull-right">Submit Query</a>
         </div>
-    {% else %}
-        All SQL code is licensed under <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 License</a>.
-    {% endif %}
+        <div class="only-no-edit">
+            All SQL code is licensed under <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0 License</a>.
+        </div>
     </div>
 
     <div id="query-result-container"class="row">

@@ -20,3 +20,11 @@ table#query-results-sampled {
 #query-result-success, #query-result-error, #query-progress, #query-result-killed {
     display: none;
 }
+
+.no-edit .only-edit {
+    display: none;
+}
+
+.edit .only-no-edit {
+    display: none;
+}

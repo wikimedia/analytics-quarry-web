@@ -3,10 +3,10 @@ USE quarry;
 CREATE TABLE user(
     id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
     username VARCHAR(255) BINARY NOT NULL UNIQUE,
-    wiki_id INT UNSIGNED NOT NULL UNIQUE
+    wiki_uid INT UNSIGNED NOT NULL UNIQUE
 );
 CREATE UNIQUE INDEX user_username_index ON user(username);
-CREATE UNIQUE INDEX user_wiki_id ON user(wiki_id);
+CREATE UNIQUE INDEX user_wiki_uid ON user(wiki_uid);
 
 CREATE TABLE query(
     id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,

@@ -1,5 +1,4 @@
 from flask import Flask, render_template, redirect, session, g, request, url_for
-from flask_mwoauth import MWOAuth
 import pymysql
 from models.user import User
 from models.query import Query, QueryRevision, QueryRun
@@ -11,6 +10,7 @@ import redis
 from celery import Celery
 from celery.exceptions import SoftTimeLimitExceeded
 from redissession import RedisSessionInterface
+from mwoauth import ConsumerToken, Handshaker
 
 
 app = Flask(__name__)
@@ -20,9 +20,10 @@ app.config['DEBUG'] = True
 app.secret_key = 'glkafsjglskhfgflsgkh'
 app.session_interface = RedisSessionInterface()
 
-mwoauth = MWOAuth(consumer_key=app.config['OAUTH_CONSUMER_TOKEN'],
-                  consumer_secret=app.config['OAUTH_SECRET_TOKEN'])
-app.register_blueprint(mwoauth.bp)
+oauth_token = ConsumerToken(
+    app.config['OAUTH_CONSUMER_TOKEN'],
+    app.config['OAUTH_SECRET_TOKEN']
+)
 
 
 def make_celery(app):
@@ -105,20 +106,10 @@ def run_query(query_run_id):
 
 
 def get_user():
-    if 'user_id' not in session:
-        user_name = mwoauth.get_current_user()
-        if user_name:
-            user_info = mwoauth.request({'action': 'query', 'meta': 'userinfo'})
-            wiki_id = user_info['query']['userinfo']['id']
-            user = User.get_by_wiki_id(wiki_id)
-            if user is None:
-                user = User(username=user_name, wiki_id=wiki_id)
-                user.save_new()
-            session['user_id'] = user.id
-        else:
-            user = None
-    else:
+    if 'user_id' in session:
         user = User.get_by_id(session['user_id'])
+    else:
+        user = None
     return user
 
 
@@ -168,6 +159,39 @@ def index():
     return render_template("landing.html", user=g.user)
 
 
+@app.route("/login")
+def login():
+    handshaker = Handshaker(
+        "https://www.mediawiki.org/w/index.php",
+        oauth_token
+    )
+    redirect_url, request_token = handshaker.initiate()
+    session['request_token'] = request_token
+    session['return_to_url'] = request.args.get('next', '/')
+    return redirect(redirect_url)
+
+
+@app.route("/oauth-callback")
+def oauth_callback():
+    handshaker = Handshaker(
+        "https://www.mediawiki.org/w/index.php",
+        oauth_token
+    )
+    access_token = handshaker.complete(session['request_token'], request.query_string)
+    session['acces_token'] = access_token
+    identity = handshaker.identify(access_token)
+    wiki_uid = identity['sub']
+    user = User.get_by_wiki_uid(wiki_uid)
+    if user is None:
+        user = User(username=identity['username'], wiki_uid=wiki_uid)
+        user.save_new()
+    session['user_id'] = user.id
+    return_to_url = session.get('return_to_url')
+    del session['request_token']
+    del session['return_to_url']
+    return redirect(return_to_url)
+
+
 @app.route("/query/new")
 def new_query():
     if g.user is None:
@@ -177,6 +201,12 @@ def new_query():
     query.title = "%s's awesome query #%s" % (g.user.username, int(time.time()))
     query.save_new()
     return redirect(url_for('query_show', query_id=query.id))
+
+
+@app.route("/logout")
+def logout():
+    session.clear()
+    return redirect("/")
 
 
 @app.route("/query/<int:query_id>")

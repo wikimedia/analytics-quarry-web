@@ -3,22 +3,22 @@ import pickle
 
 
 class User(object):
-    def __init__(self, id=None, username=None, wiki_id=None):
+    def __init__(self, id=None, username=None, wiki_uid=None):
         self.id = id
         self.username = username
-        self.wiki_id = wiki_id
+        self.wiki_uid = wiki_uid
 
     def serialize(self):
         return pickle.dumps({
             'id': self.id,
             'username': self.username,
-            'wiki_id': self.wiki_id
+            'wiki_uid': self.wiki_uid
         })
 
     @classmethod
     def unserialize(cls, json_data):
         data = pickle.loads(json_data)
-        return cls(data['id'], data['username'], data['wiki_id'])
+        return cls(data['id'], data['username'], data['wiki_uid'])
 
     @staticmethod
     def get_cache_key(id):
@@ -26,12 +26,12 @@ class User(object):
         return 'user:id:%s:%s' % (cache_version, id, )
 
     @classmethod
-    def get_by_wiki_id(cls, wiki_id):
+    def get_by_wiki_uid(cls, wiki_uid):
         try:
             cur = g.conn.cursor()
             cur.execute(
-                'SELECT id, username, wiki_id FROM user WHERE wiki_id=%s',
-                (wiki_id, )
+                'SELECT id, username, wiki_uid FROM user WHERE wiki_uid=%s',
+                (wiki_uid, )
             )
             result = cur.fetchone()
         finally:
@@ -49,7 +49,7 @@ class User(object):
         try:
             cur = g.conn.cursor()
             cur.execute(
-                'SELECT id, username, wiki_id FROM user WHERE id=%s',
+                'SELECT id, username, wiki_uid FROM user WHERE id=%s',
                 (id, )
             )
             result = cur.fetchone()
@@ -65,8 +65,8 @@ class User(object):
         try:
             cur = g.conn.cursor()
             cur.execute(
-                """INSERT INTO user (username, wiki_id) VALUES (%s, %s)""",
-                (self.username, self.wiki_id)
+                """INSERT INTO user (username, wiki_uid) VALUES (%s, %s)""",
+                (self.username, self.wiki_uid)
             )
             self.id = cur.lastrowid
         finally:

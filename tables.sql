@@ -2,8 +2,11 @@ CREATE DATABASE IF NOT EXISTS quarry;
 USE quarry;
 CREATE TABLE user(
     id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    username VARCHAR(255) BINARY NOT NULL
+    username VARCHAR(255) BINARY NOT NULL UNIQUE,
+    wiki_id INT UNSIGNED NOT NULL UNIQUE
 );
+CREATE UNIQUE INDEX user_username_index ON user(username);
+CREATE UNIQUE INDEX user_wiki_id ON user(wiki_id);
 
 CREATE TABLE query(
     id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -13,6 +16,7 @@ CREATE TABLE query(
     last_touched TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     parent_id INT UNSIGNED
 );
+CREATE INDEX query_parent_id_index ON query(parent_id);
 
 CREATE TABLE query_revision(
     id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -20,6 +24,7 @@ CREATE TABLE query_revision(
     query_id INT UNSIGNED NOT NULL,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX query_rev_query_id_index ON query_revision(query_id);
 
 CREATE TABLE query_run(
     id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
@@ -27,3 +32,4 @@ CREATE TABLE query_run(
     status TINYINT UNSIGNED NOT NULL DEFAULT 0,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+CREATE INDEX query_run_status_index ON query_run(status);

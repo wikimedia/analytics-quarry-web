@@ -110,10 +110,10 @@ def get_user():
         if user_name:
             user_info = mwoauth.request({'action': 'query', 'meta': 'userinfo'})
             wiki_id = user_info['query']['userinfo']['id']
-            user = User.get_by_id(wiki_id)
+            user = User.get_by_wiki_id(wiki_id)
             if user is None:
-                user = User(wiki_id, user_name)
-                user.save()
+                user = User(username=user_name, wiki_id=wiki_id)
+                user.save_new()
             session['user_id'] = user.id
         else:
             user = None

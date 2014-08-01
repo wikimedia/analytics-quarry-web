@@ -8,6 +8,7 @@ DB_PASSWORD = ''
 CELERY_BROKER_URL = 'redis://'
 CELERY_RESULT_BACKEND = 'redis://'
 CELERYD_TASK_SOFT_TIME_LIMIT = 60  # 1 minute
+CELERYD_CONCURRENCY = 24  # Since all tasks are IO bound
 REPLICA_HOST = '127.0.0.1'
 REPLICA_DB = 'enwiki_p'
 REPLICA_USER = ''

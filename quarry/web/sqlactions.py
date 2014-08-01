@@ -4,7 +4,7 @@ def check_sql(sql):
     be considered 'authoritative'. Will probably always be
     easily cirumventible by dedicated trolls, but should keep
     the merely clueless out"""
-    if 'information_schema' in sql:
+    if 'information_schema' in sql.lower():
         # According to springle hitting this db can fuck
         # things up for everyone, and it isn't easy to
         # restrict access to this from mysql

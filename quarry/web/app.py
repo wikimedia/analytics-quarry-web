@@ -9,6 +9,7 @@ import os
 import redis
 from celery import Celery
 from celery.exceptions import SoftTimeLimitExceeded
+from celery.utils.log import get_task_logger
 from redissession import RedisSessionInterface
 from mwoauth import ConsumerToken, Handshaker
 
@@ -45,6 +46,7 @@ def make_celery(app):
     return celery
 
 celery = make_celery(app)
+celery_log = get_task_logger(__name__)
 
 
 def make_result(cur):
@@ -61,10 +63,12 @@ def kill_query(thread_id):
     cur = g.replica.cursor()
     try:
         cur.execute("KILL QUERY %s", thread_id)
+        celery_log.info("Query with thread:%s killed", thread_id)
     except pymysql.InternalError as e:
         if e.args[0] == 1094:  # Error code for 'no such thread'
-            print 'Query already killed'
+            celery_log.info("Query with thread:%s died before it could be killed", thread_id)
         else:
+            celery_log.exception("Error killing thread:%s", thread_id)
             raise
     finally:
         cur.close()
@@ -73,6 +77,7 @@ def kill_query(thread_id):
 @celery.task
 def run_query(query_run_id):
     qrun = QueryRun.get_by_id(query_run_id)
+    celery_log.info("Starting run for qrun:%s", qrun.id)
     try:
         qrun = QueryRun.get_by_id(query_run_id)
         qrun.status = QueryRun.STATUS_RUNNING
@@ -88,15 +93,18 @@ def run_query(query_run_id):
             total_time = time.clock() - start_time
             qresult = QuerySuccessResult(qrun, total_time, result, app.config['OUTPUT_PATH_TEMPLATE'])
             qrun.status = QueryRun.STATUS_COMPLETE
+            celery_log.info("Completed run for qrun:%s successfully", qrun.id)
         except pymysql.DatabaseError as e:
             total_time = time.clock() - start_time
             qresult = QueryErrorResult(qrun, total_time, app.config['OUTPUT_PATH_TEMPLATE'], e.args[1])
             qrun.status = QueryRun.STATUS_FAILED
+            celery_log.info("Completed run for qrun:%s with failure: %s", qrun.id, e.args[1])
         finally:
             cur.close()
         qresult.output()
         qrun.save()
     except SoftTimeLimitExceeded:
+        celery_log.info("Time limit exceeded for qrun:%s, thread:%s attempting to kill", qrun.id, g.replica.thread_id())
         total_time = time.clock() - start_time
         kill_query.delay(g.replica.thread_id())
         qrun.state = QueryRun.STATUS_KILLED

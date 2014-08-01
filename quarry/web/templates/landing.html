@@ -1,5 +1,8 @@
 {% set active_page = "landing" %}
 {% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="/static/css/landing.css">
+{% endblock %}
 {% block content %}
 <div class="jumbotron">
     <div class="container">
@@ -10,7 +13,8 @@
             {% if user %}
             <a class="btn btn-primary btn-lg" role="button" href="/query/new">New Query</a>
             {% else %}
-            <a class="btn btn-primary btn-lg" role="button" href="/login?next=/">Login via MediaWiki</a>
+            <a class="btn btn-primary btn-lg" role="button" href="/login?next=/">Login with Wikimedia</a>
+            <p id="login-tou-blurb">By logging in, you agree to the <a href="https://wikitech.wikimedia.org/wiki/Wikitech:Labs_Terms_of_use">Wikimedia Labs Terms of Use</a></p>
             {% endif %}
         </div>
     </div>

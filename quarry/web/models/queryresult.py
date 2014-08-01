@@ -1,5 +1,18 @@
 import json
 import os
+import datetime
+
+
+class MoreAcceptingJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, datetime.datetime):
+            return obj.isoformat()
+        elif isinstance(obj, datetime.date):
+            return obj.isoformat()
+        elif isinstance(obj, datetime.timedelta):
+            return (datetime.datetime.min + obj).time().isoformat()
+        else:
+            return super(MoreAcceptingJSONEncoder, self).default(obj)
 
 
 class QueryResult(object):
@@ -18,7 +31,7 @@ class QueryResult(object):
         if not os.path.exists(os.path.dirname(path)):
             os.makedirs(os.path.dirname(path))
         with open(path, 'w') as f:
-            json.dump(self.output_data, f)
+            json.dump(self.output_data, f, cls=MoreAcceptingJSONEncoder)
 
 
 class QuerySuccessResult(QueryResult):

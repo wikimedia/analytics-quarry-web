@@ -3,15 +3,16 @@
 {% block content %}
         <div class="jumbotron">
             <div class="container">
-                <h1>Wikimedia LabsSQL Quarry</h1>
-                <h3>Because SQL doesn't need SSH</h3>
-                <p>
+                <h1>Quarry <small>&beta;eta</small></h1>
+                <h3>Run SQL queries against Wikipedia &amp; other databases from your browser!</h3>
+                <br />
+                <div>
                     {% if user %}
                     <a class="btn btn-primary btn-lg" role="button" href="/query/new">New Query</a>
                     {% else %}
-                    <a class="btn btn-primary btn-lg" role="button" href="/login?next=/">Login via Wikitech</a>
+                    <a class="btn btn-primary btn-lg" role="button" href="/login?next=/">Login via MediaWiki</a>
                     {% endif %}
-                </p>
+                </div>
             </div>
 
         </div>

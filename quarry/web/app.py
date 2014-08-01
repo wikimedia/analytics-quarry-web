@@ -211,7 +211,7 @@ def new_query():
         return redirect("/login?next=/query/new")
     query = Query()
     query.user = g.user
-    query.title = "%s's awesome query #%s" % (g.user.username, int(time.time()))
+    query.title = "%s's untitled query #%s" % (g.user.username, int(time.time()))
     query.save_new()
     return redirect(url_for('query_show', query_id=query.id))
 

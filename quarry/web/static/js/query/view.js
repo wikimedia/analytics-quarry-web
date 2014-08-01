@@ -2,7 +2,8 @@ $( function() {
     var editor = CodeMirror.fromTextArea($("#code")[0], {
         mode: "text/x-mariadb",
         theme: "monokai",
-        readOnly: !vars.can_edit
+        readOnly: !vars.can_edit,
+        matchBrackets: true
     });
 
     if (vars.can_edit) {

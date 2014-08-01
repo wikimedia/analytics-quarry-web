@@ -12,6 +12,7 @@ from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
 from redissession import RedisSessionInterface
 from mwoauth import ConsumerToken, Handshaker
+from sqlactions import check_sql
 
 
 app = Flask(__name__)
@@ -82,9 +83,13 @@ def run_query(query_run_id):
         qrun = QueryRun.get_by_id(query_run_id)
         qrun.status = QueryRun.STATUS_RUNNING
         qrun.save()
-        start_time = time.clock()
-        cur = g.replica.cursor()
         try:
+            check_result = check_sql(qrun.query_rev.text)
+            start_time = time.clock()
+            cur = g.replica.cursor()
+            if check_result is not True:
+                celery_log.info("Check result for qrun:%s failed, with message: %s", qrun.id, check_result[0])
+                raise pymysql.DatabaseError(0, check_result[1])
             cur.execute(qrun.query_rev.text)
             result = []
             result.append(make_result(cur))

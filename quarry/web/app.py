@@ -175,7 +175,7 @@ def index():
 @app.route("/login")
 def login():
     handshaker = Handshaker(
-        "https://www.mediawiki.org/w/index.php",
+        "https://meta.wikimedia.org/w/index.php",
         oauth_token
     )
     redirect_url, request_token = handshaker.initiate()
@@ -187,7 +187,7 @@ def login():
 @app.route("/oauth-callback")
 def oauth_callback():
     handshaker = Handshaker(
-        "https://www.mediawiki.org/w/index.php",
+        "https://meta.wikimedia.org/w/index.php",
         oauth_token
     )
     access_token = handshaker.complete(session['request_token'], request.query_string)

@@ -12,7 +12,6 @@ $( function() {
                 query_id: vars.query_id,
                 title: value
             } ).done( function( data ) {
-                alert( data );
             } );
             return value;
         }, {

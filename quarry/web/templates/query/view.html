@@ -11,7 +11,7 @@
 <script src="/static/js/query/view.js"> </script>
 {% endblock %}
 {% block content %}
-<div class="{% if jsvars.can_edit %}edit{% else %}no-edit{% endif %}">
+<div id="content" class="container {% if jsvars.can_edit %}edit{% else %}no-edit{% endif %}">
     <div class="row" id="title-container">
         <h2 id='title'>{{query.title}}</h2>
     </div>
@@ -49,6 +49,5 @@
             <h3>Query running...</h3>
         </div>
     </div>
-
-
+</div>
 {% endblock %}

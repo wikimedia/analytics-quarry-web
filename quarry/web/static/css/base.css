@@ -1,7 +1,24 @@
-#main_content {
-    margin-top: 96px;
+#content {
+    padding-top: 96px;
+}
+
+.jumbotron {
+    padding-top: 72px;
+}
+
+#footer {
+    margin-top: 48px;
+    padding-top: 24px;
+    padding-bottom: 24px;
+    border-top: 1px solid #eee;
+    color: #999;
+    background-color: #fafafa;
 }
 
 .center {
     text-align: center;
+}
+
+.right {
+    text-align: right;
 }

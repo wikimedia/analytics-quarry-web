@@ -21,7 +21,6 @@ app = Flask(__name__)
 app.config.update(yaml.load(open(os.path.join(__dir__, "../default_config.yaml"))))
 app.config.update(yaml.load(open(os.path.join(__dir__, "../config.yaml"))))
 app.config['DEBUG'] = True
-app.secret_key = 'glkafsjglskhfgflsgkh'
 app.session_interface = RedisSessionInterface()
 
 oauth_token = ConsumerToken(

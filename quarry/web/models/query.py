@@ -53,7 +53,7 @@ class Query(object):
 
     def save_new(self):
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(
                 'INSERT INTO query (user_id, latest_rev, title) VALUES (%s, %s, %s)',
                 (self.user_id, self.latest_rev_id, self.title)
@@ -64,22 +64,22 @@ class Query(object):
 
     def save(self):
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(
                 'UPDATE query SET latest_rev = %s, title = %s WHERE id = %s',
                 (self.latest_rev_id, self.title, self.id)
             )
-            g.redis.delete(Query.get_cache_key(self.id))
+            g.conn.redis.delete(Query.get_cache_key(self.id))
         finally:
             cur.close()
 
     @classmethod
     def get_by_id(cls, id):
-        query_data = g.redis.get(cls.get_cache_key(id))
+        query_data = g.conn.redis.get(cls.get_cache_key(id))
         if query_data:
             return Query.unserialize(query_data)
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(
                 """SELECT id, user_id, latest_rev, last_touched, title
                 FROM query WHERE id = %s""",
@@ -92,7 +92,7 @@ class Query(object):
             return None
 
         query = cls(result[0], result[1], result[2], result[3], result[4])
-        g.redis.set(cls.get_cache_key(id), query.serialize())
+        g.conn.redis.set(cls.get_cache_key(id), query.serialize())
         return query
 
 
@@ -132,11 +132,11 @@ class QueryRevision(object):
 
     @classmethod
     def get_by_id(cls, id):
-        queryrev_data = g.redis.get(QueryRevision.get_cache_key(id))
+        queryrev_data = g.conn.redis.get(QueryRevision.get_cache_key(id))
         if queryrev_data:
             return QueryRevision.unserialize(queryrev_data)
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(
                 """SELECT id, text, query_id, timestamp
                 FROM query_revision WHERE id = %s""",
@@ -149,12 +149,12 @@ class QueryRevision(object):
             return None
 
         qrev = cls(result[0], result[1], result[2], result[3])
-        g.redis.set(QueryRevision.get_cache_key(id), qrev.serialize())
+        g.conn.redis.set(QueryRevision.get_cache_key(id), qrev.serialize())
         return qrev
 
     def save_new(self):
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(
                 "INSERT INTO query_revision (query_id, text) VALUES ( %s, %s )",
                 (self.query_id, self.text)
@@ -209,11 +209,11 @@ class QueryRun(object):
 
     @classmethod
     def get_by_id(cls, id):
-        qrun_data = g.redis.get(QueryRun.get_cache_key(id))
+        qrun_data = g.conn.redis.get(QueryRun.get_cache_key(id))
         if qrun_data:
             return QueryRun.unserialize(qrun_data)
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(
                 """SELECT id, query_rev_id, status, timestamp
                 FROM query_run WHERE id = %s""",
@@ -242,12 +242,12 @@ class QueryRun(object):
 
     def save(self):
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(
                 "UPDATE query_run RUN SET status=%s WHERE id=%s",
                 (self.status, self.id)
             )
-            g.redis.delete(QueryRun.get_cache_key(self.id))
+            g.conn.redis.delete(QueryRun.get_cache_key(self.id))
         finally:
             cur.close()
 
@@ -265,7 +265,7 @@ class QueryRun(object):
     @classmethod
     def get_latest_run(cls, query_rev_id):
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(
                 """SELECT id, query_rev_id, status, timestamp
                 FROM query_run WHERE query_rev_id = %s
@@ -299,7 +299,7 @@ class QueryRun(object):
             query_run.timestamp DESC
         LIMIT %s"""
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(sql, (limit, ))
             row = cur.fetchone()
             while row is not None:

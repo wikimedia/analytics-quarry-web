@@ -28,7 +28,7 @@ class User(object):
     @classmethod
     def get_by_wiki_uid(cls, wiki_uid):
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(
                 'SELECT id, username, wiki_uid FROM user WHERE wiki_uid=%s',
                 (wiki_uid, )
@@ -43,11 +43,11 @@ class User(object):
 
     @classmethod
     def get_by_id(cls, id):
-        user_data = g.redis.get(cls.get_cache_key(id))
+        user_data = g.conn.redis.get(cls.get_cache_key(id))
         if user_data:
             return User.unserialize(user_data)
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(
                 'SELECT id, username, wiki_uid FROM user WHERE id=%s',
                 (id, )
@@ -58,12 +58,12 @@ class User(object):
         if result is None:
             return None
         user = cls(result[0], result[1], result[2])
-        g.redis.set(cls.get_cache_key(id), user.serialize())
+        g.conn.redis.set(cls.get_cache_key(id), user.serialize())
         return user
 
     def save_new(self):
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(
                 """INSERT INTO user (username, wiki_uid) VALUES (%s, %s)""",
                 (self.username, self.wiki_uid)

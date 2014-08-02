@@ -1,19 +1,14 @@
 from flask import Flask, render_template, redirect, session, g, request, url_for
-import pymysql
 from models.user import User
 from models.query import Query, QueryRevision, QueryRun
-from models.queryresult import QuerySuccessResult, QueryErrorResult, QueryKilledResult
 import json
 import yaml
 import time
 import os
-import redis
-from celery import Celery
-from celery.exceptions import SoftTimeLimitExceeded
-from celery.utils.log import get_task_logger
 from redissession import RedisSessionInterface
 from mwoauth import ConsumerToken, Handshaker
-from sqlactions import check_sql
+from connections import Connections
+import worker
 
 __dir__ = os.path.dirname(__file__)
 
@@ -29,96 +24,6 @@ oauth_token = ConsumerToken(
 )
 
 
-def make_celery(app):
-    celery = Celery('quarry.web.app', broker=app.config['CELERY_BROKER_URL'])
-    celery.conf.update(app.config)
-    TaskBase = celery.Task
-
-    class ContextTask(TaskBase):
-        abstract = True
-
-        def __call__(self, *args, **kwargs):
-            with app.app_context():
-                setup_redis()
-                setup_db()
-                setup_replica()
-                return TaskBase.__call__(self, *args, **kwargs)
-
-    celery.Task = ContextTask
-    return celery
-
-celery = make_celery(app)
-celery_log = get_task_logger(__name__)
-
-
-def make_result(cur):
-    if cur.description is None:
-        return None
-    return {
-        'headers': [c[0] for c in cur.description],
-        'rows': cur.fetchall()
-    }
-
-
-@celery.task
-def kill_query(thread_id):
-    cur = g.replica.cursor()
-    try:
-        cur.execute("KILL QUERY %s", thread_id)
-        celery_log.info("Query with thread:%s killed", thread_id)
-    except pymysql.InternalError as e:
-        if e.args[0] == 1094:  # Error code for 'no such thread'
-            celery_log.info("Query with thread:%s died before it could be killed", thread_id)
-        else:
-            celery_log.exception("Error killing thread:%s", thread_id)
-            raise
-    finally:
-        cur.close()
-
-
-@celery.task
-def run_query(query_run_id):
-    qrun = QueryRun.get_by_id(query_run_id)
-    celery_log.info("Starting run for qrun:%s", qrun.id)
-    try:
-        qrun = QueryRun.get_by_id(query_run_id)
-        qrun.status = QueryRun.STATUS_RUNNING
-        qrun.save()
-        try:
-            check_result = check_sql(qrun.query_rev.text)
-            start_time = time.clock()
-            cur = g.replica.cursor()
-            if check_result is not True:
-                celery_log.info("Check result for qrun:%s failed, with message: %s", qrun.id, check_result[0])
-                raise pymysql.DatabaseError(0, check_result[1])
-            cur.execute(qrun.query_rev.text)
-            result = []
-            result.append(make_result(cur))
-            while cur.nextset():
-                result.append(make_result(cur))
-            total_time = time.clock() - start_time
-            qresult = QuerySuccessResult(qrun, total_time, result, app.config['OUTPUT_PATH_TEMPLATE'])
-            qrun.status = QueryRun.STATUS_COMPLETE
-            celery_log.info("Completed run for qrun:%s successfully", qrun.id)
-        except pymysql.DatabaseError as e:
-            total_time = time.clock() - start_time
-            qresult = QueryErrorResult(qrun, total_time, app.config['OUTPUT_PATH_TEMPLATE'], e.args[1])
-            qrun.status = QueryRun.STATUS_FAILED
-            celery_log.info("Completed run for qrun:%s with failure: %s", qrun.id, e.args[1])
-        finally:
-            cur.close()
-        qresult.output()
-        qrun.save()
-    except SoftTimeLimitExceeded:
-        celery_log.info("Time limit exceeded for qrun:%s, thread:%s attempting to kill", qrun.id, g.replica.thread_id())
-        total_time = time.clock() - start_time
-        kill_query.delay(g.replica.thread_id())
-        qrun.state = QueryRun.STATUS_KILLED
-        qrun.save()
-        qresult = QueryKilledResult(qrun, total_time, app.config['OUTPUT_PATH_TEMPLATE'])
-        qresult.output()
-
-
 def get_user():
     if 'user_id' in session:
         user = User.get_by_id(session['user_id'])
@@ -129,43 +34,13 @@ def get_user():
 
 @app.before_request
 def setup_context():
-    setup_redis()
-    setup_db()
-    setup_user()
-
-
-def setup_redis():
-    g.redis = redis.StrictRedis(
-        host=app.config['REDIS_HOST'],
-        port=app.config['REDIS_PORT'],
-        db=app.config['REDIS_DB']
-    )
-
-
-def setup_replica():
-    g.replica = pymysql.connect(
-        host=app.config['REPLICA_HOST'],
-        db=app.config['REPLICA_DB'],
-        user=app.config['REPLICA_USER'],
-        passwd=app.config['REPLICA_PASSWORD'],
-        port=app.config['REPLICA_PORT'],
-        charset='utf8'
-    )
-
-
-def setup_db():
-    g.conn = pymysql.connect(
-        host=app.config['DB_HOST'],
-        db=app.config['DB_NAME'],
-        user=app.config['DB_USER'],
-        passwd=app.config['DB_PASSWORD'],
-        autocommit=True,
-        charset='utf8'
-    )
-
-
-def setup_user():
+    g.conn = Connections(app.config)
     g.user = get_user()
+
+
+@app.teardown_request
+def kill_context(exception=None):
+    g.conn.close_all()
 
 
 @app.route("/")
@@ -286,7 +161,7 @@ def api_run_query():
     query_run = QueryRun()
     query_run.query_rev = query_rev
     query_run.save_new()
-    run_query.delay(query_run.id)
+    worker.run_query.delay(query_run.id)
     return json.dumps({
         'output_url': url_for('api_query_output', user_id=g.user.id, run_id=query_run.id)
     })

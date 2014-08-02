@@ -181,18 +181,20 @@ class QueryRun(object):
         'superseded'
     ]
 
-    def __init__(self, id=None, query_rev_id=None, status=None, timestamp=None):
+    def __init__(self, id=None, query_rev_id=None, status=None, timestamp=None, task_id=None):
         self.id = id
         self.query_rev_id = query_rev_id
         self.status = status
         self.timestamp = timestamp
+        self.task_id = task_id
 
     def serialize(self):
         return pickle.dumps({
             'id': self.id,
             'query_rev_id': self.query_rev_id,
             'status': self.status,
-            'timestamp': self.timestamp
+            'timestamp': self.timestamp,
+            'task_id': self.task_id
         })
 
     @classmethod
@@ -201,7 +203,8 @@ class QueryRun(object):
 
     @staticmethod
     def get_cache_key(id):
-        return "queryrun:id:%s" % (id, )
+        cache_key = 1
+        return "queryrun:%s:id:%s" % (cache_key, id, )
 
     @property
     def status_message(self):
@@ -215,7 +218,7 @@ class QueryRun(object):
         try:
             cur = g.conn.db.cursor()
             cur.execute(
-                """SELECT id, query_rev_id, status, timestamp
+                """SELECT id, query_rev_id, status, timestamp, task_id
                 FROM query_run WHERE id = %s""",
                 (id, )
             )
@@ -225,16 +228,16 @@ class QueryRun(object):
         if result is None:
             return None
 
-        qrun = cls(result[0], result[1], result[2], result[3])
-        g.redis.set(QueryRun.get_cache_key(id), qrun.serialize())
+        qrun = cls(result[0], result[1], result[2], result[3], result[4])
+        g.conn.redis.set(QueryRun.get_cache_key(id), qrun.serialize())
         return qrun
 
     def save_new(self):
         try:
-            cur = g.conn.cursor()
+            cur = g.conn.db.cursor()
             cur.execute(
-                "INSERT INTO query_run (query_rev_id) VALUES (%s)",
-                (self.query_rev_id, )
+                "INSERT INTO query_run (status, query_rev_id, task_id) VALUES (%s, %s, %s)",
+                (self.status, self.query_rev_id, self.task_id)
             )
             self.id = cur.lastrowid
         finally:
@@ -244,8 +247,8 @@ class QueryRun(object):
         try:
             cur = g.conn.db.cursor()
             cur.execute(
-                "UPDATE query_run RUN SET status=%s WHERE id=%s",
-                (self.status, self.id)
+                "UPDATE query_run RUN SET status=%s, task_id=%s WHERE id=%s",
+                (self.status, self.task_id, self.id)
             )
             g.conn.redis.delete(QueryRun.get_cache_key(self.id))
         finally:
@@ -267,7 +270,7 @@ class QueryRun(object):
         try:
             cur = g.conn.db.cursor()
             cur.execute(
-                """SELECT id, query_rev_id, status, timestamp
+                """SELECT id, query_rev_id, status, timestamp, task_id
                 FROM query_run WHERE query_rev_id = %s
                 ORDER BY timestamp DESC
                 LIMIT 1""",
@@ -279,7 +282,7 @@ class QueryRun(object):
         if result is None:
             return None
 
-        return cls(result[0], result[1], result[2], result[3])
+        return cls(result[0], result[1], result[2], result[3], result[4])
 
     @classmethod
     def get_augmented_list(cls, limit=25):

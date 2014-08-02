@@ -120,19 +120,6 @@ def query_show(query_id):
     )
 
 
-@app.route('/api/query/new', methods=['POST'])
-def api_new_query():
-    if g.user is None:
-        return "Authentication required", 401
-    text = request.form['text']
-    query = Query.get_by_id(request.form['query_id'])
-    query_rev = QueryRevision(query_id=query.id, text=text)
-    query_rev.save_new()
-    query.latest_rev = query_rev
-    query.save()
-    return json.dumps({'id': query_rev.id})
-
-
 @app.route('/api/query/output/<int:user_id>/<int:run_id>', methods=['GET'])
 def api_query_output(user_id, run_id):
     path = app.config['OUTPUT_PATH_TEMPLATE'] % (user_id, run_id)
@@ -157,11 +144,28 @@ def api_set_meta():
 def api_run_query():
     if g.user is None:
         return "Authentication required", 401
-    query_rev = QueryRevision.get_by_id(request.form['query_rev_id'])
+    text = request.form['text']
+    query = Query.get_by_id(request.form['query_id'])
+
+    last_query_rev = query.latest_rev
+    if last_query_rev:
+        last_query_run = QueryRun.get_latest_run(last_query_rev.id)
+        if last_query_run:
+            result = worker.run_query.AsyncResult(last_query_run.task_id)
+            if not result.ready():
+                result.revoke(terminate=True)
+                last_query_run.status = QueryRun.STATUS_SUPERSEDED
+                last_query_run.save()
+    query_rev = QueryRevision(query_id=query.id, text=text)
+    query_rev.save_new()
+    query.latest_rev = query_rev
+    query.save()
     query_run = QueryRun()
     query_run.query_rev = query_rev
+    query_run.status = QueryRun.STATUS_QUEUED
     query_run.save_new()
-    worker.run_query.delay(query_run.id)
+    query_run.task_id = worker.run_query.delay(query_run.id).task_id
+    query_run.save()
     return json.dumps({
         'output_url': url_for('api_query_output', user_id=g.user.id, run_id=query_run.id)
     })

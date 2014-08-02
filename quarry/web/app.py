@@ -4,6 +4,7 @@ from models.user import User
 from models.query import Query, QueryRevision, QueryRun
 from models.queryresult import QuerySuccessResult, QueryErrorResult, QueryKilledResult
 import json
+import yaml
 import time
 import os
 import redis
@@ -14,10 +15,11 @@ from redissession import RedisSessionInterface
 from mwoauth import ConsumerToken, Handshaker
 from sqlactions import check_sql
 
+__dir__ = os.path.dirname(__file__)
 
 app = Flask(__name__)
-app.config.from_pyfile("../default_config.py", silent=False)
-app.config.from_pyfile("../config.py", silent=False)
+app.config.update(yaml.load(open(os.path.join(__dir__, "../default_config.yaml"))))
+app.config.update(yaml.load(open(os.path.join(__dir__, "../config.yaml"))))
 app.config['DEBUG'] = True
 app.secret_key = 'glkafsjglskhfgflsgkh'
 app.session_interface = RedisSessionInterface()

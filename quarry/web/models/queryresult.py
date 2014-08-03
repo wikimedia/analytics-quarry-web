@@ -1,6 +1,7 @@
 import json
 import os
 import datetime
+import decimal
 
 
 class MoreAcceptingJSONEncoder(json.JSONEncoder):
@@ -11,6 +12,8 @@ class MoreAcceptingJSONEncoder(json.JSONEncoder):
             return obj.isoformat()
         elif isinstance(obj, datetime.timedelta):
             return (datetime.datetime.min + obj).time().isoformat()
+        elif isinstance(obj, decimal.Decimal):
+            return str(obj)
         else:
             return super(MoreAcceptingJSONEncoder, self).default(obj)
 

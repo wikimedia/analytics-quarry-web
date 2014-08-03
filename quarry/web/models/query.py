@@ -284,6 +284,15 @@ class QueryRun(object):
 
         return cls(result[0], result[1], result[2], result[3], result[4])
 
+    @property
+    def augmented_sql(self):
+        """Adds metadata to the queryrun SQL so labsdb admins can
+        find out who ran the query when and for what"""
+        if not hasattr(self, '_augmented_sql'):
+            self._augmented_sql = "/* Run by Quarry for User %s as qrun id %s */ %s" % \
+                (self.query_rev.query.user.username, self.id, self.query_rev.text)
+        return self._augmented_sql
+
     @classmethod
     def get_augmented_list(cls, limit=25):
         results = []

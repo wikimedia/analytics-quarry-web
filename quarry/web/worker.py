@@ -90,13 +90,13 @@ def run_query(query_run_id):
         qrun = QueryRun.get_by_id(query_run_id)
         qrun.status = QueryRun.STATUS_RUNNING
         qrun.save()
-        check_result = check_sql(qrun.query_rev.text)
+        check_result = check_sql(qrun.augmented_sql)
         if check_result is not True:
             celery_log.info("Check result for qrun:%s failed, with message: %s", qrun.id, check_result[0])
             raise pymysql.DatabaseError(0, check_result[1])
         g.conn.replica.ping(reconnect=True)
         cur = g.conn.replica.cursor()
-        cur.execute(qrun.query_rev.text)
+        cur.execute(qrun.augmented_sql)
         result = []
         result.append(make_result(cur))
         while cur.nextset():

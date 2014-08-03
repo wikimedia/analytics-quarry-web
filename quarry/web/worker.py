@@ -84,13 +84,13 @@ def kill_query(thread_id):
 @celery.task(name='worker.run_query')
 def run_query(query_run_id):
     cur = False
+    start_time = time.clock()
     try:
         celery_log.info("Starting run for qrun:%s", query_run_id)
         qrun = QueryRun.get_by_id(query_run_id)
         qrun.status = QueryRun.STATUS_RUNNING
         qrun.save()
         check_result = check_sql(qrun.query_rev.text)
-        start_time = time.clock()
         if check_result is not True:
             celery_log.info("Check result for qrun:%s failed, with message: %s", qrun.id, check_result[0])
             raise pymysql.DatabaseError(0, check_result[1])

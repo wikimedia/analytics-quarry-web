@@ -307,12 +307,14 @@ class QueryRun(object):
         FROM
             query_run JOIN query_revision ON query_rev_id = query_revision.id
             JOIN query ON query.id = query_id
+        WHERE
+            status != %s
         ORDER BY
             query_run.timestamp DESC
         LIMIT %s"""
         try:
             cur = g.conn.db.cursor()
-            cur.execute(sql, (limit, ))
+            cur.execute(sql, (QueryRun.STATUS_SUPERSEDED, limit, ))
             row = cur.fetchone()
             while row is not None:
                 q_run = QueryRun(

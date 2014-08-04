@@ -66,7 +66,6 @@ def shutdown(sender, signal, pid, exitcode):
 
 @celery.task(name='worker.kill_query')
 def kill_query(thread_id):
-    g.conn.replica.ping(reconnect=True)
     cur = g.conn.replica.cursor()
     try:
         cur.execute("KILL QUERY %s", thread_id)
@@ -94,7 +93,6 @@ def run_query(query_run_id):
         if check_result is not True:
             celery_log.info("Check result for qrun:%s failed, with message: %s", qrun.id, check_result[0])
             raise pymysql.DatabaseError(0, check_result[1])
-        g.conn.replica.ping(reconnect=True)
         cur = g.conn.replica.cursor()
         cur.execute(qrun.augmented_sql)
         result = []

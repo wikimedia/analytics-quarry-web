@@ -17,6 +17,8 @@ class Connections(object):
                 autocommit=True,
                 charset='utf8'
             )
+        else:
+            self._db.ping(reconnect=True)
         return self._db
 
     @property
@@ -40,6 +42,8 @@ class Connections(object):
                 port=self.config['REPLICA_PORT'],
                 charset='utf8'
             )
+        else:
+            self._replica.ping(reconnect=True)
         return self._replica
 
     def close_all(self):

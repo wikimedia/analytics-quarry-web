@@ -35,7 +35,7 @@ def restart_celery():
 @roles('web', 'runner')
 def update_config(config_file):
     put(config_file, '/srv/quarry/quarry/config.yaml', use_sudo=True)
-    sudo('chown quarry:www-data /srv/quarry/quarry/config.py')
+    sudo('chown quarry:www-data /srv/quarry/quarry/config.yaml')
 
 
 @roles('db')

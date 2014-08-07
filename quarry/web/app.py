@@ -177,4 +177,4 @@ def all_query_runs():
     return render_template("query/list.html", user=g.user, query_runs=query_runs)
 
 if __name__ == '__main__':
-    app.run(port=6000, host="0.0.0.0")
+    app.run(port=5000, host="0.0.0.0")

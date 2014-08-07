@@ -1,13 +1,13 @@
-from flask import g, Flask
 import pymysql
-from models.queryresult import QuerySuccessResult, QueryErrorResult, QueryKilledResult
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
 from sqlactions import check_sql
-from models.query import QueryRun
+from models.queryrun import QueryRunRepository, QueryRun
+from models.queryresult import QuerySuccessResult, QueryErrorResult, QueryKilledResult
 from celery import Celery
 from celery.signals import worker_process_init, worker_process_shutdown
 from connections import Connections
+from sqlalchemy.orm import sessionmaker
 import time
 import yaml
 import os
@@ -20,24 +20,8 @@ celery_log = get_task_logger(__name__)
 celery = Celery('quarry.web.worker')
 celery.conf.update(yaml.load(open(os.path.join(__dir__, "../default_config.yaml"))))
 celery.conf.update(yaml.load(open(os.path.join(__dir__, "../config.yaml"))))
-TaskBase = celery.Task
 
-# FIXME: Find a way to not need this?
-# Without this, g.conn isn't set in a way that models can share
-fake_app = Flask('faaaaaakeeee')
-conn = None
-
-
-class ContextTask(TaskBase):
-    abstract = True
-
-    def __call__(self, *args, **kwargs):
-        with fake_app.app_context():
-            g.conn = conn
-            return TaskBase.__call__(self, *args, **kwargs)
-
-
-celery.Task = ContextTask
+conn = query_run_repository = None
 
 
 def make_result(cur):
@@ -51,9 +35,15 @@ def make_result(cur):
 
 @worker_process_init.connect
 def init(sender, signal):
-    global conn
+    global conn, query_run_repository
+
     conn = Connections(celery.conf)
     celery_log.info("Initialized lazy loaded connections")
+
+    Session = sessionmaker(bind=conn.db_engine)
+    session = Session()
+    query_run_repository = QueryRunRepository(session)
+    celery_log.info('Initialized query run repository')
 
 
 @worker_process_shutdown.connect
@@ -66,7 +56,7 @@ def shutdown(sender, signal, pid, exitcode):
 
 @celery.task(name='worker.kill_query')
 def kill_query(thread_id):
-    cur = g.conn.replica.cursor()
+    cur = conn.replica.cursor()
     try:
         cur.execute("KILL QUERY %s", thread_id)
         celery_log.info("Query with thread:%s killed", thread_id)
@@ -82,18 +72,20 @@ def kill_query(thread_id):
 
 @celery.task(name='worker.run_query')
 def run_query(query_run_id):
+    global query_run_repository, conn
+
     cur = False
     start_time = time.clock()
     try:
         celery_log.info("Starting run for qrun:%s", query_run_id)
-        qrun = QueryRun.get_by_id(query_run_id)
+        qrun = query_run_repository.get_by_id(query_run_id)
         qrun.status = QueryRun.STATUS_RUNNING
-        qrun.save()
+        query_run_repository.save(qrun)
         check_result = check_sql(qrun.augmented_sql)
         if check_result is not True:
             celery_log.info("Check result for qrun:%s failed, with message: %s", qrun.id, check_result[0])
             raise pymysql.DatabaseError(0, check_result[1])
-        cur = g.conn.replica.cursor()
+        cur = conn.replica.cursor()
         cur.execute(qrun.augmented_sql)
         result = []
         result.append(make_result(cur))
@@ -104,23 +96,23 @@ def run_query(query_run_id):
         qrun.status = QueryRun.STATUS_COMPLETE
         celery_log.info("Completed run for qrun:%s successfully", qrun.id)
         qresult.output()
-        qrun.save()
+        query_run_repository.save(qrun)
     except pymysql.DatabaseError as e:
         total_time = time.clock() - start_time
         qresult = QueryErrorResult(qrun, total_time, celery.conf.OUTPUT_PATH_TEMPLATE, e.args[1])
         qrun.status = QueryRun.STATUS_FAILED
         qresult.output()
-        qrun.save()
+        query_run_repository.save(qrun)
         celery_log.info("Completed run for qrun:%s with failure: %s", qrun.id, e.args[1])
     except SoftTimeLimitExceeded:
         celery_log.info(
             "Time limit exceeded for qrun:%s, thread:%s attempting to kill",
-            qrun.id, g.conn.replica.thread_id()
+            qrun.id, conn.replica.thread_id()
         )
         total_time = time.clock() - start_time
-        kill_query.delay(g.conn.replica.thread_id())
+        kill_query.delay(conn.replica.thread_id())
         qrun.state = QueryRun.STATUS_KILLED
-        qrun.save()
+        query_run_repository.save(qrun)
         qresult = QueryKilledResult(qrun, total_time, celery.conf.OUTPUT_PATH_TEMPLATE)
         qresult.output()
     finally:

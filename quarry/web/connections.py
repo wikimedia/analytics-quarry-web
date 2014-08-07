@@ -1,5 +1,6 @@
 import pymysql
 import redis
+from sqlalchemy import create_engine
 
 
 class Connections(object):
@@ -7,19 +8,19 @@ class Connections(object):
         self.config = config
 
     @property
-    def db(self):
-        if not hasattr(self, '_db'):
-            self._db = pymysql.connect(
-                host=self.config['DB_HOST'],
-                db=self.config['DB_NAME'],
-                user=self.config['DB_USER'],
-                passwd=self.config['DB_PASSWORD'],
-                autocommit=True,
-                charset='utf8'
+    def db_engine(self):
+        if not hasattr(self, '_db_engine'):
+            url = "mysql+pymysql://%s:%s@%s/%s" % (
+                self.config['DB_USER'],
+                self.config['DB_PASSWORD'],
+                self.config['DB_HOST'],
+                self.config['DB_NAME'],
             )
-        else:
-            self._db.ping(reconnect=True)
-        return self._db
+
+            # By default, encoding (charset above) is 'utf-8'.
+            self._db_engine = create_engine(url)
+
+        return self._db_engine
 
     @property
     def redis(self):
@@ -48,7 +49,5 @@ class Connections(object):
 
     def close_all(self):
         # Redis doesn't need to be closed
-        if hasattr(self, '_db'):
-            self._db.close()
         if hasattr(self, '_replica'):
             self._replica.close()

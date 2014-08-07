@@ -25,10 +25,10 @@ class QueryResult(object):
         self.total_time = total_time
 
     def output(self):
-        path = self.path_template % (self.query_run.query_rev.query.user_id, self.query_run.id)
+        path = self.path_template % (self.query_run.rev.query.user_id, self.query_run.id)
         self.output_data['query_run'] = {
             'id': self.query_run.id,
-            'user': self.query_run.query_rev.query.user_id
+            'user': self.query_run.rev.query.user_id
         }
         self.output_data['time'] = self.total_time
         if not os.path.exists(os.path.dirname(path)):

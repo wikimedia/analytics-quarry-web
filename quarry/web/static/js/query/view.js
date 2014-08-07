@@ -38,8 +38,7 @@ $( function() {
 
     function checkOutput() {
         if (vars.output_url) {
-            $.get( vars.output_url ).done( function( data ) {
-                var d = JSON.parse(data);
+            $.get( vars.output_url ).done( function( d ) {
                 if (d.result === 'ok') {
                     $("#query-result-success table").remove();
                     $.each(d.data, function( i, item ) {

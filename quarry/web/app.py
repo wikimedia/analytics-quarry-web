@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, session, g, request, url_for
+from flask import Flask, render_template, redirect, session, g, request, url_for, Response
 from models.user import User
 from models.query import Query, QueryRevision, QueryRun
 import json
@@ -124,7 +124,14 @@ def query_show(query_id):
 def api_query_output(user_id, run_id):
     path = app.config['OUTPUT_PATH_TEMPLATE'] % (user_id, run_id)
     if os.path.exists(path):
-        return open(path).read()
+        return Response(
+            response=open(path).read(),
+            status=200,
+            headers={
+                'Access-Control-Allow-Origin': '*'
+            },
+            mimetype='application/json'
+        )
     else:
         return '', 404
 

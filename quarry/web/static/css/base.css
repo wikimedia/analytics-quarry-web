@@ -22,3 +22,7 @@
 .right {
     text-align: right;
 }
+
+.navbar-brand {
+    margin-top: -14px;
+}

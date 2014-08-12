@@ -1,7 +1,6 @@
 import pymysql
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
-from sqlactions import check_sql
 from models.queryrun import QueryRunRepository, QueryRun
 from models.queryresult import QuerySuccessResult, QueryErrorResult, QueryKilledResult
 from celery import Celery
@@ -81,7 +80,7 @@ def run_query(query_run_id):
         qrun = query_run_repository.get_by_id(query_run_id)
         qrun.status = QueryRun.STATUS_RUNNING
         query_run_repository.save(qrun)
-        check_result = check_sql(qrun.augmented_sql)
+        check_result = qrun.rev.is_allowed()
         if check_result is not True:
             celery_log.info("Check result for qrun:%s failed, with message: %s", qrun.id, check_result[0])
             raise pymysql.DatabaseError(0, check_result[1])

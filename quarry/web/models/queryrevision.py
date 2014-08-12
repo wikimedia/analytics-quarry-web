@@ -14,6 +14,22 @@ class QueryRevision(Base):
 
     runs = relationship('QueryRun', lazy='dynamic', backref='rev')
 
+    def is_allowed(self):
+        """Check if given SQL is ok to execute.
+        Super minimal and stupid right now, and should never
+        be considered 'authoritative'. Will probably always be
+        easily cirumventible by dedicated trolls, but should keep
+        the merely clueless out
+
+        returns tuple of (actual_reason, public_reason_string)
+        """
+        if 'information_schema' in self.text.lower():
+            # According to springle hitting this db can fuck
+            # things up for everyone, and it isn't easy to
+            # restrict access to this from mysql
+            return ("Hitting information_schema", "Unauthorized access to restricted database")
+        return True
+
 
 class QueryRevisionRepository:
     def __init__(self, session):

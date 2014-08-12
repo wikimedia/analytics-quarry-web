@@ -12,7 +12,7 @@ CREATE TABLE query(
     id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
     user_id INT UNSIGNED NOT NULL,
     title VARCHAR(1024) BINARY NOT NULL,
-    latest_rev INT UNSIGNED,
+    latest_rev_id INT UNSIGNED,
     last_touched TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     parent_id INT UNSIGNED
 );
@@ -22,6 +22,7 @@ CREATE TABLE query_revision(
     id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
     text VARCHAR(4096) BINARY NOT NULL,
     query_id INT UNSIGNED NOT NULL,
+    latest_run_id INT UNSIGNED,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX query_rev_query_id_index ON query_revision(query_id);

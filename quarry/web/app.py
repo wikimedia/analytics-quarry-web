@@ -7,6 +7,7 @@ import json
 import yaml
 import time
 import os
+from sqlalchemy import desc
 from sqlalchemy.orm import sessionmaker
 from redissession import RedisSessionInterface
 from mwoauth import ConsumerToken, Handshaker
@@ -46,6 +47,7 @@ def setup_context():
     g.query_repository = QueryRepository(session)
     g.query_revision_repository = QueryRevisionRepository(session)
     g.query_run_repository = QueryRunRepository(session)
+    g.session = session
 
     g.user = get_user(g.user_repository)
 
@@ -177,20 +179,25 @@ def api_run_query():
                 result.revoke(terminate=True)
                 last_query_run.status = QueryRun.STATUS_SUPERSEDED
                 g.query_run_repository.save(last_query_run)
+
     query_rev = QueryRevision(query_id=query.id, text=text)
-    g.query_revision_repository.save(query_rev)
-    query.latest_rev_id = query_rev.id
-    g.query_repository.save(query)
-    query_run = QueryRun()
+    query.latest_rev = query_rev
 
     # XXX (phuedx, 2014/08/08): This deviates from the pre-existing
     # QueryRevision interface, but I'm not confident that SQLAlchemy would
     # invalidate a cached result for a relationship if a property changed.
-    query_run.query_rev_id = query_rev.id
+    query_run = QueryRun()
+    query_run.rev = query_rev
     query_run.status = QueryRun.STATUS_QUEUED
-    g.query_run_repository.save(query_run)
+
+    g.session.add(query_run)
+    g.session.add(query)
+    g.session.commit()
+    query_rev.latest_run = query_run
     query_run.task_id = worker.run_query.delay(query_run.id).task_id
-    g.query_run_repository.save(query_run)
+    g.session.add(query_rev)
+    g.session.add(query_run)
+    g.session.commit()
     return json.dumps({
         'output_url': url_for('api_query_output', user_id=g.user.id, run_id=query_run.id)
     })
@@ -198,8 +205,10 @@ def api_run_query():
 
 @app.route("/query/runs/all")
 def all_query_runs():
-    query_runs = g.query_run_repository.get_latest(25)
-    return render_template("query/list.html", user=g.user, query_runs=query_runs)
+    queries = g.session.query(Query)\
+        .join(Query.latest_rev).join(QueryRevision.latest_run)\
+        .order_by(desc(QueryRun.timestamp))
+    return render_template("query/list.html", user=g.user, queries=queries)
 
 if __name__ == '__main__':
     app.run(port=5000, host="0.0.0.0")

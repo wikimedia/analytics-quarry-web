@@ -1,5 +1,5 @@
 from sqlalchemy import Column, Integer, ForeignKey, DateTime, String, desc
-from sqlalchemy.orm import joinedload
+from sqlalchemy.orm import joinedload, relationship
 from base import Base
 from queryrevision import QueryRevision  # noqa
 
@@ -29,6 +29,8 @@ class QueryRun(Base):
     status = Column(Integer)
     timestamp = Column(DateTime)
     task_id = Column(String)
+
+    rev = relationship('QueryRevision', uselist=False, primaryjoin='QueryRevision.id == QueryRun.query_rev_id')
 
     @property
     def status_message(self):
@@ -61,7 +63,6 @@ class QueryRunRepository:
         self.session.commit()
 
     def get_latest(self, limit):
-
         # Eagerly load the associated query revision, query, and user.
         return self.session.query(QueryRun) \
             .options(

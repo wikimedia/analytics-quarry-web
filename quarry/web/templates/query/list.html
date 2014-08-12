@@ -13,12 +13,12 @@
             <th>Timestamp</th>
         </tr>
         <tbody>
-        {% for query_run in query_runs %}
+        {% for query in queries %}
             <tr>
-                <td><a href="/query/{{query_run.rev.query_id}}">{{query_run.rev.query.title}}</a></td>
-                <td>{{query_run.rev.query.user.username}}</td>
-                <td>{{query_run.status_message}}</td>
-                <td>{{query_run.timestamp}}</td>
+                <td><a href="/query/{{query.id}}">{{query.title}}</a></td>
+                <td>{{query.user.username}}</td>
+                <td>{{query.latest_rev.latest_run.status_message}}</td>
+                <td>{{query.latest_rev.latest_run.timestamp}}</td>
             </tr>
         {% endfor %}
         </tbody>

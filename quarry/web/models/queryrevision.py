@@ -11,8 +11,9 @@ class QueryRevision(Base):
     text = Column(String(4096))
     query_id = Column(Integer, ForeignKey('query.id'))
     timestamp = Column(DateTime)
+    latest_run_id = Column(Integer, ForeignKey('query_run.id'))
 
-    runs = relationship('QueryRun', lazy='dynamic', backref='rev')
+    latest_run = relationship('QueryRun', primaryjoin='QueryRevision.latest_run_id == QueryRun.id', uselist=False)
 
     def is_allowed(self):
         """Check if given SQL is ok to execute.

@@ -58,7 +58,7 @@ def shutdown(sender, signal, pid, exitcode):
 def kill_query(thread_id):
     cur = conn.replica.cursor()
     try:
-        cur.execute("KILL QUERY %s", thread_id)
+        cur.execute("KILL QUERY %s", (thread_id, ))
         celery_log.info("Query with thread:%s killed", thread_id)
     except pymysql.InternalError as e:
         if e.args[0] == 1094:  # Error code for 'no such thread'

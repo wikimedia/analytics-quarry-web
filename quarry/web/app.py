@@ -1,5 +1,5 @@
 from flask import Flask, render_template, redirect, session, g, request, url_for, Response
-from models.user import UserRepository, User
+from models.user import User
 from models.query import Query
 from models.queryrevision import QueryRevision
 from models.queryrun import QueryRun
@@ -28,9 +28,9 @@ oauth_token = ConsumerToken(
 )
 
 
-def get_user(user_repository):
+def get_user():
     if 'user_id' in session:
-        user = user_repository.get_by_id(session['user_id'])
+        user = g.session.query(User).filter(User.id == session['user_id']).one()
     else:
         user = None
     return user
@@ -43,10 +43,9 @@ def setup_context():
     # Initialise repositories.
     Session = sessionmaker(bind=g.conn.db_engine)
     session = Session()
-    g.user_repository = UserRepository(session)
     g.session = session
 
-    g.user = get_user(g.user_repository)
+    g.user = get_user()
 
 
 @app.teardown_request
@@ -81,10 +80,11 @@ def oauth_callback():
     session['acces_token'] = access_token
     identity = handshaker.identify(access_token)
     wiki_uid = identity['sub']
-    user = g.user_repository.get_by_wiki_uid(wiki_uid)
+    user = g.session.query(User).filter(User.wiki_uid == wiki_uid).one()
     if user is None:
         user = User(username=identity['username'], wiki_uid=wiki_uid)
-        g.user_repository.save(user)
+        g.session.add(user)
+        g.session.commit()
     session['user_id'] = user.id
     return_to_url = session.get('return_to_url')
     del session['request_token']

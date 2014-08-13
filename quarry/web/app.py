@@ -104,7 +104,8 @@ def user_page(user_name):
     recent_queries = g.session.query(Query).filter(Query.user_id == user.id).limit(10)
     return render_template(
         "user.html",
-        user=user,
+        display_user=user,
+        user=g.user,
         stats=stats,
         recent_queries=recent_queries
     )

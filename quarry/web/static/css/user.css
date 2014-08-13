@@ -8,15 +8,15 @@
     padding-bottom: 12px;
 }
 
-#query-items-list {
+.query-items-list {
     list-style: none;
     padding-left: 0;
 }
 
-#query-items-list li {
+.query-items-list li {
     padding: 4px 0px;
 }
 
-#query-items-list li a.query-title {
+.query-items-list li a.query-title {
     font-size: 1.2em;
 }

@@ -17,14 +17,42 @@
             </div>
         </div>
     </div>
-    <div class="query-list-container">
+    <div class="row">
+        <div class="col-md-6 query-list-container">
+            <h3>Self starred Queries</h3>
+            <ul class="query-items-list">
+                {% for star in self_stars %}
+                <li class="query-item">
+                    <a class="query-title" href="/query/{{star.query.id}}">{{star.query.title}}</a>
+                </li>
+                {% else %}
+                    This user has not starred any of his queries yet.
+                {% endfor %}
+            </ul>
+        </div>
+        <div class="col-md-6 query-list-container">
+            <h3>Other starred Queries</h3>
+            <ul class="query-items-list">
+                {% for star in other_stars %}
+                <li class="query-item">
+                    <a class="query-title" href="/query/{{star.query.id}}">{{star.query.title}}</a>
+                </li>
+                {% else %}
+                    This user has not starred any other user's queries yet.
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    <div>
         <h3>Recent Queries</h3>
-        <ul id="query-items-list">
+        <ul class="query-items-list">
             {% for query in recent_queries %}
             <li class="query-item">
                 <a class="query-title" href="/query/{{query.id}}">{{query.title}}</a>
                 <small>{{query.last_touched|timesince}}</small>
             </li>
+            {% else %}
+                This user has not run any queries yet
             {% endfor %}
         </ul>
     </div>

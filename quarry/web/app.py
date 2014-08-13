@@ -4,12 +4,13 @@ from models.user import User
 from models.query import Query
 from models.queryrevision import QueryRevision
 from models.queryrun import QueryRun
+from models.star import Star
 import json
 import yaml
 import time
 import os
 from sqlalchemy import desc, func
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, joinedload
 from redissession import RedisSessionInterface
 from mwoauth import ConsumerToken, Handshaker
 from connections import Connections
@@ -99,19 +100,67 @@ def user_page(user_name):
     user_name = user_name.replace('_', ' ').lower()
     user = g.session.query(User).filter(func.lower(User.username) == user_name).one()
     stats = {
-        'query_count': g.session.query(func.count(Query.id)).filter(Query.user_id == user.id).scalar()
+        'query_count': g.session.query(func.count(Query.id)).filter(Query.user_id == user.id).scalar(),
+        'stars_count': g.session.query(func.count(Star.id)).filter(Star.user_id == user.id).scalar()
     }
     recent_queries = g.session.query(Query)\
         .filter(Query.user_id == user.id)\
         .order_by(desc(Query.last_touched))\
+        .limit(10)
+    self_stars = g.session.query(Star).join(Star.query)\
+        .options(joinedload(Star.query))\
+        .filter(Star.user_id == user.id)\
+        .filter(Query.user_id == user.id)\
+        .order_by(desc(Star.timestamp))\
+        .limit(10)
+    other_stars = g.session.query(Star).join(Star.query) \
+        .options(joinedload(Star.query))\
+        .filter(Star.user_id == user.id) \
+        .filter(Query.user_id != user.id) \
+        .order_by(desc(Star.timestamp))\
         .limit(10)
     return render_template(
         "user.html",
         display_user=user,
         user=g.user,
         stats=stats,
-        recent_queries=recent_queries
+        recent_queries=recent_queries,
+        self_stars=self_stars,
+        other_stars=other_stars
     )
+
+
+@app.route("/api/query/unstar", methods=["POST"])
+def unstar_query():
+    if g.user is None:
+        return "Unauthorized access", 403
+    query = g.session.query(Query).get(request.form['query_id'])
+    if query:
+        star = g.session.query(Star)\
+            .filter(Star.query_id == request.form['query_id'])\
+            .filter(Star.user_id == g.user.id)\
+            .one()
+        g.session.delete(star)
+        g.session.commit()
+        return ""
+    else:
+        return "Query not found", 404
+
+
+@app.route("/api/query/star", methods=["POST"])
+def star_query():
+    if g.user is None:
+        return "Unauthorized access", 403
+    query = g.session.query(Query).get(request.form['query_id'])
+    if query:
+        star = Star()
+        star.user = g.user
+        star.query = query
+        g.session.add(star)
+        g.session.commit()
+        return ""
+    else:
+        return "Query not found", 404
 
 
 @app.route("/query/new")
@@ -136,9 +185,15 @@ def logout():
 def query_show(query_id):
     query = g.session.query(Query).filter(Query.id == query_id).one()
     can_edit = g.user is not None and g.user.id == query.user_id
+    is_starred = False
+    if g.user:
+        is_starred = g.session.query(func.count(Star.id))\
+            .filter(Star.user_id == g.user.id)\
+            .filter(Star.query_id == query_id).scalar() == 1
     jsvars = {
         'query_id': query.id,
-        'can_edit': can_edit
+        'can_edit': can_edit,
+        'is_starred': is_starred
     }
 
     if query.latest_rev and query.latest_rev.latest_run:

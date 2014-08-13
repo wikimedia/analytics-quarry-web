@@ -35,3 +35,12 @@ CREATE TABLE query_run(
     task_id VARCHAR(36) BINARY
 );
 CREATE INDEX query_run_status_index ON query_run(status);
+
+CREATE TABLE star(
+    id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    user_id INT UNSIGNED NOT NULL,
+    query_id INT UNSIGNED NOT NULL,
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX star_user_id_index ON star(user_id);
+CREATE INDEX star_query_id_index ON star(query_id);

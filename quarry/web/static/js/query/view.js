@@ -20,6 +20,22 @@ $( function() {
         } );
     }
 
+    $("#un-star-query").click( function() {
+        $.post( "/api/query/unstar", {
+            query_id: vars.query_id
+        }).done(function( data ) {
+            $('#content').removeClass('starred');
+        });
+    });
+
+    $("#star-query").click( function() {
+        $.post( "/api/query/star", {
+            query_id: vars.query_id
+        }).done(function( data ) {
+            $('#content').addClass('starred');
+        });
+    });
+
     $('#run-code').click( function() {
         $.post( "/api/query/run", {
             text: editor.getValue(),

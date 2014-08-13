@@ -2,6 +2,23 @@ table#query-results-sampled {
     margin-top: 20px;
 }
 
+.starred .only-starred {
+    display: block;
+}
+
+.starred .only-non-starred {
+    display: none;
+}
+
+.only-starred {
+    display: none;
+}
+
+#title-actions-container button {
+    margin-top: 18px;
+    float: right;
+}
+
 .CodeMirror {
     font-family: Monaco, Consolas, "Ubuntu Mono", monospace;
     height: auto;

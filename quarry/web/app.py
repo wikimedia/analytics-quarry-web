@@ -1,3 +1,4 @@
+from datetime import datetime
 from flask import Flask, render_template, redirect, session, g, request, url_for, Response
 from models.user import User
 from models.query import Query
@@ -7,7 +8,7 @@ import json
 import yaml
 import time
 import os
-from sqlalchemy import desc
+from sqlalchemy import desc, func
 from sqlalchemy.orm import sessionmaker
 from redissession import RedisSessionInterface
 from mwoauth import ConsumerToken, Handshaker
@@ -90,6 +91,23 @@ def oauth_callback():
     del session['request_token']
     del session['return_to_url']
     return redirect(return_to_url)
+
+
+@app.route('/<string:user_name>')
+def user_page(user_name):
+    # Munge the user_name, and hope
+    user_name = user_name.replace('_', ' ').lower()
+    user = g.session.query(User).filter(func.lower(User.username) == user_name).one()
+    stats = {
+        'query_count': g.session.query(func.count(Query.id)).filter(Query.user_id == user.id).scalar()
+    }
+    recent_queries = g.session.query(Query).filter(Query.user_id == user.id).limit(10)
+    return render_template(
+        "user.html",
+        user=user,
+        stats=stats,
+        recent_queries=recent_queries
+    )
 
 
 @app.route("/query/new")
@@ -204,6 +222,36 @@ def all_query_runs():
         .join(Query.latest_rev).join(QueryRevision.latest_run)\
         .order_by(desc(QueryRun.timestamp))
     return render_template("query/list.html", user=g.user, queries=queries)
+
+
+@app.template_filter()
+def timesince(dt, default="just now"):
+    """
+    Returns string representing "time since" e.g.
+    3 days ago, 5 hours ago etc.
+
+    From http://flask.pocoo.org/snippets/33/
+    """
+
+    now = datetime.utcnow()
+    diff = now - dt
+
+    periods = (
+        (diff.days / 365, "year", "years"),
+        (diff.days / 30, "month", "months"),
+        (diff.days / 7, "week", "weeks"),
+        (diff.days, "day", "days"),
+        (diff.seconds / 3600, "hour", "hours"),
+        (diff.seconds / 60, "minute", "minutes"),
+        (diff.seconds, "second", "seconds"),
+    )
+
+    for period, singular, plural in periods:
+
+        if period:
+            return "%d %s ago" % (period, singular if period == 1 else plural)
+
+    return default
 
 if __name__ == '__main__':
     app.run(port=5000, host="0.0.0.0")

@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block head %}
+<link href="/static/css/user.css" rel="stylesheet">
+{% endblock %}
+{% block content %}
+<div id="content" class="container">
+    <div id="user-header" class="row">
+        <div class="col-md-8">
+            <h2>{{user.username}}</h2>
+            <a href="//meta.wikimedia.org/wiki/User:{{user.username}}">User page</a> |
+            <a href="//meta.wikimedia.org/wiki/User_talk:{{user.username}}">Talk page</a>
+        </div>
+        <div id="user-stats-container" class="col-md-4">
+            <div class="user-stat">
+                <h2>{{stats.query_count}}</h2>
+                <span>Queries</span>
+            </div>
+        </div>
+    </div>
+    <div class="query-list-container">
+        <h3>Recent Queries</h3>
+        <ul id="query-items-list">
+            {% for query in recent_queries %}
+            <li class="query-item">
+                <a class="query-title" href="/query/{{query.id}}">{{query.title}}</a>
+                <small>{{query.last_touched|timesince}}</small>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

@@ -10,14 +10,13 @@ class Connections(object):
     @property
     def db_engine(self):
         if not hasattr(self, '_db_engine'):
-            url = "mysql+pymysql://%s:%s@%s/%s" % (
+            url = "mysql+pymysql://%s:%s@%s/%s?charset=utf8" % (
                 self.config['DB_USER'],
                 self.config['DB_PASSWORD'],
                 self.config['DB_HOST'],
                 self.config['DB_NAME'],
             )
 
-            # By default, encoding (charset above) is 'utf-8'.
             self._db_engine = create_engine(url)
 
         return self._db_engine

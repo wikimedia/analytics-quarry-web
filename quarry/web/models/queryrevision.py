@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, desc
+from sqlalchemy import Column, Integer, Unicode, ForeignKey, DateTime, desc
 from sqlalchemy.orm import relationship
 from base import Base
 from query import Query  # noqa
@@ -8,7 +8,7 @@ class QueryRevision(Base):
     __tablename__ = 'query_revision'
 
     id = Column(Integer, primary_key=True)
-    text = Column(String(4096))
+    text = Column(Unicode(4096))
     query_id = Column(Integer, ForeignKey('query.id'))
     timestamp = Column(DateTime)
     latest_run_id = Column(Integer, ForeignKey('query_run.id'))

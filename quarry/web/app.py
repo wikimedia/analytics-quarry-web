@@ -101,7 +101,10 @@ def user_page(user_name):
     stats = {
         'query_count': g.session.query(func.count(Query.id)).filter(Query.user_id == user.id).scalar()
     }
-    recent_queries = g.session.query(Query).filter(Query.user_id == user.id).limit(10)
+    recent_queries = g.session.query(Query)\
+        .filter(Query.user_id == user.id)\
+        .order_by(desc(Query.last_touched))\
+        .limit(10)
     return render_template(
         "user.html",
         display_user=user,

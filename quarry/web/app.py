@@ -119,9 +119,8 @@ def query_show(query_id):
         'can_edit': can_edit
     }
 
-    # Check if there's a run?
-    query_run = query.latest_rev.latest_run
-    if query_run is not None:
+    if query.latest_rev and query.latest_rev.latest_run:
+        query_run = query.latest_rev.latest_run
         jsvars['output_url'] = url_for('api_query_output', user_id=query.user_id, run_id=query_run.id)
 
     return render_template(

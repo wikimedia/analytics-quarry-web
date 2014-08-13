@@ -1,7 +1,7 @@
 import pymysql
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
-from models.queryrun import QueryRunRepository, QueryRun
+from models.queryrun import QueryRun
 from models.queryresult import QuerySuccessResult, QueryErrorResult, QueryKilledResult
 from celery import Celery
 from celery.signals import worker_process_init, worker_process_shutdown
@@ -20,7 +20,7 @@ celery = Celery('quarry.web.worker')
 celery.conf.update(yaml.load(open(os.path.join(__dir__, "../default_config.yaml"))))
 celery.conf.update(yaml.load(open(os.path.join(__dir__, "../config.yaml"))))
 
-conn = query_run_repository = None
+conn = session = None
 
 
 def make_result(cur):
@@ -34,14 +34,13 @@ def make_result(cur):
 
 @worker_process_init.connect
 def init(sender, signal):
-    global conn, query_run_repository
+    global conn, session
 
     conn = Connections(celery.conf)
     celery_log.info("Initialized lazy loaded connections")
 
     Session = sessionmaker(bind=conn.db_engine)
     session = Session()
-    query_run_repository = QueryRunRepository(session)
     celery_log.info('Initialized query run repository')
 
 
@@ -71,15 +70,16 @@ def kill_query(thread_id):
 
 @celery.task(name='worker.run_query')
 def run_query(query_run_id):
-    global query_run_repository, conn
+    global conn
 
     cur = False
     start_time = time.clock()
     try:
         celery_log.info("Starting run for qrun:%s", query_run_id)
-        qrun = query_run_repository.get_by_id(query_run_id)
+        qrun = session.query(QueryRun).filter(QueryRun.id == query_run_id).one()
         qrun.status = QueryRun.STATUS_RUNNING
-        query_run_repository.save(qrun)
+        session.add(qrun)
+        session.commit()
         check_result = qrun.rev.is_allowed()
         if check_result is not True:
             celery_log.info("Check result for qrun:%s failed, with message: %s", qrun.id, check_result[0])
@@ -95,13 +95,15 @@ def run_query(query_run_id):
         qrun.status = QueryRun.STATUS_COMPLETE
         celery_log.info("Completed run for qrun:%s successfully", qrun.id)
         qresult.output()
-        query_run_repository.save(qrun)
+        session.add(qrun)
+        session.commit()
     except pymysql.DatabaseError as e:
         total_time = time.clock() - start_time
         qresult = QueryErrorResult(qrun, total_time, celery.conf.OUTPUT_PATH_TEMPLATE, e.args[1])
         qrun.status = QueryRun.STATUS_FAILED
         qresult.output()
-        query_run_repository.save(qrun)
+        session.add(qrun)
+        session.commit()
         celery_log.info("Completed run for qrun:%s with failure: %s", qrun.id, e.args[1])
     except SoftTimeLimitExceeded:
         celery_log.info(
@@ -111,7 +113,8 @@ def run_query(query_run_id):
         total_time = time.clock() - start_time
         kill_query.delay(conn.replica.thread_id())
         qrun.state = QueryRun.STATUS_KILLED
-        query_run_repository.save(qrun)
+        session.add(qrun)
+        session.commit()
         qresult = QueryKilledResult(qrun, total_time, celery.conf.OUTPUT_PATH_TEMPLATE)
         qresult.output()
     finally:

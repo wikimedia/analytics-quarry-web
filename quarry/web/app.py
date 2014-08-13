@@ -2,7 +2,7 @@ from flask import Flask, render_template, redirect, session, g, request, url_for
 from models.user import UserRepository, User
 from models.query import Query
 from models.queryrevision import QueryRevision
-from models.queryrun import QueryRunRepository, QueryRun
+from models.queryrun import QueryRun
 import json
 import yaml
 import time
@@ -44,7 +44,6 @@ def setup_context():
     Session = sessionmaker(bind=g.conn.db_engine)
     session = Session()
     g.user_repository = UserRepository(session)
-    g.query_run_repository = QueryRunRepository(session)
     g.session = session
 
     g.user = get_user(g.user_repository)
@@ -169,15 +168,13 @@ def api_run_query():
     text = request.form['text']
     query = g.session.query(Query).filter(Query.id == request.form['query_id']).one()
 
-    last_query_rev = query.latest_rev
-    if last_query_rev:
-        last_query_run = g.query_run_repository.get_latest_by_rev(last_query_rev)
-        if last_query_run:
-            result = worker.run_query.AsyncResult(last_query_run.task_id)
-            if not result.ready():
-                result.revoke(terminate=True)
-                last_query_run.status = QueryRun.STATUS_SUPERSEDED
-                g.query_run_repository.save(last_query_run)
+    if query.latest_rev and query.latest_rev.latest_run:
+        result = worker.run_query.AsyncResult(query.latest_rev.latest_run.task_id)
+        if not result.ready():
+            result.revoke(terminate=True)
+            query.latest_rev.latest_run.status = QueryRun.STATUS_SUPERSEDED
+            g.session.add(query.latest_rev.latest_run)
+            g.session.commit()
 
     query_rev = QueryRevision(query_id=query.id, text=text)
     query.latest_rev = query_rev

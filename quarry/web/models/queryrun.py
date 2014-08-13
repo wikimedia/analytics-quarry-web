@@ -1,5 +1,5 @@
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, String, desc
-from sqlalchemy.orm import joinedload, relationship
+from sqlalchemy import Column, Integer, ForeignKey, DateTime, String
+from sqlalchemy.orm import relationship
 from base import Base
 from queryrevision import QueryRevision  # noqa
 
@@ -44,35 +44,3 @@ class QueryRun(Base):
             self.id,
             self.rev.text
         )
-
-
-class QueryRunRepository:
-    def __init__(self, session):
-        self.session = session
-
-    def get_latest_by_rev(self, rev):
-        if rev is None:
-            return None
-
-        return self.session.query(QueryRun).filter_by(query_rev_id=rev.id).first()
-
-    def save(self, query_run):
-        self.session.add(query_run)
-
-        # Persist the query run immediately.
-        self.session.commit()
-
-    def get_latest(self, limit):
-        # Eagerly load the associated query revision, query, and user.
-        return self.session.query(QueryRun) \
-            .options(
-                joinedload('rev')
-                .joinedload('query')
-                .joinedload('user')
-            ) \
-            .filter(QueryRun.status != QueryRun.STATUS_SUPERSEDED) \
-            .order_by(desc(QueryRun.timestamp)) \
-            .limit(limit)
-
-    def get_by_id(self, id):
-        return self.session.query(QueryRun).filter_by(id=id).first()

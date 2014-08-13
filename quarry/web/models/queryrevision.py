@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Unicode, ForeignKey, DateTime, desc
+from sqlalchemy import Column, Integer, Unicode, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
 from base import Base
 from query import Query  # noqa
@@ -30,20 +30,3 @@ class QueryRevision(Base):
             # restrict access to this from mysql
             return ("Hitting information_schema", "Unauthorized access to restricted database")
         return True
-
-
-class QueryRevisionRepository:
-    def __init__(self, session):
-        self.session = session
-
-    def save(self, query_revision):
-        self.session.add(query_revision)
-
-        # Persist the query revision immediately.
-        self.session.commit()
-
-    def get_latest_by_query(self, query):
-        return self.session.query(QueryRevision) \
-            .filter_by(query_id=query.id) \
-            .order_by(desc(QueryRevision.timestamp)) \
-            .first()

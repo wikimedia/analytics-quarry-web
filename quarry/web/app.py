@@ -1,7 +1,7 @@
 from flask import Flask, render_template, redirect, session, g, request, url_for, Response
 from models.user import UserRepository, User
 from models.query import Query
-from models.queryrevision import QueryRevisionRepository, QueryRevision
+from models.queryrevision import QueryRevision
 from models.queryrun import QueryRunRepository, QueryRun
 import json
 import yaml
@@ -44,7 +44,6 @@ def setup_context():
     Session = sessionmaker(bind=g.conn.db_engine)
     session = Session()
     g.user_repository = UserRepository(session)
-    g.query_revision_repository = QueryRevisionRepository(session)
     g.query_run_repository = QueryRunRepository(session)
     g.session = session
 
@@ -122,8 +121,7 @@ def query_show(query_id):
     }
 
     # Check if there's a run?
-    latest_rev = g.query_revision_repository.get_latest_by_query(query)
-    query_run = g.query_run_repository.get_latest_by_rev(latest_rev)
+    query_run = query.latest_rev.latest_run
     if query_run is not None:
         jsvars['output_url'] = url_for('api_query_output', user_id=query.user_id, run_id=query_run.id)
 
@@ -132,7 +130,7 @@ def query_show(query_id):
         user=g.user,
         query=query,
         jsvars=jsvars,
-        latest_rev=latest_rev
+        latest_rev=query.latest_rev
     )
 
 
@@ -171,7 +169,7 @@ def api_run_query():
     text = request.form['text']
     query = g.session.query(Query).filter(Query.id == request.form['query_id']).one()
 
-    last_query_rev = g.query_revision_repository.get_latest_by_query(query)
+    last_query_rev = query.latest_rev
     if last_query_rev:
         last_query_run = g.query_run_repository.get_latest_by_rev(last_query_rev)
         if last_query_run:

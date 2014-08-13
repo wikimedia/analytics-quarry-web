@@ -22,21 +22,3 @@ class Query(Base):
     latest_rev = relationship('QueryRevision',
                               primaryjoin='Query.latest_rev_id == QueryRevision.id',
                               uselist=False)
-
-
-class QueryRepository:
-    def __init__(self, session):
-        self.session = session
-
-    def save(self, query):
-        self.session.add(query)
-
-        # Persist the new user immediately.
-        self.session.commit()
-
-    def get_latest(self, limit):
-        # Eagerly load the associated query revision, query, and user.
-        return self.session.query(Query).limit(limit)
-
-    def get_by_id(self, id):
-        return self.session.query(Query).filter_by(id=id).first()

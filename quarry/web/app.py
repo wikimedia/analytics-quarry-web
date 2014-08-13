@@ -1,6 +1,6 @@
 from flask import Flask, render_template, redirect, session, g, request, url_for, Response
 from models.user import UserRepository, User
-from models.query import QueryRepository, Query
+from models.query import Query
 from models.queryrevision import QueryRevisionRepository, QueryRevision
 from models.queryrun import QueryRunRepository, QueryRun
 import json
@@ -44,7 +44,6 @@ def setup_context():
     Session = sessionmaker(bind=g.conn.db_engine)
     session = Session()
     g.user_repository = UserRepository(session)
-    g.query_repository = QueryRepository(session)
     g.query_revision_repository = QueryRevisionRepository(session)
     g.query_run_repository = QueryRunRepository(session)
     g.session = session
@@ -102,7 +101,8 @@ def new_query():
     query = Query()
     query.user = g.user
     query.title = "%s's untitled query #%s" % (g.user.username, int(time.time()))
-    g.query_repository.save(query)
+    g.session.add(query)
+    g.session.commit()
     return redirect(url_for('query_show', query_id=query.id))
 
 
@@ -114,7 +114,7 @@ def logout():
 
 @app.route("/query/<int:query_id>")
 def query_show(query_id):
-    query = g.query_repository.get_by_id(query_id)
+    query = g.session.query(Query).filter(Query.id == query_id).one()
     can_edit = g.user is not None and g.user.id == query.user_id
     jsvars = {
         'query_id': query.id,
@@ -156,10 +156,11 @@ def api_query_output(user_id, run_id):
 def api_set_meta():
     if g.user is None:
         return "Authentication required", 401
-    query = g.query_repository.get_by_id(request.form['query_id'])
+    query = g.session.query(Query).filter(Query.id == request.form['query_id']).one()
     if 'title' in request.form:
         query.title = request.form['title']
-    g.query_repository.save(query)
+    g.session.add(query)
+    g.session.commit()
     return json.dumps({'id': query.id})
 
 
@@ -168,7 +169,7 @@ def api_run_query():
     if g.user is None:
         return "Authentication required", 401
     text = request.form['text']
-    query = g.query_repository.get_by_id(request.form['query_id'])
+    query = g.session.query(Query).filter(Query.id == request.form['query_id']).one()
 
     last_query_rev = g.query_revision_repository.get_latest_by_query(query)
     if last_query_rev:

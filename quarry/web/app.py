@@ -82,7 +82,7 @@ def oauth_callback():
     session['acces_token'] = access_token
     identity = handshaker.identify(access_token)
     wiki_uid = identity['sub']
-    user = g.session.query(User).filter(User.wiki_uid == wiki_uid).one()
+    user = g.session.query(User).filter(User.wiki_uid == wiki_uid).first()
     if user is None:
         user = User(username=identity['username'], wiki_uid=wiki_uid)
         g.session.add(user)

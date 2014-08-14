@@ -36,6 +36,16 @@ $( function() {
         });
     });
 
+    $("#toggle-publish").click( function() {
+        $.post( "/api/query/meta", {
+            query_id: vars.query_id,
+            published: vars.published ? 0 : 1
+        }).done(function( data ) {
+            $("#content").toggleClass("published");
+            vars.published = !vars.published;
+        } );
+    } );
+
     $('#run-code').click( function() {
         $.post( "/api/query/run", {
             text: editor.getValue(),

@@ -103,20 +103,19 @@ def user_page(user_name):
         'query_count': g.session.query(func.count(Query.id)).filter(Query.user_id == user.id).scalar(),
         'stars_count': g.session.query(func.count(Star.id)).filter(Star.user_id == user.id).scalar()
     }
-    recent_queries = g.session.query(Query)\
+    draft_queries = g.session.query(Query) \
+        .filter(Query.user_id == user.id) \
+        .filter_by(published=False) \
+        .order_by(desc(Query.last_touched)) \
+        .limit(10)
+    published_queries = g.session.query(Query)\
         .filter(Query.user_id == user.id)\
+        .filter_by(published=True)\
         .order_by(desc(Query.last_touched))\
         .limit(10)
-    self_stars = g.session.query(Star).join(Star.query)\
-        .options(joinedload(Star.query))\
-        .filter(Star.user_id == user.id)\
-        .filter(Query.user_id == user.id)\
-        .order_by(desc(Star.timestamp))\
-        .limit(10)
-    other_stars = g.session.query(Star).join(Star.query) \
+    stars = g.session.query(Star).join(Star.query) \
         .options(joinedload(Star.query))\
         .filter(Star.user_id == user.id) \
-        .filter(Query.user_id != user.id) \
         .order_by(desc(Star.timestamp))\
         .limit(10)
     return render_template(
@@ -124,9 +123,9 @@ def user_page(user_name):
         display_user=user,
         user=g.user,
         stats=stats,
-        recent_queries=recent_queries,
-        self_stars=self_stars,
-        other_stars=other_stars
+        draft_queries=draft_queries,
+        published_queries=published_queries,
+        stars=stars
     )
 
 
@@ -193,7 +192,8 @@ def query_show(query_id):
     jsvars = {
         'query_id': query.id,
         'can_edit': can_edit,
-        'is_starred': is_starred
+        'is_starred': is_starred,
+        'published': query.published
     }
 
     if query.latest_rev and query.latest_rev.latest_run:
@@ -232,6 +232,8 @@ def api_set_meta():
     query = g.session.query(Query).filter(Query.id == request.form['query_id']).one()
     if 'title' in request.form:
         query.title = request.form['title']
+    if 'published' in request.form:
+        query.published = request.form['published'] == '1'
     g.session.add(query)
     g.session.commit()
     return json.dumps({'id': query.id})

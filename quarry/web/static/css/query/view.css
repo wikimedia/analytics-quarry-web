@@ -2,6 +2,23 @@ table#query-results-sampled {
     margin-top: 20px;
 }
 
+.only-published {
+    display: none
+}
+
+.published .only-not-published {
+    display: none;
+}
+
+.published .only-published {
+    display: block;
+}
+
+.published span.only-published,
+.published button.only-published {
+    display: inline;
+}
+
 .starred .only-starred {
     display: block;
 }

@@ -19,40 +19,40 @@
     </div>
     <div class="row">
         <div class="col-md-6 query-list-container">
-            <h3>Self starred Queries</h3>
+            <h3>Published queries</h3>
             <ul class="query-items-list">
-                {% for star in self_stars %}
+                {% for query in published_queries %}
                 <li class="query-item">
-                    <a class="query-title" href="/query/{{star.query.id}}">{{star.query.title}}</a>
+                    <a class="query-title" href="/query/{{query.id}}">{{query.title}}</a>
                 </li>
                 {% else %}
-                    This user has not starred any of their queries yet.
+                    This user has not published any of their queries yet.
                 {% endfor %}
             </ul>
         </div>
         <div class="col-md-6 query-list-container">
-            <h3>Other starred Queries</h3>
+            <h3>Starred Queries</h3>
             <ul class="query-items-list">
-                {% for star in other_stars %}
+                {% for star in stars %}
                 <li class="query-item">
                     <a class="query-title" href="/query/{{star.query.id}}">{{star.query.title}}</a>
                 </li>
                 {% else %}
-                    This user has not starred any other user's queries yet.
+                    This user has not starred any queries yet.
                 {% endfor %}
             </ul>
         </div>
     </div>
     <div>
-        <h3>Recent Queries</h3>
+        <h3>Draft Queries</h3>
         <ul class="query-items-list">
-            {% for query in recent_queries %}
+            {% for query in draft_queries %}
             <li class="query-item">
                 <a class="query-title" href="/query/{{query.id}}">{{query.title}}</a>
                 <small>{{query.last_touched|timesince}}</small>
             </li>
             {% else %}
-                This user has not run any queries yet
+                This user has not drafted any queries
             {% endfor %}
         </ul>
     </div>

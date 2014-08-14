@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, Unicode, DateTime
+from sqlalchemy import Column, Integer, ForeignKey, Unicode, DateTime, Boolean
 from sqlalchemy.orm import relationship
 from base import Base
 from user import User  # noqa
@@ -13,6 +13,7 @@ class Query(Base):
     last_touched = Column(DateTime)
     parent_id = Column(Integer)
     latest_rev_id = Column(Integer, ForeignKey('query_revision.id'))
+    published = Column(Boolean)
 
     # Stick with "rev" as common language.
     revs = relationship('QueryRevision',

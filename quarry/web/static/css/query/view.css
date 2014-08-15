@@ -31,6 +31,11 @@ table#query-results-sampled {
     display: none;
 }
 
+#title {
+    width: 100%;
+    border: none;
+}
+
 #title-actions-container button {
     margin-top: 18px;
     float: right;

@@ -7,17 +7,14 @@ $( function() {
     });
 
     if (vars.can_edit) {
-        $('#title').editable(function(value, settings) {
+        $('#title').blur(function() {
             $.post( "/api/query/meta", {
                 query_id: vars.query_id,
-                title: value
+                title: $('#title').val()
             } ).done( function( data ) {
+                // Uh, do nothing
             } );
-            return value;
-        }, {
-            tooltip: 'Click to edit',
-            height: 'None',
-        } );
+        });
     }
 
     $("#un-star-query").click( function() {

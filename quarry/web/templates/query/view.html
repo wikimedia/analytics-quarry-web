@@ -4,7 +4,6 @@
 <link rel="stylesheet" href="/static/vendor/codemirror-4.3/lib/codemirror.css">
 <link rel="stylesheet" href="/static/vendor/codemirror-4.3/theme/monokai.css">
 <link rel="stylesheet" href="/static/css/query/view.css">
-<script src="/static/vendor/jquery.jeditable.js"> </script>
 <script src="/static/vendor/swig-1.4.1.min.js"> </script>
 <script src="/static/vendor/codemirror-4.3/lib/codemirror.js"> </script>
 <script src="/static/vendor/codemirror-4.3/mode/sql/sql.js"> </script>
@@ -15,7 +14,7 @@
 <div id="content" class="container {% if jsvars.can_edit %}edit{% else %}no-edit{% endif %} {% if jsvars.is_starred %}starred{% endif %} {% if query.published %}published {% endif %}">
     <div class="row" id="title-container">
         <div class="col-md-10">
-            <h2 id='title'>{{query.title}}</h2>
+            <h2><input type="textbox" id="title" {% if jsvars.can_edit %}placeholder="Click to add title..."{% else %}readonly{% endif %} value="{% if query.title %}{{query.title}}{% endif %}"> </input></h2>
         </div>
         <div class="col-md-2" id="title-actions-container">
             {% if user and not jsvars.can_edit %}

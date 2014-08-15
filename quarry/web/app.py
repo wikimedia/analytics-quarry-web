@@ -7,7 +7,6 @@ from models.queryrun import QueryRun
 from models.star import Star
 import json
 import yaml
-import time
 import os
 from sqlalchemy import desc, func
 from sqlalchemy.orm import sessionmaker, joinedload
@@ -168,7 +167,6 @@ def new_query():
         return redirect("/login?next=/query/new")
     query = Query()
     query.user = g.user
-    query.title = "%s's untitled query #%s" % (g.user.username, int(time.time()))
     g.session.add(query)
     g.session.commit()
     return redirect(url_for('query_show', query_id=query.id))

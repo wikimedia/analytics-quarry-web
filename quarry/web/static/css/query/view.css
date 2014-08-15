@@ -62,3 +62,9 @@ table#query-results-sampled {
 .edit .only-no-edit {
     display: none;
 }
+
+#query-description {
+    border: none;
+    width: 100%;
+    resize: none;
+}

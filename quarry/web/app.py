@@ -234,6 +234,8 @@ def api_set_meta():
         query.title = request.form['title']
     if 'published' in request.form:
         query.published = request.form['published'] == '1'
+    if 'description' in request.form:
+        query.description = request.form['description']
     g.session.add(query)
     g.session.commit()
     return json.dumps({'id': query.id})

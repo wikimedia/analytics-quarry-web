@@ -15,6 +15,7 @@ CREATE TABLE query(
     latest_rev_id INT UNSIGNED,
     last_touched TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     published SMALLINT DEFAULT 0,
+    description TEXT BINARY,
     parent_id INT UNSIGNED
 );
 CREATE INDEX query_parent_id_index ON query(parent_id);

@@ -36,6 +36,15 @@ $( function() {
         });
     });
 
+    $("#query-description").blur( function() {
+        $.post( "/api/query/meta", {
+            query_id: vars.query_id,
+            description: $("#query-description").val()
+        } ).done( function() {
+            // Uh, do nothing?
+        } );
+    } );
+
     $("#toggle-publish").click( function() {
         $.post( "/api/query/meta", {
             query_id: vars.query_id,

@@ -39,6 +39,11 @@
         {% endif %}
     </div>
     <div>
+        {% if jsvars.can_edit or query.description %}
+        <textarea id="query-description" {% if jsvars.can_edit %}placeholder="Click to add description..."{% else %}readonly{% endif %}>{% if query.description %}{{query.description}}{% endif %}</textarea>
+        {% endif %}
+    </div>
+    <div>
         <h3>SQL</h3>
         <textarea id="code">{% if latest_rev %}{{ latest_rev.text }}{%endif%}</textarea>
     </div>

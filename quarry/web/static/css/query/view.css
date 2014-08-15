@@ -41,6 +41,19 @@ table#query-results-sampled {
     float: right;
 }
 
+#sql-actions-container {
+    background-color: #f5f5f5;
+    border: 1px #ddd solid;
+    padding: 8px;
+    margin: 0;
+}
+
+#query-status {
+    margin-top: 24px;
+    padding-bottom: 4px;
+    border-bottom: 1px #ccc solid;
+}
+
 .CodeMirror {
     font-family: Monaco, Consolas, "Ubuntu Mono", monospace;
     height: auto;
@@ -50,14 +63,6 @@ table#query-results-sampled {
     overflow-y: hidden;
     overflow-x: auto;
     min-height: 144px;
-}
-
-#query-result-container {
-    overflow-x: scroll;
-}
-
-#query-result-success, #query-result-error, #query-progress, #query-result-killed {
-    display: none;
 }
 
 .no-edit .only-edit {

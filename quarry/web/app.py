@@ -5,8 +5,10 @@ from models.query import Query
 from models.queryrevision import QueryRevision
 from models.queryrun import QueryRun
 from models.star import Star
+from results import SQLiteResultReader
 import json
 import yaml
+import output
 import os
 from sqlalchemy import desc, func
 from sqlalchemy.orm import sessionmaker, joinedload
@@ -31,7 +33,9 @@ oauth_token = ConsumerToken(
 
 def get_user():
     if 'user_id' in session:
-        user = g.session.query(User).filter(User.id == session['user_id']).one()
+        if not hasattr(g, '_user'):
+            g._user = g.session.query(User).filter(User.id == session['user_id']).one()
+        return g._user
     else:
         user = None
     return user
@@ -46,8 +50,6 @@ def setup_context():
     session = Session()
     g.session = session
 
-    g.user = get_user()
-
 
 @app.teardown_request
 def kill_context(exception=None):
@@ -56,7 +58,7 @@ def kill_context(exception=None):
 
 @app.route("/")
 def index():
-    return render_template("landing.html", user=g.user)
+    return render_template("landing.html", user=get_user())
 
 
 @app.route("/login")
@@ -93,7 +95,7 @@ def oauth_callback():
     return redirect(return_to_url)
 
 
-@app.route('/<string:user_name>')
+@app.route('/<user_name>')
 def user_page(user_name):
     # Munge the user_name, and hope
     user_name = user_name.replace('_', ' ').lower()
@@ -120,7 +122,7 @@ def user_page(user_name):
     return render_template(
         "user.html",
         display_user=user,
-        user=g.user,
+        user=get_user(),
         stats=stats,
         draft_queries=draft_queries,
         published_queries=published_queries,
@@ -130,13 +132,13 @@ def user_page(user_name):
 
 @app.route("/api/query/unstar", methods=["POST"])
 def unstar_query():
-    if g.user is None:
+    if get_user() is None:
         return "Unauthorized access", 403
     query = g.session.query(Query).get(request.form['query_id'])
     if query:
         star = g.session.query(Star)\
             .filter(Star.query_id == request.form['query_id'])\
-            .filter(Star.user_id == g.user.id)\
+            .filter(Star.user_id == get_user().id)\
             .one()
         g.session.delete(star)
         g.session.commit()
@@ -147,12 +149,12 @@ def unstar_query():
 
 @app.route("/api/query/star", methods=["POST"])
 def star_query():
-    if g.user is None:
+    if get_user() is None:
         return "Unauthorized access", 403
     query = g.session.query(Query).get(request.form['query_id'])
     if query:
         star = Star()
-        star.user = g.user
+        star.user = get_user()
         star.query = query
         g.session.add(star)
         g.session.commit()
@@ -163,10 +165,10 @@ def star_query():
 
 @app.route("/query/new")
 def new_query():
-    if g.user is None:
+    if get_user() is None:
         return redirect("/login?next=/query/new")
     query = Query()
-    query.user = g.user
+    query.user = get_user()
     g.session.add(query)
     g.session.commit()
     return redirect(url_for('query_show', query_id=query.id))
@@ -181,11 +183,11 @@ def logout():
 @app.route("/query/<int:query_id>")
 def query_show(query_id):
     query = g.session.query(Query).filter(Query.id == query_id).one()
-    can_edit = g.user is not None and g.user.id == query.user_id
+    can_edit = get_user() is not None and get_user().id == query.user_id
     is_starred = False
-    if g.user:
+    if get_user():
         is_starred = g.session.query(func.count(Star.id))\
-            .filter(Star.user_id == g.user.id)\
+            .filter(Star.user_id == get_user().id)\
             .filter(Star.query_id == query_id).scalar() == 1
     jsvars = {
         'query_id': query.id,
@@ -194,38 +196,21 @@ def query_show(query_id):
         'published': query.published
     }
 
-    if query.latest_rev and query.latest_rev.latest_run:
-        query_run = query.latest_rev.latest_run
-        jsvars['output_url'] = url_for('api_query_output', user_id=query.user_id, run_id=query_run.id)
+    if query.latest_rev and query.latest_rev.latest_run_id:
+        jsvars['qrun_id'] = query.latest_rev.latest_run_id
 
     return render_template(
         "query/view.html",
-        user=g.user,
+        user=get_user(),
         query=query,
         jsvars=jsvars,
         latest_rev=query.latest_rev
     )
 
 
-@app.route('/api/query/output/<int:user_id>/<int:run_id>', methods=['GET'])
-def api_query_output(user_id, run_id):
-    path = app.config['OUTPUT_PATH_TEMPLATE'] % (user_id, run_id)
-    if os.path.exists(path):
-        return Response(
-            response=open(path).read(),
-            status=200,
-            headers={
-                'Access-Control-Allow-Origin': '*'
-            },
-            mimetype='application/json'
-        )
-    else:
-        return '', 404
-
-
 @app.route('/api/query/meta', methods=['POST'])
 def api_set_meta():
-    if g.user is None:
+    if get_user() is None:
         return "Authentication required", 401
     query = g.session.query(Query).filter(Query.id == request.form['query_id']).one()
     if 'title' in request.form:
@@ -241,7 +226,7 @@ def api_set_meta():
 
 @app.route('/api/query/run', methods=['POST'])
 def api_run_query():
-    if g.user is None:
+    if get_user() is None:
         return "Authentication required", 401
     text = request.form['text']
     query = g.session.query(Query).filter(Query.id == request.form['query_id']).one()
@@ -273,7 +258,7 @@ def api_run_query():
     g.session.add(query_run)
     g.session.commit()
     return json.dumps({
-        'output_url': url_for('api_query_output', user_id=g.user.id, run_id=query_run.id)
+        'qrun_id': query_run.id
     })
 
 
@@ -282,7 +267,24 @@ def all_query_runs():
     queries = g.session.query(Query)\
         .join(Query.latest_rev).join(QueryRevision.latest_run)\
         .order_by(desc(QueryRun.timestamp))
-    return render_template("query/list.html", user=g.user, queries=queries)
+    return render_template("query/list.html", user=get_user(), queries=queries)
+
+
+@app.route('/run/<int:qrun_id>/status')
+def run_status(qrun_id):
+    qrun = g.session.query(QueryRun).get(qrun_id)
+    return Response(json.dumps({
+        'status': qrun.status_message,
+        'extra': json.loads(qrun.extra_info or "{}")
+    }), mimetype='application/json')
+
+
+@app.route("/run/<int:qrun_id>/output/<int:resultset_id>/<string:format>")
+def output_result(qrun_id, resultset_id=0, format=json):
+    qrun = g.session.query(QueryRun).get(qrun_id)
+    reader = SQLiteResultReader(qrun, app.config['OUTPUT_PATH_TEMPLATE'])
+    response = output.get_formatted_response(format, reader, resultset_id)
+    return response
 
 
 @app.template_filter()

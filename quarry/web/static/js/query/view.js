@@ -62,64 +62,68 @@ $( function() {
             $("#query-progress").show();
             $("#query-result-error").hide();
             $("#query-result-success").hide();
-            checkOutput();
+            clearTimeout( window.lastStatusCheck );
+            checkStatus(d.qrun_id);
         } );
 
         return false;
     } );
 
-    function checkOutput() {
-        if (vars.output_url) {
-            $.get( vars.output_url ).done( function( d ) {
-                if (d.result === 'ok') {
-                    $("#query-result-success table").remove();
-                    $.each(d.data, function( i, item ) {
-                        var table = swig.render(query_success_template,
-                            { locals: item }
-                        );
-                        $("#query-result-success").append(table);
-                    } );
-                    $("#success-time").text(d.time.toFixed(4) + "s");
-                    $("#query-progress").hide();
-                    $("#query-result-error").hide();
-
-                    $("#query-result-success").show();
-                    $("#query-result-killed").hide();
-                } else if (d.result === 'error') {
-                    $("#error-time").text(d.time.toFixed(4) + "s");
-                    $("#query-error-message").text(d.error);
-                    $("#query-progress").hide();
-                    $("#query-result-error").show();
-                    $("#query-result-success").hide();
-                    $("#query-result-killed").hide();
-                } else if (d.result === 'killed' ) {
-                    $("#killed-time").text(d.time.toFixed(4) + "s");
-                    $("#query-progress").hide();
-                    $("#query-result-error").hide();
-                    $("#query-result-success").hide();
-                    $("#query-result-killed").show();
-                }
-            } ).fail( function() {
-                setTimeout( checkOutput, 5000 );
-            } );
-        }
+    function checkStatus(qrun_id) {
+        var url = '/run/' + qrun_id + '/status';
+        $.get( url ).done( function( data ) {
+            $( "#query-status" ).html( 'Query status: <strong>' + data.status + '</strong>' );
+            $('#query-result').html(
+                nunjucks.render( 'query-status.html', data )
+            );
+            if ( data.status === 'complete' ) {
+                // kick off other things!
+                populateResults( qrun_id, 0, data.extra.resultsets.length );
+            } else if ( data.status === 'queued' || data.status === 'running' ) {
+                window.lastStatusCheck = setTimeout( function() { checkStatus( qrun_id ); }, 5000 );
+            }
+        } );
     }
 
-    checkOutput();
+    function populateResults(qrun_id, resultset_id, till) {
+        var url = '/run/' + qrun_id + '/output/' + resultset_id + '/json';
+        console.log( url );
+        $.get( url ).done( function( data ) {
+            var columns = [];
+            $.each( data.headers, function( i, header ) {
+                columns.push( { 'title': header } );
+            } );
 
-    var query_success_template = "" +
-        "<table class='table table-bordered table-hover'>" +
-            "<tr>" +
-            "{% for c in headers %}" +
-                "<th>{{ c }}</th>" +
-            "{% endfor %}" +
-            "</tr>" +
-            "{% for r in rows %}" +
-            "<tr>" +
-                "{% for d in r %}" +
-                "<td>{{ d }}</td>" +
-                "{% endfor %}" +
-            "</tr>" +
-            "{% endfor %}" +
-        "</table>";
+            var tableContainer = $( nunjucks.render( 'query-resultset.html', {
+                'only_resultset': resultset_id === till - 1,
+                'resultset_number': resultset_id + 1,
+                'rowcount': data.rows.length
+            } ) );
+            var table = tableContainer.find( 'table' );
+            $( table ).dataTable({
+                'data': data.rows,
+                'columns': columns,
+                'scrollX': true,
+                'pagingType': 'simple_numbers',
+                'paging': data.rows.length > 100,
+                'pageLength': 100,
+                'deferRender': true
+            } );
+
+            $( '#query-result' ).append( tableContainer );
+
+            // Ugly hack to ensure that table rows actually show
+            // up. Otherwise they don't until you do a resize.
+            // Browser and DOM bugs are the best.
+            $( table ).DataTable().draw();
+
+            if ( resultset_id < till - 1 ) {
+                populateResults( qrun_id, resultset_id + 1, till );
+            }
+        } );
+    }
+
+    if ( vars.qrun_id ) {
+        checkStatus(vars.qrun_id);
+    }
 } );

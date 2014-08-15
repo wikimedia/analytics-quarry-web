@@ -1,0 +1,11 @@
+<div>
+    <span class='resultset-header'>
+        {% if only_resultset %}
+        Resultset
+        {% else %}
+        Resultset {{ resultset_number }}
+        {% endif %}
+        ({{rowcount}} rows)
+    </span>
+    <table class='table'></table>
+</div>

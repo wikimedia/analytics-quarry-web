@@ -2,14 +2,14 @@ import pymysql
 from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
 from models.queryrun import QueryRun
-from models.queryresult import QuerySuccessResult, QueryErrorResult, QueryKilledResult
+from results import SQLiteResultWriter
 from celery import Celery
 from celery.signals import worker_process_init, worker_process_shutdown
 from connections import Connections
 from sqlalchemy.orm import sessionmaker
-import time
 import yaml
 import os
+import json
 
 
 __dir__ = os.path.dirname(__file__)
@@ -21,15 +21,6 @@ celery.conf.update(yaml.load(open(os.path.join(__dir__, "../default_config.yaml"
 celery.conf.update(yaml.load(open(os.path.join(__dir__, "../config.yaml"))))
 
 conn = session = None
-
-
-def make_result(cur):
-    if cur.description is None:
-        return None
-    return {
-        'headers': [c[0] for c in cur.description],
-        'rows': cur.fetchall()
-    }
 
 
 @worker_process_init.connect
@@ -73,7 +64,6 @@ def run_query(query_run_id):
     global conn
 
     cur = False
-    start_time = time.clock()
     try:
         celery_log.info("Starting run for qrun:%s", query_run_id)
         qrun = session.query(QueryRun).filter(QueryRun.id == query_run_id).one()
@@ -86,22 +76,31 @@ def run_query(query_run_id):
             raise pymysql.DatabaseError(0, check_result[1])
         cur = conn.replica.cursor()
         cur.execute(qrun.augmented_sql)
-        result = []
-        result.append(make_result(cur))
+        output = SQLiteResultWriter(qrun, celery.conf.OUTPUT_PATH_TEMPLATE)
+        if cur.description:
+            output.start_resultset([c[0] for c in cur.description], cur.rowcount)
+            rows = cur.fetchmany(10)
+            while rows:
+                output.add_rows(rows)
+                rows = cur.fetchmany(10)
+            output.end_resultset()
         while cur.nextset():
-            result.append(make_result(cur))
-        total_time = time.clock() - start_time
-        qresult = QuerySuccessResult(qrun, total_time, result, celery.conf.OUTPUT_PATH_TEMPLATE)
+            if cur.description:
+                output.start_resultset([c[0] for c in cur.description], cur.rowcount)
+                rows = cur.fetchmany(10)
+                while rows:
+                    output.add_rows(rows)
+                    rows = cur.fetchmany(10)
+                output.end_resultset()
+        output.close()
         qrun.status = QueryRun.STATUS_COMPLETE
+        qrun.extra_info = json.dumps({'resultsets': output.get_resultsets()})
         celery_log.info("Completed run for qrun:%s successfully", qrun.id)
-        qresult.output()
         session.add(qrun)
         session.commit()
     except pymysql.DatabaseError as e:
-        total_time = time.clock() - start_time
-        qresult = QueryErrorResult(qrun, total_time, celery.conf.OUTPUT_PATH_TEMPLATE, e.args[1])
         qrun.status = QueryRun.STATUS_FAILED
-        qresult.output()
+        qrun.extra_info = json.dumps({'error': e.args[1]})
         session.add(qrun)
         session.commit()
         celery_log.info("Completed run for qrun:%s with failure: %s", qrun.id, e.args[1])
@@ -110,13 +109,10 @@ def run_query(query_run_id):
             "Time limit exceeded for qrun:%s, thread:%s attempting to kill",
             qrun.id, conn.replica.thread_id()
         )
-        total_time = time.clock() - start_time
         kill_query.delay(conn.replica.thread_id())
         qrun.state = QueryRun.STATUS_KILLED
         session.add(qrun)
         session.commit()
-        qresult = QueryKilledResult(qrun, total_time, celery.conf.OUTPUT_PATH_TEMPLATE)
-        qresult.output()
     finally:
         if cur is not False:
             # It is possible the cursor was never created,

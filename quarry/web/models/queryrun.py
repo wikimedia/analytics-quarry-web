@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, String
+from sqlalchemy import Column, Integer, ForeignKey, DateTime, String, UnicodeText
 from sqlalchemy.orm import relationship
 from base import Base
 from queryrevision import QueryRevision  # noqa
@@ -29,6 +29,7 @@ class QueryRun(Base):
     status = Column(Integer)
     timestamp = Column(DateTime)
     task_id = Column(String)
+    extra_info = Column(UnicodeText)
 
     rev = relationship('QueryRevision', uselist=False, primaryjoin='QueryRevision.id == QueryRun.query_rev_id')
 

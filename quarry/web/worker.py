@@ -110,7 +110,7 @@ def run_query(query_run_id):
             qrun.id, conn.replica.thread_id()
         )
         kill_query.delay(conn.replica.thread_id())
-        qrun.state = QueryRun.STATUS_KILLED
+        qrun.status = QueryRun.STATUS_KILLED
         session.add(qrun)
         session.commit()
     finally:

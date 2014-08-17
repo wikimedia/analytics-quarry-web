@@ -1,3 +1,4 @@
+import json
 from sqlalchemy import Column, Integer, ForeignKey, DateTime, String, UnicodeText
 from sqlalchemy.orm import relationship
 from base import Base
@@ -40,8 +41,11 @@ class QueryRun(Base):
     # Stick with "augmented" as common language.
     @property
     def augmented_sql(self):
-        return "/* Run by Quarry for User %s as qrun id %s */ %s" % (
-            self.rev.query.user.username,
-            self.id,
+        meta = {
+            'qrun': self.id,
+            'user': self.rev.query.user.username
+        }
+        return "/*%s*/ %s" % (
+            json.dumps(meta),
             self.rev.text
         )

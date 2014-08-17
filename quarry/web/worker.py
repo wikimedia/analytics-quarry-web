@@ -1,5 +1,4 @@
 import pymysql
-from celery.exceptions import SoftTimeLimitExceeded
 from celery.utils.log import get_task_logger
 from models.queryrun import QueryRun
 from results import SQLiteResultWriter
@@ -38,25 +37,8 @@ def init(sender, signal):
 @worker_process_shutdown.connect
 def shutdown(sender, signal, pid, exitcode):
     global conn
-    kill_query.delay(conn.replica.thread_id())
     conn.close_all()
     celery_log.info("Closed all connection")
-
-
-@celery.task(name='worker.kill_query')
-def kill_query(thread_id):
-    cur = conn.replica.cursor()
-    try:
-        cur.execute("KILL QUERY %s", (thread_id, ))
-        celery_log.info("Query with thread:%s killed", thread_id)
-    except pymysql.InternalError as e:
-        if e.args[0] == 1094:  # Error code for 'no such thread'
-            celery_log.info("Query with thread:%s died before it could be killed", thread_id)
-        else:
-            celery_log.exception("Error killing thread:%s", thread_id)
-            raise
-    finally:
-        cur.close()
 
 
 @celery.task(name='worker.run_query')
@@ -98,21 +80,24 @@ def run_query(query_run_id):
         celery_log.info("Completed run for qrun:%s successfully", qrun.id)
         session.add(qrun)
         session.commit()
+    except pymysql.InternalError as e:
+        if e[0] == 1317:  # Query interrupted
+            celery_log.info(
+                "Time limit exceeded for qrun:%s, thread:%s attempting to kill",
+                qrun.id, conn.replica.thread_id()
+            )
+            print 'got killed'
+            qrun.status = QueryRun.STATUS_KILLED
+            session.add(qrun)
+            session.commit()
+        else:
+            raise
     except pymysql.DatabaseError as e:
         qrun.status = QueryRun.STATUS_FAILED
         qrun.extra_info = json.dumps({'error': e.args[1]})
         session.add(qrun)
         session.commit()
         celery_log.info("Completed run for qrun:%s with failure: %s", qrun.id, e.args[1])
-    except SoftTimeLimitExceeded:
-        celery_log.info(
-            "Time limit exceeded for qrun:%s, thread:%s attempting to kill",
-            qrun.id, conn.replica.thread_id()
-        )
-        kill_query.delay(conn.replica.thread_id())
-        qrun.status = QueryRun.STATUS_KILLED
-        session.add(qrun)
-        session.commit()
     finally:
         if cur is not False:
             # It is possible the cursor was never created,

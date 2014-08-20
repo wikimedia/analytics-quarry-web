@@ -2,6 +2,8 @@ import json
 import os
 import sqlite3
 import codecs
+from datetime import datetime
+from decimal import Decimal
 
 INITIAL_SQL = """
 CREATE TABLE resultsets (id, headers, rowcount)
@@ -39,8 +41,22 @@ class SQLiteResultWriter(object):
 
     def add_rows(self, rows):
         table_name = self._get_current_resultset_table()
+        sanitized_rows = []
+        for row in rows:
+            sanitized_row = []
+            for c in row:
+                if isinstance(c, datetime):
+                    sanitized_row.append(c.isoformat())
+                elif isinstance(c, str):
+                    # Hack!
+                    sanitized_row.append(c.decode('utf-8', errors='ignore'))
+                elif isinstance(c, Decimal):
+                    sanitized_row.append(float(c))
+                else:
+                    sanitized_row.append(c)
+            sanitized_rows.append(sanitized_row)
         sql = u"INSERT INTO %s VALUES (NULL, %s)" % (table_name, (u"?," * self.column_count)[:-1])
-        self.db.executemany(sql, rows)
+        self.db.executemany(sql, sanitized_rows)
         self.db.commit()
 
     def end_resultset(self):

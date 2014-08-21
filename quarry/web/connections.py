@@ -17,9 +17,9 @@ class Connections(object):
                 self.config['DB_NAME'],
             )
 
-            # Recycle connections after an hour, since mysql does not
+            # Recycle connections after 10 mins, since mysql does not
             # like it otherwise
-            self._db_engine = create_engine(url, pool_recycle=3600)
+            self._db_engine = create_engine(url, pool_recycle=600)
 
         return self._db_engine
 

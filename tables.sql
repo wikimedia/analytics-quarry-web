@@ -8,6 +8,15 @@ CREATE TABLE user(
 CREATE UNIQUE INDEX user_username_index ON user(username);
 CREATE UNIQUE INDEX user_wiki_uid ON user(wiki_uid);
 
+CREATE TABLE user_group(
+    id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
+    user_id INT UNSIGNED NOT NULL,
+    group_name VARCHAR(255) BINARY NOT NULL
+);
+CREATE INDEX user_group_user_group_index ON user_group(user_id, group_name);
+CREATE INDEX user_group_user_id_index ON user_group(user_id);
+CREATE INDEX user_group_group_name_index ON user_group(group_name);
+
 CREATE TABLE query(
     id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
     user_id INT UNSIGNED NOT NULL,

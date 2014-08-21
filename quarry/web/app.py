@@ -1,6 +1,6 @@
 from datetime import datetime
 from flask import Flask, render_template, redirect, session, g, request, url_for, Response
-from models.user import User
+from models.user import User, UserGroup
 from models.query import Query
 from models.queryrevision import QueryRevision
 from models.queryrun import QueryRun
@@ -71,6 +71,19 @@ def login():
     session['request_token'] = request_token
     session['return_to_url'] = request.args.get('next', '/')
     return redirect(redirect_url)
+
+
+@app.route("/sudo/<int:user_id>")
+def sudo(user_id):
+    user = get_user()
+    if user is None:
+        return 'Authorization required', 403
+    if g.session.query(UserGroup).filter(UserGroup.user_id == user.id)\
+            .filter(UserGroup.group_name == 'sudo').first() is not None:
+        session['user_id'] = user_id
+        return redirect('/')
+    else:
+        return 'You do not have the sudo right', 403
 
 
 @app.route("/oauth-callback")

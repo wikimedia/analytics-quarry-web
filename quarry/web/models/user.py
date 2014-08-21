@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Unicode
+from sqlalchemy import Column, Integer, Unicode, ForeignKey
 from sqlalchemy.orm import relationship
 from base import Base
 
@@ -10,3 +10,13 @@ class User(Base):
     username = Column(Unicode(255))
     wiki_uid = Column(Integer)
     queries = relationship('Query', backref='user')
+
+    groups = relationship('UserGroup', backref='user')
+
+
+class UserGroup(Base):
+    __tablename__ = 'user_group'
+
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('user.id'))
+    group_name = Column(Unicode(255))

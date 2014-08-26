@@ -318,10 +318,9 @@ def output_result(qrun_id, resultset_id=0, format='json'):
             query_name = qrun.rev.query.title
         else:
             query_name = 'untitled'
-        filename = "quarry-%s-%s-%s-%s.%s" % (
+        filename = "quarry-%s-%s-run%s.%s" % (
             qrun.rev.query.id,
             slugify(query_name),
-            qrun.rev.id,
             qrun.id,
             format
         )

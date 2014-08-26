@@ -4,6 +4,7 @@ MarkupSafe==0.23
 PyJWT==0.2.1
 PyMySQL==0.6.2
 PyYAML==3.11
+SQLAlchemy==0.9.7
 Werkzeug==0.9.6
 amqp==1.4.5
 anyjson==0.3.3
@@ -19,5 +20,5 @@ redis==2.10.1
 requests==2.3.0
 requests-oauthlib==0.4.1
 six==1.7.3
+unicodecsv==0.9.4
 wsgiref==0.1.2
-SQLAlchemy==0.9.7

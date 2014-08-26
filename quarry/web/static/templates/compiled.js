@@ -3,20 +3,32 @@ var lineno = null;
 var colno = null;
 var output = "";
 try {
-output += "<div>\n    <span class='resultset-header'>\n        ";
+output += "<div>\n    <div class=\"row resultset-header\">\n        <div class='resultset-header col-md-8'>\n            ";
 if(runtime.contextOrFrameLookup(context, frame, "only_resultset")) {
-output += "\n        Resultset\n        ";
+output += "\n            Resultset\n            ";
 ;
 }
 else {
-output += "\n        Resultset ";
+output += "\n            Resultset ";
 output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_number"), env.autoesc);
-output += "\n        ";
+output += "\n            ";
 ;
 }
-output += "\n        (";
+output += "\n            (";
 output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "rowcount"), env.autoesc);
-output += " rows)\n    </span>\n    <table class='table'></table>\n</div>\n";
+output += " rows)\n        </div>\n        <div class='col-md-4'>\n            <div class=\"btn-group pull-right\">\n                <button type=\"button\" class=\"btn btn-info btn-xs dropdown-toggle\" data-toggle=\"dropdown\">\n                    Download data <span class=\"caret\"></span>\n                </button>\n                <ul class=\"dropdown-menu\" role=\"menu\">\n                    <li><a href=\"/run/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.autoesc);
+output += "/output/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.autoesc);
+output += "/tsv?download=true\">TSV</a></li>\n                    <li><a href=\"/run/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.autoesc);
+output += "/output/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.autoesc);
+output += "/json?download=true\">JSON</a></li>\n                    <li><a href=\"/run/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.autoesc);
+output += "/output/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.autoesc);
+output += "/csv?download=true\">CSV</a></li>\n                </ul>\n            </div>\n        </div>\n    </div>\n    <table class='table'></table>\n</div>\n";
 cb(null, output);
 ;
 } catch (e) {

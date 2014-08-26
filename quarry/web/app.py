@@ -6,6 +6,9 @@ from models.queryrevision import QueryRevision
 from models.queryrun import QueryRun
 from models.star import Star
 from results import SQLiteResultReader
+# This just provides the translit/long codec, unused otherwise
+import translitcodec  # NOQA
+import re
 import json
 import yaml
 import output
@@ -29,6 +32,18 @@ oauth_token = ConsumerToken(
     app.config['OAUTH_CONSUMER_TOKEN'],
     app.config['OAUTH_SECRET_TOKEN']
 )
+
+_punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
+
+
+def slugify(text, delim=u'-'):
+    """Generates an ASCII-only slug."""
+    result = []
+    for word in _punct_re.split(text.lower()):
+        word = word.encode('translit/long')
+        if word:
+            result.append(word)
+    return unicode(delim.join(result))
 
 
 def get_user():
@@ -293,10 +308,24 @@ def run_status(qrun_id):
 
 
 @app.route("/run/<int:qrun_id>/output/<int:resultset_id>/<string:format>")
-def output_result(qrun_id, resultset_id=0, format=json):
+def output_result(qrun_id, resultset_id=0, format='json'):
     qrun = g.session.query(QueryRun).get(qrun_id)
     reader = SQLiteResultReader(qrun, app.config['OUTPUT_PATH_TEMPLATE'])
     response = output.get_formatted_response(format, reader, resultset_id)
+    if request.args.get('download', 'false') == 'true':
+        # Download this!
+        if qrun.rev.query.title:
+            query_name = qrun.rev.query.title
+        else:
+            query_name = 'untitled'
+        filename = "quarry-%s-%s-%s-%s.%s" % (
+            qrun.rev.query.id,
+            slugify(query_name),
+            qrun.rev.id,
+            qrun.id,
+            format
+        )
+        response.headers['Content-Disposition'] = 'attachment; filename="%s"' % filename
     return response
 
 

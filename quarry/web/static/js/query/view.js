@@ -97,7 +97,9 @@ $( function() {
             var tableContainer = $( nunjucks.render( 'query-resultset.html', {
                 'only_resultset': resultset_id === till - 1,
                 'resultset_number': resultset_id + 1,
-                'rowcount': data.rows.length
+                'rowcount': data.rows.length,
+                'resultset_id': resultset_id,
+                'run_id': qrun_id
             } ) );
             var table = tableContainer.find( 'table' );
             $( table ).dataTable({

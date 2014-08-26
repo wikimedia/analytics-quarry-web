@@ -78,3 +78,7 @@ table#query-results-sampled {
     width: 100%;
     resize: none;
 }
+
+.resultset-header {
+    margin-bottom: 12px;
+}

@@ -14,7 +14,7 @@ import yaml
 import output
 import os
 from sqlalchemy import desc, func
-from sqlalchemy.orm import sessionmaker, joinedload
+from sqlalchemy.orm import joinedload
 from redissession import RedisSessionInterface
 from mwoauth import ConsumerToken, Handshaker
 from connections import Connections
@@ -49,7 +49,7 @@ def slugify(text, delim=u'-'):
 def get_user():
     if 'user_id' in session:
         if not hasattr(g, '_user'):
-            g._user = g.session.query(User).filter(User.id == session['user_id']).one()
+            g._user = g.conn.session.query(User).filter(User.id == session['user_id']).one()
         return g._user
     else:
         user = None
@@ -59,11 +59,6 @@ def get_user():
 @app.before_request
 def setup_context():
     g.conn = Connections(app.config)
-
-    # Initialise repositories.
-    Session = sessionmaker(bind=g.conn.db_engine)
-    session = Session()
-    g.session = session
 
 
 @app.teardown_request
@@ -88,14 +83,15 @@ def login():
     return redirect(redirect_url)
 
 
-@app.route("/sudo/<int:user_id>")
-def sudo(user_id):
+@app.route("/sudo/<string:username>")
+def sudo(username):
     user = get_user()
     if user is None:
         return 'Authorization required', 403
-    if g.session.query(UserGroup).filter(UserGroup.user_id == user.id)\
+    if g.conn.session.query(UserGroup).filter(UserGroup.user_id == user.id)\
             .filter(UserGroup.group_name == 'sudo').first() is not None:
-        session['user_id'] = user_id
+        new_user = g.conn.session.query(User).filter(User.username == username).first()
+        session['user_id'] = new_user.id
         return redirect('/')
     else:
         return 'You do not have the sudo right', 403
@@ -111,11 +107,11 @@ def oauth_callback():
     session['acces_token'] = access_token
     identity = handshaker.identify(access_token)
     wiki_uid = identity['sub']
-    user = g.session.query(User).filter(User.wiki_uid == wiki_uid).first()
+    user = g.conn.session.query(User).filter(User.wiki_uid == wiki_uid).first()
     if user is None:
         user = User(username=identity['username'], wiki_uid=wiki_uid)
-        g.session.add(user)
-        g.session.commit()
+        g.conn.session.add(user)
+        g.conn.session.commit()
     session['user_id'] = user.id
     return_to_url = session.get('return_to_url')
     del session['request_token']
@@ -127,22 +123,22 @@ def oauth_callback():
 def user_page(user_name):
     # Munge the user_name, and hope
     user_name = user_name.replace('_', ' ').lower()
-    user = g.session.query(User).filter(func.lower(User.username) == user_name).one()
+    user = g.conn.session.query(User).filter(func.lower(User.username) == user_name).one()
     stats = {
-        'query_count': g.session.query(func.count(Query.id)).filter(Query.user_id == user.id).scalar(),
-        'stars_count': g.session.query(func.count(Star.id)).filter(Star.user_id == user.id).scalar()
+        'query_count': g.conn.session.query(func.count(Query.id)).filter(Query.user_id == user.id).scalar(),
+        'stars_count': g.conn.session.query(func.count(Star.id)).filter(Star.user_id == user.id).scalar()
     }
-    draft_queries = g.session.query(Query) \
+    draft_queries = g.conn.session.query(Query) \
         .filter(Query.user_id == user.id) \
         .filter_by(published=False) \
         .order_by(desc(Query.last_touched)) \
         .limit(10)
-    published_queries = g.session.query(Query)\
+    published_queries = g.conn.session.query(Query)\
         .filter(Query.user_id == user.id)\
         .filter_by(published=True)\
         .order_by(desc(Query.last_touched))\
         .limit(10)
-    stars = g.session.query(Star).join(Star.query) \
+    stars = g.conn.session.query(Star).join(Star.query) \
         .options(joinedload(Star.query))\
         .filter(Star.user_id == user.id) \
         .order_by(desc(Star.timestamp))\
@@ -162,14 +158,14 @@ def user_page(user_name):
 def unstar_query():
     if get_user() is None:
         return "Unauthorized access", 403
-    query = g.session.query(Query).get(request.form['query_id'])
+    query = g.conn.session.query(Query).get(request.form['query_id'])
     if query:
-        star = g.session.query(Star)\
+        star = g.conn.session.query(Star)\
             .filter(Star.query_id == request.form['query_id'])\
             .filter(Star.user_id == get_user().id)\
             .one()
-        g.session.delete(star)
-        g.session.commit()
+        g.conn.session.delete(star)
+        g.conn.session.commit()
         return ""
     else:
         return "Query not found", 404
@@ -179,13 +175,13 @@ def unstar_query():
 def star_query():
     if get_user() is None:
         return "Unauthorized access", 403
-    query = g.session.query(Query).get(request.form['query_id'])
+    query = g.conn.session.query(Query).get(request.form['query_id'])
     if query:
         star = Star()
         star.user = get_user()
         star.query = query
-        g.session.add(star)
-        g.session.commit()
+        g.conn.session.add(star)
+        g.conn.session.commit()
         return ""
     else:
         return "Query not found", 404
@@ -197,8 +193,8 @@ def new_query():
         return redirect("/login?next=/query/new")
     query = Query()
     query.user = get_user()
-    g.session.add(query)
-    g.session.commit()
+    g.conn.session.add(query)
+    g.conn.session.commit()
     return redirect(url_for('query_show', query_id=query.id))
 
 
@@ -210,11 +206,11 @@ def logout():
 
 @app.route("/query/<int:query_id>")
 def query_show(query_id):
-    query = g.session.query(Query).filter(Query.id == query_id).one()
+    query = g.conn.session.query(Query).filter(Query.id == query_id).one()
     can_edit = get_user() is not None and get_user().id == query.user_id
     is_starred = False
     if get_user():
-        is_starred = g.session.query(func.count(Star.id))\
+        is_starred = g.conn.session.query(func.count(Star.id))\
             .filter(Star.user_id == get_user().id)\
             .filter(Star.query_id == query_id).scalar() == 1
     jsvars = {
@@ -240,15 +236,15 @@ def query_show(query_id):
 def api_set_meta():
     if get_user() is None:
         return "Authentication required", 401
-    query = g.session.query(Query).filter(Query.id == request.form['query_id']).one()
+    query = g.conn.session.query(Query).filter(Query.id == request.form['query_id']).one()
     if 'title' in request.form:
         query.title = request.form['title']
     if 'published' in request.form:
         query.published = request.form['published'] == '1'
     if 'description' in request.form:
         query.description = request.form['description']
-    g.session.add(query)
-    g.session.commit()
+    g.conn.session.add(query)
+    g.conn.session.commit()
     return json.dumps({'id': query.id})
 
 
@@ -257,15 +253,15 @@ def api_run_query():
     if get_user() is None:
         return "Authentication required", 401
     text = request.form['text']
-    query = g.session.query(Query).filter(Query.id == request.form['query_id']).one()
+    query = g.conn.session.query(Query).filter(Query.id == request.form['query_id']).one()
 
     if query.latest_rev and query.latest_rev.latest_run:
         result = worker.run_query.AsyncResult(query.latest_rev.latest_run.task_id)
         if not result.ready():
             result.revoke(terminate=True)
             query.latest_rev.latest_run.status = QueryRun.STATUS_SUPERSEDED
-            g.session.add(query.latest_rev.latest_run)
-            g.session.commit()
+            g.conn.session.add(query.latest_rev.latest_run)
+            g.conn.session.commit()
 
     query_rev = QueryRevision(query_id=query.id, text=text)
     query.latest_rev = query_rev
@@ -277,14 +273,14 @@ def api_run_query():
     query_run.rev = query_rev
     query_run.status = QueryRun.STATUS_QUEUED
 
-    g.session.add(query_run)
-    g.session.add(query)
-    g.session.commit()
+    g.conn.session.add(query_run)
+    g.conn.session.add(query)
+    g.conn.session.commit()
     query_rev.latest_run = query_run
     query_run.task_id = worker.run_query.delay(query_run.id).task_id
-    g.session.add(query_rev)
-    g.session.add(query_run)
-    g.session.commit()
+    g.conn.session.add(query_rev)
+    g.conn.session.add(query_run)
+    g.conn.session.commit()
     return json.dumps({
         'qrun_id': query_run.id
     })
@@ -292,7 +288,7 @@ def api_run_query():
 
 @app.route("/query/runs/all")
 def all_query_runs():
-    queries = g.session.query(Query)\
+    queries = g.conn.session.query(Query)\
         .join(Query.latest_rev).join(QueryRevision.latest_run)\
         .order_by(desc(QueryRun.timestamp))
     return render_template("query/list.html", user=get_user(), queries=queries)
@@ -300,7 +296,7 @@ def all_query_runs():
 
 @app.route('/run/<int:qrun_id>/status')
 def run_status(qrun_id):
-    qrun = g.session.query(QueryRun).get(qrun_id)
+    qrun = g.conn.session.query(QueryRun).get(qrun_id)
     return Response(json.dumps({
         'status': qrun.status_message,
         'extra': json.loads(qrun.extra_info or "{}")
@@ -309,7 +305,7 @@ def run_status(qrun_id):
 
 @app.route("/run/<int:qrun_id>/output/<int:resultset_id>/<string:format>")
 def output_result(qrun_id, resultset_id=0, format='json'):
-    qrun = g.session.query(QueryRun).get(qrun_id)
+    qrun = g.conn.session.query(QueryRun).get(qrun_id)
     reader = SQLiteResultReader(qrun, app.config['OUTPUT_PATH_TEMPLATE'])
     response = output.get_formatted_response(format, reader, resultset_id)
     if request.args.get('download', 'false') == 'true':

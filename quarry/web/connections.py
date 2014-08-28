@@ -1,6 +1,7 @@
 import pymysql
 import redis
 from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
 
 class Connections(object):
@@ -22,6 +23,13 @@ class Connections(object):
             self._db_engine = create_engine(url, pool_recycle=600)
 
         return self._db_engine
+
+    @property
+    def session(self):
+        if not hasattr(self, '_session'):
+            Session = sessionmaker(bind=self.db_engine)
+            self._session = Session()
+        return self._session
 
     @property
     def redis(self):
@@ -52,3 +60,7 @@ class Connections(object):
         # Redis doesn't need to be closed
         if hasattr(self, '_replica'):
             self._replica.close()
+        if hasattr(self, '_session'):
+            self._session.close()
+        if hasattr(self, '_db_engine'):
+            self._db_engine.dispose()

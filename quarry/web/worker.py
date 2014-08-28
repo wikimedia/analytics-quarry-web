@@ -5,7 +5,6 @@ from results import SQLiteResultWriter
 from celery import Celery
 from celery.signals import worker_process_init, worker_process_shutdown
 from connections import Connections
-from sqlalchemy.orm import sessionmaker
 import yaml
 import os
 import json
@@ -19,19 +18,15 @@ celery = Celery('quarry.web.worker')
 celery.conf.update(yaml.load(open(os.path.join(__dir__, "../default_config.yaml"))))
 celery.conf.update(yaml.load(open(os.path.join(__dir__, "../config.yaml"))))
 
-conn = session = None
+conn = None
 
 
 @worker_process_init.connect
 def init(sender, signal):
-    global conn, session
+    global conn
 
     conn = Connections(celery.conf)
     celery_log.info("Initialized lazy loaded connections")
-
-    Session = sessionmaker(bind=conn.db_engine)
-    session = Session()
-    celery_log.info('Initialized query run repository')
 
 
 @worker_process_shutdown.connect
@@ -48,10 +43,10 @@ def run_query(query_run_id):
     cur = False
     try:
         celery_log.info("Starting run for qrun:%s", query_run_id)
-        qrun = session.query(QueryRun).filter(QueryRun.id == query_run_id).one()
+        qrun = conn.session.query(QueryRun).filter(QueryRun.id == query_run_id).one()
         qrun.status = QueryRun.STATUS_RUNNING
-        session.add(qrun)
-        session.commit()
+        conn.session.add(qrun)
+        conn.session.commit()
         check_result = qrun.rev.is_allowed()
         if check_result is not True:
             celery_log.info("Check result for qrun:%s failed, with message: %s", qrun.id, check_result[0])
@@ -78,8 +73,8 @@ def run_query(query_run_id):
         qrun.status = QueryRun.STATUS_COMPLETE
         qrun.extra_info = json.dumps({'resultsets': output.get_resultsets()})
         celery_log.info("Completed run for qrun:%s successfully", qrun.id)
-        session.add(qrun)
-        session.commit()
+        conn.session.add(qrun)
+        conn.session.commit()
     except pymysql.InternalError as e:
         if e[0] == 1317:  # Query interrupted
             celery_log.info(
@@ -88,15 +83,15 @@ def run_query(query_run_id):
             )
             print 'got killed'
             qrun.status = QueryRun.STATUS_KILLED
-            session.add(qrun)
-            session.commit()
+            conn.session.add(qrun)
+            conn.session.commit()
         else:
             raise
     except pymysql.DatabaseError as e:
         qrun.status = QueryRun.STATUS_FAILED
         qrun.extra_info = json.dumps({'error': e.args[1]})
-        session.add(qrun)
-        session.commit()
+        conn.session.add(qrun)
+        conn.session.commit()
         celery_log.info("Completed run for qrun:%s with failure: %s", qrun.id, e.args[1])
     finally:
         if cur is not False:

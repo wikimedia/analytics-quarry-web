@@ -64,3 +64,8 @@ class Connections(object):
             self._session.close()
         if hasattr(self, '_db_engine'):
             self._db_engine.dispose()
+
+    def close_session(self):
+        if hasattr(self, '_session'):
+            self._session.close()
+            del self._session

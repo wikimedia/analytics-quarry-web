@@ -98,3 +98,4 @@ def run_query(query_run_id):
             # It is possible the cursor was never created,
             # so check before we try to close it
             cur.close()
+        conn.close_session()

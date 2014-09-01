@@ -85,17 +85,21 @@ def run_query(query_run_id):
             qrun.status = QueryRun.STATUS_KILLED
             conn.session.add(qrun)
             conn.session.commit()
-        else:
-            raise
+        elif e[0] == 1054:  # Unknwon column in Select, for some reason this is an InternalError
+            write_error(qrun, e[1])
     except pymysql.DatabaseError as e:
-        qrun.status = QueryRun.STATUS_FAILED
-        qrun.extra_info = json.dumps({'error': e.args[1]})
-        conn.session.add(qrun)
-        conn.session.commit()
-        celery_log.info("Completed run for qrun:%s with failure: %s", qrun.id, e.args[1])
+        write_error(qrun, e[1])
     finally:
         if cur is not False:
             # It is possible the cursor was never created,
             # so check before we try to close it
             cur.close()
         conn.close_session()
+
+
+def write_error(qrun, error):
+    qrun.status = QueryRun.STATUS_FAILED
+    qrun.extra_info = json.dumps({'error': error})
+    conn.sesion.add(qrun)
+    conn.session.commit()
+    celery_log.info("Completed run for qrun:%s with failure: %s", qrun.id, error)

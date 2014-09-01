@@ -85,7 +85,7 @@ def run_query(query_run_id):
             qrun.status = QueryRun.STATUS_KILLED
             conn.session.add(qrun)
             conn.session.commit()
-        elif e[0] == 1054:  # Unknwon column in Select, for some reason this is an InternalError
+        else:  # Surfacing it to the user is always better than just silently failing
             write_error(qrun, e[1])
     except pymysql.DatabaseError as e:
         write_error(qrun, e[1])
@@ -100,6 +100,6 @@ def run_query(query_run_id):
 def write_error(qrun, error):
     qrun.status = QueryRun.STATUS_FAILED
     qrun.extra_info = json.dumps({'error': error})
-    conn.sesion.add(qrun)
+    conn.session.add(qrun)
     conn.session.commit()
     celery_log.info("Completed run for qrun:%s with failure: %s", qrun.id, error)

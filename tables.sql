@@ -31,7 +31,7 @@ CREATE INDEX query_parent_id_index ON query(parent_id);
 
 CREATE TABLE query_revision(
     id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,
-    text VARCHAR(4096) BINARY NOT NULL,
+    text TEXT BINARY NOT NULL,
     query_id INT UNSIGNED NOT NULL,
     latest_run_id INT UNSIGNED,
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP

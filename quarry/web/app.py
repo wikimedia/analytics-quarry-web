@@ -300,7 +300,7 @@ def run_status(qrun_id):
     return Response(json.dumps({
         'status': qrun.status_message,
         'extra': json.loads(qrun.extra_info or "{}")
-    }), mimetype='application/json')
+    }), mimetype='application/json', headers={'Access-Control-Allow-Origin': '*'})
 
 
 @app.route("/run/<int:qrun_id>/output/<int:resultset_id>/<string:format>")
@@ -321,6 +321,7 @@ def output_result(qrun_id, resultset_id=0, format='json'):
             format
         )
         response.headers['Content-Disposition'] = 'attachment; filename="%s"' % filename
+    response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
 

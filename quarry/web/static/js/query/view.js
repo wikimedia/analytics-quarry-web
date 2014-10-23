@@ -1,5 +1,14 @@
 $( function() {
-    var editor = CodeMirror.fromTextArea($("#code")[0], {
+    function htmlEscape(str) {
+        return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;');
+    }
+
+    var editor = CodeMirror.fromTextArea( $("#code")[0], {
         mode: "text/x-mariadb",
         theme: "monokai",
         readOnly: !vars.can_edit,
@@ -91,7 +100,16 @@ $( function() {
         $.get( url ).done( function( data ) {
             var columns = [];
             $.each( data.headers, function( i, header ) {
-                columns.push( { 'title': header } );
+                columns.push( {
+                    'title': htmlEscape( header ),
+                    'render': function( data, type, row ) {
+                        if ( typeof data === 'string' ) {
+                            return htmlEscape( data );
+                        } else {
+                            return data;
+                        }
+                    }
+                } );
             } );
 
             var tableContainer = $( nunjucks.render( 'query-resultset.html', {

@@ -34,6 +34,7 @@
     <div class="query-status">
         <span class="only-not-published">This query is marked as a draft</span>
         <span class="only-published">This query has been published</span>
+        by <a href="/{{query.user.username}}">{{query.user.username}}</a>.
         {% if jsvars.can_edit %}
             <button id="toggle-publish" type="button" class="btn btn-default btn-xs">
                 <span class="only-not-published">Publish</span>

@@ -6,12 +6,14 @@
 {% block content %}
 <div id="content" class="container">
     <table class="table table-bordered table-hover">
-        <tr>
-            <th>Title</th>
-            <th>Author</th>
-            <th>Status</th>
-            <th>Last run</th>
-        </tr>
+        {% if queries %}
+            <tr>
+                <th>Title</th>
+                <th>Author</th>
+                <th>Status</th>
+                <th>Last run</th>
+            </tr>
+        {% endif %}
         <tbody>
         {% for query in queries %}
             <tr>
@@ -20,8 +22,22 @@
                 <td>{{query.latest_rev.latest_run.status_message}}</td>
                 <td>{{query.latest_rev.latest_run.timestamp|timesince}}</td>
             </tr>
+        {% else %}
+            <tr>
+                <td>No queries found.</td>
+            </tr>
         {% endfor %}
         </tbody>
     </table>
+    <nav>
+      <ul class="pager">
+        <li class="previous{% if not prev_link %} disabled{% endif %}">
+            <a href="{{ prev_link or '#' }}">Previous</a>
+        </li>
+        <li class="next{% if not next_link %} disabled{% endif %}">
+            <a href="{{ next_link or '#' }}">Next</a>
+        </li>
+      </ul>
+    </nav>
 </div>
 {% endblock %}

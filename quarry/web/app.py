@@ -18,6 +18,7 @@ from sqlalchemy.orm import joinedload
 from redissession import RedisSessionInterface
 from mwoauth import ConsumerToken, Handshaker
 from connections import Connections
+from utils.pagination import RangeBasedPagination
 import worker
 
 __dir__ = os.path.dirname(__file__)
@@ -34,6 +35,28 @@ oauth_token = ConsumerToken(
 )
 
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
+
+
+class QueriesRangeBasedPagination(RangeBasedPagination):
+
+    def order_queryset(self):
+        if self.direction == 'next':
+            self.queryset = self.queryset.order_by(desc(QueryRun.timestamp))
+        else:
+            self.queryset = self.queryset.order_by(QueryRun.timestamp)
+
+    def filter_queryset(self):
+        if self.page_key is None:
+            return
+        from_query = g.conn.session.query(Query).get(self.page_key)
+        if from_query:
+            from_qrun_id = from_query.latest_rev.latest_run.id
+            if self.direction == 'prev':
+                self.queryset = self.queryset.filter(
+                    QueryRun.id > from_qrun_id)
+            else:
+                self.queryset = self.queryset.filter(
+                    QueryRun.id < from_qrun_id)
 
 
 def slugify(text, delim=u'-'):
@@ -289,9 +312,15 @@ def api_run_query():
 @app.route("/query/runs/all")
 def all_query_runs():
     queries = g.conn.session.query(Query)\
-        .join(Query.latest_rev).join(QueryRevision.latest_run)\
-        .order_by(desc(QueryRun.timestamp))
-    return render_template("query/list.html", user=get_user(), queries=queries)
+        .join(Query.latest_rev).join(QueryRevision.latest_run)
+    limit = int(request.args.get(
+        'limit', app.config.get('QUERY_RESULTS_PER_PAGE', 50)))
+    queries, prev_link, next_link = QueriesRangeBasedPagination(
+        queries, request.args.get('from'), limit,
+        '/query/runs/all', request.referrer).paginate()
+    return render_template(
+        "query/list.html", user=get_user(), queries=queries,
+        prev_link=prev_link, next_link=next_link)
 
 
 @app.route('/run/<int:qrun_id>/status')

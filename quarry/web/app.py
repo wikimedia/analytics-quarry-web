@@ -39,6 +39,14 @@ _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
 
 class QueriesRangeBasedPagination(RangeBasedPagination):
 
+    def get_page_link(self, page_key, limit):
+        get_params = dict(request.args)
+        get_params.update({
+            'from': page_key, 'limit': limit})
+        return url_for('query_runs_all', **dict(
+            [(key, value) for key, value in get_params.items()])
+        )
+
     def order_queryset(self):
         if self.direction == 'next':
             self.queryset = self.queryset.order_by(desc(QueryRun.timestamp))
@@ -310,17 +318,23 @@ def api_run_query():
 
 
 @app.route("/query/runs/all")
-def all_query_runs():
+def query_runs_all():
     queries = g.conn.session.query(Query)\
         .join(Query.latest_rev).join(QueryRevision.latest_run)
+    queries_filter = 'all'
+    if request.args.get('published') == 'true':
+        queries = queries.filter(Query.published)
+        queries_filter = 'published'
     limit = int(request.args.get(
         'limit', app.config.get('QUERY_RESULTS_PER_PAGE', 50)))
     queries, prev_link, next_link = QueriesRangeBasedPagination(
         queries, request.args.get('from'), limit,
-        '/query/runs/all', request.referrer).paginate()
+        request.path,
+        request.referrer, dict(request.args)).paginate()
     return render_template(
         "query/list.html", user=get_user(), queries=queries,
-        prev_link=prev_link, next_link=next_link)
+        prev_link=prev_link, next_link=next_link,
+        queries_filter=queries_filter)
 
 
 @app.route('/run/<int:qrun_id>/status')

@@ -2,7 +2,8 @@ class RangeBasedPagination(object):
     """
     Generic range based pagination.
     """
-    def __init__(self, queryset, page_key, limit, base_url, referrer_url=None):
+    def __init__(self, queryset, page_key, limit, base_url, referrer_url=None,
+                 get_params={}):
         """
         Instantiate RangeBasedPagination.
 
@@ -18,13 +19,15 @@ class RangeBasedPagination(object):
             base_url: A string for the base url of the paginated view.
             referrer_url: A string for url from which the current page
                 has been referred.
+            get_params: A dictionary for request's GET parameters.
         """
         self.queryset = queryset
         self.page_key = page_key
         self.limit = abs(limit)
         self.direction = 'next' if limit >= 0 else 'prev'
         self.base_url = base_url
-        self.referrer_url = referrer_url
+        self.referrer_url = referrer_url or ''
+        self.get_params = get_params or {}
 
     def paginate(self):
         """
@@ -102,15 +105,14 @@ class RangeBasedPagination(object):
             if self.page_key and (self.direction == 'next' or (
                     self.direction == 'prev' and
                     page_items_count == self.limit)):
-                prev_link = '{url}?from={page_key}&limit={limit}'.format(
-                    url=self.base_url,
+
+                prev_link = self.get_page_link(
                     page_key=self.get_page_key_from_page_item(page_items[0]),
                     limit=-1 * self.limit)
             if self.direction == 'prev' or (
                     self.direction == 'next' and
                     page_items_count == self.limit):
-                next_link = '{url}?from={page_key}&limit={limit}'.format(
-                    url=self.base_url,
+                next_link = self.get_page_link(
                     page_key=self.get_page_key_from_page_item(page_items[-1]),
                     limit=self.limit)
         return prev_link, next_link
@@ -128,3 +130,22 @@ class RangeBasedPagination(object):
             identify a page.
         """
         return page_item.id
+
+    def get_page_link(self, page_key, limit):
+        """
+        Get paginated link for a page.
+
+        Args:
+            page_key: A unique key (string/number) to identify a point
+                of reference to paginate from.
+            limit: An integer specifying number of items to render
+                in a page. A negative value indicates that page
+                items are to be fetched before the point of reference,
+                and a positive value means that page items are to be
+                fetched after the point of reference.
+
+        Returns:
+            A string for the paginated link.
+        """
+        return '{url}?from={page_key}&limit={limit}'.format(
+            url=self.base_url, page_key=page_key, limit=limit)

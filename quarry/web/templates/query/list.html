@@ -1,10 +1,19 @@
 {% set active_page = "query-runs-all" %}
 {% extends "base.html" %}
 {% block head %}
+<link rel="stylesheet" href="/static/css/query/list.css">
 <script src="/static/js/query/list.js"> </script>
 {% endblock %}
 {% block content %}
 <div id="content" class="container">
+    <div class="query-list-filters btn-group btn-group-sm pull-right" role="group">
+      <button type="button" class="btn btn-default{% if queries_filter == 'all' %} active{% endif %}">
+          <a href="/query/runs/all">All queries</a>
+      </button>
+      <button type="button" class="btn btn-default{% if queries_filter == 'published' %} active{% endif %}">
+          <a href="/query/runs/all?published=true">Published queries</a>
+      </button>
+    </div>
     <table class="table table-bordered table-hover">
         {% if queries %}
             <tr>

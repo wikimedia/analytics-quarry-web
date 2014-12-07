@@ -30,3 +30,11 @@ class QueryRevision(Base):
             # restrict access to this from mysql
             return ("Hitting information_schema", "Unauthorized access to restricted database")
         return True
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'sql': self.text,
+            'timestamp': self.timestamp,
+            'latest_run': self.latest_run.id,
+        }

@@ -6,6 +6,7 @@ from models.queryrevision import QueryRevision
 from models.queryrun import QueryRun
 from models.star import Star
 from results import SQLiteResultReader
+from utils import json_formatter
 # This just provides the translit/long codec, unused otherwise
 import translitcodec  # NOQA
 import re
@@ -366,6 +367,48 @@ def output_result(qrun_id, resultset_id=0, format='json'):
         response.headers['Content-Disposition'] = 'attachment; filename="%s"' % filename
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
+
+
+@app.route("/run/<int:qrun_id>/meta")
+def output_run_meta(qrun_id):
+    qrun = g.conn.session.query(QueryRun).get(qrun_id)
+
+    return Response(json.dumps(
+        {
+            'run': qrun,
+            'rev': qrun.rev,
+            'query': qrun.rev.query
+        }, default=json_formatter),
+        mimetype='application/json',
+    )
+
+
+@app.route("/rev/<int:rev_id>/meta")
+def output_rev_meta(rev_id):
+    rev = g.conn.session.query(QueryRevision).get(rev_id)
+
+    return Response(json.dumps(
+        {
+            'latest_run': rev.latest_run,
+            'rev': rev,
+            'query': rev.query
+        }, default=json_formatter),
+        mimetype='application/json',
+    )
+
+
+@app.route("/query/<int:query_id>/meta")
+def output_query_meta(query_id):
+    query = g.conn.session.query(Query).get(query_id)
+
+    return Response(json.dumps(
+        {
+            'latest_run': query.latest_rev.latest_run,
+            'latest_rev': query.latest_rev,
+            'query': query
+        }, default=json_formatter),
+        mimetype='application/json',
+    )
 
 
 @app.template_filter()

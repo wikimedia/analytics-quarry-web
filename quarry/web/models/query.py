@@ -24,3 +24,15 @@ class Query(Base):
     latest_rev = relationship('QueryRevision',
                               primaryjoin='Query.latest_rev_id == QueryRevision.id',
                               uselist=False)
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'author': self.user.username,
+            'title': self.title,
+            'timestamp': self.last_touched,
+            'parent': self.parent_id,
+            'latest_revision': self.latest_rev.id,
+            'published': bool(self.published),
+            'description': self.description,
+        }

@@ -49,3 +49,11 @@ class QueryRun(Base):
             json.dumps(meta),
             self.rev.text
         )
+
+    def to_json(self):
+        return {
+            'id': self.id,
+            'status': self.status_message,
+            'timestamp': self.timestamp,
+            'extra': json.loads(self.extra_info or "{}"),
+        }

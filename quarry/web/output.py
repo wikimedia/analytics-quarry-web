@@ -3,9 +3,9 @@ import json
 import unicodecsv
 
 
-def get_formatted_response(format, reader, resultset_id):
+def get_formatted_response(format, queryrun, reader, resultset_id):
     if format == 'json':
-        return json_formatter(reader, resultset_id)
+        return json_formatter(queryrun, reader, resultset_id)
     elif format == 'csv':
         return separated_formatter(reader, resultset_id, ',')
     elif format == 'tsv':
@@ -33,12 +33,18 @@ def separated_formatter(reader, resultset_id, delim=','):
     return Response(respond(), content_type='text/csv')
 
 
-def json_formatter(reader, resultset_id):
+def json_formatter(qrun, reader, resultset_id):
     rows = list(reader.get_rows(resultset_id))
     header = rows[0]
     del rows[0]
     data = {
+        'meta': {
+            'run_id': qrun.id,
+            'rev_id': qrun.rev.id,
+            'query_id': qrun.rev.query.id,
+        },
         'headers': header,
         'rows': rows
     }
-    return Response(json.dumps(data), mimetype='application/json')
+    return Response(json.dumps(data),
+                    mimetype='application/json')

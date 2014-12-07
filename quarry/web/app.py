@@ -351,7 +351,7 @@ def run_status(qrun_id):
 def output_result(qrun_id, resultset_id=0, format='json'):
     qrun = g.conn.session.query(QueryRun).get(qrun_id)
     reader = SQLiteResultReader(qrun, app.config['OUTPUT_PATH_TEMPLATE'])
-    response = output.get_formatted_response(format, reader, resultset_id)
+    response = output.get_formatted_response(format, qrun, reader, resultset_id)
     if request.args.get('download', 'false') == 'true':
         # Download this!
         if qrun.rev.query.title:

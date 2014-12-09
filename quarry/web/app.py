@@ -380,6 +380,7 @@ def output_run_meta(qrun_id):
             'query': qrun.rev.query
         }, default=json_formatter),
         mimetype='application/json',
+        headers={'Access-Control-Allow-Origin': '*'},
     )
 
 
@@ -394,6 +395,7 @@ def output_rev_meta(rev_id):
             'query': rev.query
         }, default=json_formatter),
         mimetype='application/json',
+        headers={'Access-Control-Allow-Origin': '*'},
     )
 
 
@@ -408,6 +410,7 @@ def output_query_meta(query_id):
             'query': query
         }, default=json_formatter),
         mimetype='application/json',
+        headers={'Access-Control-Allow-Origin': '*'},
     )
 
 

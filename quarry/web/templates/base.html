@@ -11,6 +11,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Quarry</title>
 
+    <title>{% block title %} {% endblock %} - Quarry</title>
     {% if jsvars %}
     <script>
         var vars = {{jsvars|tojson}};

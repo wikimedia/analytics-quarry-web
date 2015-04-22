@@ -89,6 +89,8 @@ def run_query(query_run_id):
             write_error(qrun, e[1])
     except pymysql.DatabaseError as e:
         write_error(qrun, e[1])
+    except pymysql.OperationalError as e:
+        write_error(qrun, e[1])
     finally:
         if cur is not False:
             # It is possible the cursor was never created,

@@ -53,7 +53,7 @@ output += "</pre>\n";
 }
 else {
 if(runtime.contextOrFrameLookup(context, frame, "status") == "killed") {
-output += "\nYour query took longer than 10 minutes to execute and was killed.\n";
+output += "\nYour query took longer than 20 minutes to execute and was killed.\n";
 ;
 }
 else {

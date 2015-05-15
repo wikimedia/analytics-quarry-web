@@ -9,9 +9,8 @@
     <link rel="shortcut icon" href="/static/img/favicon.png" type="image/x-icon">
     <link rel="icon" href="/static/img/favicon.png" type="image/x-icon">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Quarry</title>
 
-    <title>{% block title %} {% endblock %} - Quarry</title>
+    <title>{% block title %}Quarry{% endblock %}</title>
     {% if jsvars %}
     <script>
         var vars = {{jsvars|tojson}};

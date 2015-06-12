@@ -352,6 +352,7 @@ def output_result(qrun_id, resultset_id=0, format='json'):
     qrun = g.conn.session.query(QueryRun).get(qrun_id)
     reader = SQLiteResultReader(qrun, app.config['OUTPUT_PATH_TEMPLATE'])
     response = output.get_formatted_response(format, qrun, reader, resultset_id)
+    response.encoding = request.args.get('encoding', 'utf-8')
     if request.args.get('download', 'false') == 'true':
         # Download this!
         if qrun.rev.query.title:

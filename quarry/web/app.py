@@ -1,4 +1,3 @@
-from datetime import datetime
 from flask import Flask, render_template, redirect, session, g, request, url_for, Response
 from models.user import User, UserGroup
 from models.query import Query
@@ -22,6 +21,7 @@ from utils.pagination import RangeBasedPagination
 import worker
 
 from login import auth
+from webhelpers import templatehelpers
 
 __dir__ = os.path.dirname(__file__)
 
@@ -35,6 +35,7 @@ except IOError:
 app.config['DEBUG'] = True
 
 app.register_blueprint(auth)
+app.register_blueprint(templatehelpers)
 
 app.session_interface = RedisSessionInterface()
 
@@ -377,35 +378,6 @@ def output_query_meta(query_id):
         headers={'Access-Control-Allow-Origin': '*'},
     )
 
-
-@app.template_filter()
-def timesince(dt, default="just now"):
-    """
-    Returns string representing "time since" e.g.
-    3 days ago, 5 hours ago etc.
-
-    From http://flask.pocoo.org/snippets/33/
-    """
-
-    now = datetime.utcnow()
-    diff = now - dt
-
-    periods = (
-        (diff.days / 365, "year", "years"),
-        (diff.days / 30, "month", "months"),
-        (diff.days / 7, "week", "weeks"),
-        (diff.days, "day", "days"),
-        (diff.seconds / 3600, "hour", "hours"),
-        (diff.seconds / 60, "minute", "minutes"),
-        (diff.seconds, "second", "seconds"),
-    )
-
-    for period, singular, plural in periods:
-
-        if period:
-            return "%d %s ago" % (period, singular if period == 1 else plural)
-
-    return default
 
 if __name__ == '__main__':
     app.run(port=5000, host="0.0.0.0")

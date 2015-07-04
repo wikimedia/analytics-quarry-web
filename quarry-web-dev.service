@@ -1,0 +1,7 @@
+[Unit]
+Description=Development web server for quarry
+
+[Service]
+ExecStart=/srv/venv/bin/python /vagrant/quarry.wsgi
+User=vagrant
+group=vagrant

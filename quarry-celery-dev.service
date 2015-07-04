@@ -1,0 +1,7 @@
+[Unit]
+Description=Development celery runner for quarry
+
+[Service]
+ExecStart=/srv/venv/bin/celery worker --workdir=/vagrant --app=quarry.web.worker
+User=vagrant
+group=vagrant

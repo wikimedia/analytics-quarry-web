@@ -10,25 +10,33 @@ output += "\n            Resultset\n            ";
 }
 else {
 output += "\n            Resultset ";
-output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_number"), env.autoesc);
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_number"), env.opts.autoescape);
 output += "\n            ";
 ;
 }
 output += "\n            (";
-output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "rowcount"), env.autoesc);
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "rowcount"), env.opts.autoescape);
 output += " rows)\n        </div>\n        <div class='col-md-4'>\n            <div class=\"btn-group pull-right\">\n                <button type=\"button\" class=\"btn btn-info btn-xs dropdown-toggle\" data-toggle=\"dropdown\">\n                    Download data <span class=\"caret\"></span>\n                </button>\n                <ul class=\"dropdown-menu\" role=\"menu\">\n                    <li><a href=\"/run/";
-output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.autoesc);
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.opts.autoescape);
 output += "/output/";
-output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.autoesc);
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.opts.autoescape);
 output += "/tsv?download=true\">TSV</a></li>\n                    <li><a href=\"/run/";
-output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.autoesc);
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.opts.autoescape);
 output += "/output/";
-output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.autoesc);
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.opts.autoescape);
 output += "/json?download=true\">JSON</a></li>\n                    <li><a href=\"/run/";
-output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.autoesc);
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.opts.autoescape);
 output += "/output/";
-output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.autoesc);
-output += "/csv?download=true\">CSV</a></li>\n                </ul>\n            </div>\n        </div>\n    </div>\n    <table class='table'></table>\n</div>\n";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.opts.autoescape);
+output += "/json-lines?download=true\">JSON Lines</a></li>\n                    <li><a href=\"/run/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.opts.autoescape);
+output += "/output/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.opts.autoescape);
+output += "/csv?download=true\">CSV</a></li>\n                    <li><a href=\"/run/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.opts.autoescape);
+output += "/output/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.opts.autoescape);
+output += "/csv?download=true&encoding=utf-16\">Excel (UTF-16 CSV)</a></li>\n                </ul>\n            </div>\n        </div>\n    </div>\n    <table class='table'></table>\n</div>\n";
 cb(null, output);
 ;
 } catch (e) {
@@ -47,7 +55,7 @@ var output = "";
 try {
 if(runtime.contextOrFrameLookup(context, frame, "status") == "failed") {
 output += "\n<strong>Error</strong>\n<pre>";
-output += runtime.suppressValue(runtime.memberLookup((runtime.contextOrFrameLookup(context, frame, "extra")),"error", env.autoesc), env.autoesc);
+output += runtime.suppressValue(runtime.memberLookup((runtime.contextOrFrameLookup(context, frame, "extra")),"error", env.opts.autoescape), env.opts.autoescape);
 output += "</pre>\n";
 ;
 }

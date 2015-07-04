@@ -6,6 +6,8 @@ import unicodecsv
 def get_formatted_response(format, queryrun, reader, resultset_id):
     if format == 'json':
         return json_formatter(queryrun, reader, resultset_id)
+    elif format == 'json-lines':
+        return json_line_formatter(reader, resultset_id)
     elif format == 'csv':
         return separated_formatter(reader, resultset_id, ',')
     elif format == 'tsv':
@@ -31,6 +33,20 @@ def separated_formatter(reader, resultset_id, delim=','):
             yield retainer.last_written
 
     return Response(respond(), content_type='text/csv')
+
+
+def json_line_formatter(reader, resultset_id):
+    rows = reader.get_rows(resultset_id)
+
+    def respond():
+        headers = None
+        for row in rows:
+            if headers is None:
+                headers = row
+                continue
+            yield json.dumps(dict(zip(headers, row)))
+
+    return Response(respond(), content_type='application/json')
 
 
 def json_formatter(qrun, reader, resultset_id):

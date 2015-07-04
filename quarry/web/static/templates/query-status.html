@@ -2,9 +2,9 @@
 <strong>Error</strong>
 <pre>{{ extra.error }}</pre>
 {% elif status == 'killed' %}
-Your query took longer than 20 minutes to execute and was killed.
+This query took longer than 20 minutes to execute and was killed.
 {% elif status == 'queued' %}
-Your query is waiting to be executed
+This query is waiting to be executed
 {% elif status == 'running' %}
-Your query is currently executing
+This query is currently executing
 {% endif %}

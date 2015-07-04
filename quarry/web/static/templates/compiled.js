@@ -53,17 +53,17 @@ output += "</pre>\n";
 }
 else {
 if(runtime.contextOrFrameLookup(context, frame, "status") == "killed") {
-output += "\nYour query took longer than 20 minutes to execute and was killed.\n";
+output += "\nThis query took longer than 20 minutes to execute and was killed.\n";
 ;
 }
 else {
 if(runtime.contextOrFrameLookup(context, frame, "status") == "queued") {
-output += "\nYour query is waiting to be executed\n";
+output += "\nThis query is waiting to be executed\n";
 ;
 }
 else {
 if(runtime.contextOrFrameLookup(context, frame, "status") == "running") {
-output += "\nYour query is currently executing\n";
+output += "\nThis query is currently executing\n";
 ;
 }
 ;

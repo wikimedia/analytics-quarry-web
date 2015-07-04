@@ -127,7 +127,8 @@ $( function() {
                 'pagingType': 'simple_numbers',
                 'paging': data.rows.length > 100,
                 'pageLength': 100,
-                'deferRender': true
+                'deferRender': true,
+                'order': [],
             } );
 
             $( '#query-result' ).append( tableContainer );

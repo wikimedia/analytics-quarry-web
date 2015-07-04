@@ -16,7 +16,11 @@ celery_log = get_task_logger(__name__)
 
 celery = Celery('quarry.web.worker')
 celery.conf.update(yaml.load(open(os.path.join(__dir__, "../default_config.yaml"))))
-celery.conf.update(yaml.load(open(os.path.join(__dir__, "../config.yaml"))))
+try:
+    celery.conf.update(yaml.load(open(os.path.join(__dir__, "../config.yaml"))))
+except IOError:
+    # Is ok if we can not load config.yaml
+    pass
 
 conn = None
 

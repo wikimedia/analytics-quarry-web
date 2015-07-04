@@ -7,7 +7,11 @@ from connections import Connections
 
 __dir__ = os.path.dirname(__file__)
 config = yaml.load(open(os.path.join(__dir__, "../default_config.yaml")))
-config.update(yaml.load(open(os.path.join(__dir__, "../config.yaml"))))
+try:
+    config.update(yaml.load(open(os.path.join(__dir__, "../config.yaml"))))
+except IOError:
+    # is ok if we do not have config.yaml
+    pass
 
 logging.basicConfig(
     filename=config['KILLER_LOG_PATH'],

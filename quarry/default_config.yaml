@@ -1,21 +1,25 @@
-OAUTH_CONSUMER_TOKEN: ''
-OAUTH_SECRET_TOKEN: ''
-SECRET_KEY: ''  # Secret key
+# The OAUTH tokens are callbacks to a localhost domain
+# it is ok that they are public.
+OAUTH_CONSUMER_TOKEN: "e9bfbacf0b29a8ea64712b209c24ee36"
+OAUTH_SECRET_TOKEN: "83ed4ac72176286f5c7798459f0a6b16a96853c4"
+SECRET_KEY: 'aaarggghhpleaserescuemeiamstuckinarandomnumbergeneratorfactory'
+DEBUG: True
 DB_HOST: 'localhost'
 DB_NAME: 'quarry'
-DB_USER: ''
+DB_USER: 'root'
 DB_PASSWORD: ''
 BROKER_URL: 'redis://'
 CELERY_RESULT_BACKEND: 'redis://'
 CELERYD_CONCURRENCY: 24  # Since all tasks are IO bound
 CELERY_ACKS_LATE: True  # Tasks are idempotent!
 CELERY_TRACK_STARTED: True
-REPLICA_HOST: '127.0.0.1'
-REPLICA_DB: 'enwiki_p'
-REPLICA_USER: ''
+# Just query the quarry database itself.
+REPLICA_HOST: 'localhost'
+REPLICA_DB: 'quarry'
+REPLICA_USER: 'root'
 REPLICA_PASSWORD: ''
-REPLICA_PORT: 3309
-OUTPUT_PATH_TEMPLATE: '/data/project/quarry/results/%s/%s.json'
+REPLICA_PORT: 3306
+OUTPUT_PATH_TEMPLATE: '/srv/results/%s/%s/%s.json'
 REDIS_HOST: '127.0.0.1'
 REDIS_PORT: 6379
 REDIS_DB: 0

@@ -17,10 +17,11 @@ import os
 from sqlalchemy import desc, func
 from sqlalchemy.orm import joinedload
 from redissession import RedisSessionInterface
-from mwoauth import ConsumerToken, Handshaker
 from connections import Connections
 from utils.pagination import RangeBasedPagination
 import worker
+
+from login import auth
 
 __dir__ = os.path.dirname(__file__)
 
@@ -32,12 +33,10 @@ except IOError:
     # Is ok if we can't load config.yaml
     pass
 app.config['DEBUG'] = True
-app.session_interface = RedisSessionInterface()
 
-oauth_token = ConsumerToken(
-    app.config['OAUTH_CONSUMER_TOKEN'],
-    app.config['OAUTH_SECRET_TOKEN']
-)
+app.register_blueprint(auth)
+
+app.session_interface = RedisSessionInterface()
 
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
 
@@ -107,18 +106,6 @@ def index():
     return render_template("landing.html", user=get_user())
 
 
-@app.route("/login")
-def login():
-    handshaker = Handshaker(
-        "https://meta.wikimedia.org/w/index.php",
-        oauth_token
-    )
-    redirect_url, request_token = handshaker.initiate()
-    session['request_token'] = request_token
-    session['return_to_url'] = request.args.get('next', '/')
-    return redirect(redirect_url)
-
-
 @app.route("/sudo/<string:username>")
 def sudo(username):
     user = get_user()
@@ -131,28 +118,6 @@ def sudo(username):
         return redirect('/')
     else:
         return 'You do not have the sudo right', 403
-
-
-@app.route("/oauth-callback")
-def oauth_callback():
-    handshaker = Handshaker(
-        "https://meta.wikimedia.org/w/index.php",
-        oauth_token
-    )
-    access_token = handshaker.complete(session['request_token'], request.query_string)
-    session['acces_token'] = access_token
-    identity = handshaker.identify(access_token)
-    wiki_uid = identity['sub']
-    user = g.conn.session.query(User).filter(User.wiki_uid == wiki_uid).first()
-    if user is None:
-        user = User(username=identity['username'], wiki_uid=wiki_uid)
-        g.conn.session.add(user)
-        g.conn.session.commit()
-    session['user_id'] = user.id
-    return_to_url = session.get('return_to_url')
-    del session['request_token']
-    del session['return_to_url']
-    return redirect(return_to_url)
 
 
 @app.route('/<user_name>')
@@ -232,12 +197,6 @@ def new_query():
     g.conn.session.add(query)
     g.conn.session.commit()
     return redirect(url_for('query_show', query_id=query.id))
-
-
-@app.route("/logout")
-def logout():
-    session.clear()
-    return redirect("/")
 
 
 @app.route("/query/<int:query_id>")

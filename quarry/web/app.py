@@ -228,6 +228,16 @@ def query_show(query_id):
     )
 
 
+@app.route('/query/<int:query_id>/result/latest/<string:resultset_id>/<string:format>')
+def query_output_redirect(query_id, resultset_id, format):
+    query = g.conn.session.query(Query).filter(Query.id == query_id).one()
+    qrun_id = query.latest_rev.latest_run_id
+    return redirect(
+        url_for('output_result', qrun_id=qrun_id,
+                resultset_id=resultset_id, format=format)
+        )
+
+
 @app.route('/api/query/meta', methods=['POST'])
 def api_set_meta():
     if get_user() is None:

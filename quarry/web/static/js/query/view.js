@@ -15,6 +15,8 @@ $( function() {
         matchBrackets: true
     });
 
+    $('#query-description').autosize();
+
     if (vars.can_edit) {
         $('#title').blur(function() {
             $.post( "/api/query/meta", {

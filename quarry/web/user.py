@@ -44,18 +44,15 @@ def user_page(user_name):
     draft_queries = g.conn.session.query(Query) \
         .filter(Query.user_id == user.id) \
         .filter_by(published=False) \
-        .order_by(desc(Query.last_touched)) \
-        .limit(10)
+        .order_by(desc(Query.last_touched))
     published_queries = g.conn.session.query(Query)\
         .filter(Query.user_id == user.id)\
         .filter_by(published=True)\
-        .order_by(desc(Query.last_touched))\
-        .limit(10)
+        .order_by(desc(Query.last_touched))
     stars = g.conn.session.query(Star).join(Star.query) \
         .options(joinedload(Star.query))\
         .filter(Star.user_id == user.id) \
-        .order_by(desc(Star.timestamp))\
-        .limit(10)
+        .order_by(desc(Star.timestamp))
     return render_template(
         "user.html",
         display_user=user,

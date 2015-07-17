@@ -5,10 +5,9 @@ from models.queryrevision import QueryRevision
 from models.queryrun import QueryRun
 from models.star import Star
 from results import SQLiteResultReader
-from utils import json_formatter
+from utils import json_formatter, slugify
 # This just provides the translit/long codec, unused otherwise
 import translitcodec  # NOQA
-import re
 import json
 import yaml
 import output
@@ -39,8 +38,6 @@ app.register_blueprint(templatehelpers)
 
 app.session_interface = RedisSessionInterface()
 
-_punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
-
 
 class QueriesRangeBasedPagination(RangeBasedPagination):
 
@@ -70,16 +67,6 @@ class QueriesRangeBasedPagination(RangeBasedPagination):
             else:
                 self.queryset = self.queryset.filter(
                     QueryRun.id < from_qrun_id)
-
-
-def slugify(text, delim=u'-'):
-    """Generates an ASCII-only slug."""
-    result = []
-    for word in _punct_re.split(text.lower()):
-        word = word.encode('translit/long')
-        if word:
-            result.append(word)
-    return unicode(delim.join(result))
 
 
 def get_user():

@@ -24,6 +24,7 @@
                 {% for query in published_queries %}
                 <li class="query-item">
                     <a class="query-title" href="/query/{{query.id}}">{{query.title}}</a>
+                    <small>{{query.last_touched|timesince}}</small>
                 </li>
                 {% else %}
                     This user has not published any of their queries yet.

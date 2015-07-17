@@ -1,5 +1,4 @@
-from flask import Flask, render_template, redirect, session, g, request, url_for, Response
-from models.user import User, UserGroup
+from flask import Flask, render_template, redirect, g, request, url_for, Response
 from models.query import Query
 from models.queryrevision import QueryRevision
 from models.queryrun import QueryRun
@@ -13,13 +12,13 @@ import yaml
 import output
 import os
 from sqlalchemy import desc, func
-from sqlalchemy.orm import joinedload
 from redissession import RedisSessionInterface
 from connections import Connections
 from utils.pagination import RangeBasedPagination
 import worker
 
 from login import auth
+from user import user_blueprint, get_user
 from webhelpers import templatehelpers
 
 __dir__ = os.path.dirname(__file__)
@@ -34,13 +33,13 @@ except IOError:
 app.config['DEBUG'] = True
 
 app.register_blueprint(auth)
+app.register_blueprint(user_blueprint)
 app.register_blueprint(templatehelpers)
 
 app.session_interface = RedisSessionInterface()
 
 
 class QueriesRangeBasedPagination(RangeBasedPagination):
-
     def get_page_link(self, page_key, limit):
         get_params = dict(request.args)
         get_params.update({
@@ -69,16 +68,6 @@ class QueriesRangeBasedPagination(RangeBasedPagination):
                     QueryRun.id < from_qrun_id)
 
 
-def get_user():
-    if 'user_id' in session:
-        if not hasattr(g, '_user'):
-            g._user = g.conn.session.query(User).filter(User.id == session['user_id']).one()
-        return g._user
-    else:
-        user = None
-    return user
-
-
 @app.before_request
 def setup_context():
     g.conn = Connections(app.config)
@@ -92,55 +81,6 @@ def kill_context(exception=None):
 @app.route("/")
 def index():
     return render_template("landing.html", user=get_user())
-
-
-@app.route("/sudo/<string:username>")
-def sudo(username):
-    user = get_user()
-    if user is None:
-        return 'Authorization required', 403
-    if g.conn.session.query(UserGroup).filter(UserGroup.user_id == user.id)\
-            .filter(UserGroup.group_name == 'sudo').first() is not None:
-        new_user = g.conn.session.query(User).filter(User.username == username).first()
-        session['user_id'] = new_user.id
-        return redirect('/')
-    else:
-        return 'You do not have the sudo right', 403
-
-
-@app.route('/<user_name>')
-def user_page(user_name):
-    # Munge the user_name, and hope
-    user_name = user_name.replace('_', ' ').lower()
-    user = g.conn.session.query(User).filter(func.lower(User.username) == user_name).one()
-    stats = {
-        'query_count': g.conn.session.query(func.count(Query.id)).filter(Query.user_id == user.id).scalar(),
-        'stars_count': g.conn.session.query(func.count(Star.id)).filter(Star.user_id == user.id).scalar()
-    }
-    draft_queries = g.conn.session.query(Query) \
-        .filter(Query.user_id == user.id) \
-        .filter_by(published=False) \
-        .order_by(desc(Query.last_touched)) \
-        .limit(10)
-    published_queries = g.conn.session.query(Query)\
-        .filter(Query.user_id == user.id)\
-        .filter_by(published=True)\
-        .order_by(desc(Query.last_touched))\
-        .limit(10)
-    stars = g.conn.session.query(Star).join(Star.query) \
-        .options(joinedload(Star.query))\
-        .filter(Star.user_id == user.id) \
-        .order_by(desc(Star.timestamp))\
-        .limit(10)
-    return render_template(
-        "user.html",
-        display_user=user,
-        user=get_user(),
-        stats=stats,
-        draft_queries=draft_queries,
-        published_queries=published_queries,
-        stars=stars
-    )
 
 
 @app.route("/api/query/unstar", methods=["POST"])

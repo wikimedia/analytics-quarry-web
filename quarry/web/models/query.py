@@ -13,7 +13,7 @@ class Query(Base):
     last_touched = Column(DateTime)
     parent_id = Column(Integer)
     latest_rev_id = Column(Integer, ForeignKey('query_revision.id'))
-    published = Column(Boolean)
+    published = Column(Boolean, default=False)
     description = Column(UnicodeText)
 
     # Stick with "rev" as common language.

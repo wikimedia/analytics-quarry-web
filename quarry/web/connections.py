@@ -1,7 +1,7 @@
 import pymysql
 import redis
 from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
+from sqlalchemy.orm import sessionmaker, scoped_session
 
 
 class Connections(object):
@@ -27,8 +27,9 @@ class Connections(object):
     @property
     def session(self):
         if not hasattr(self, '_session'):
-            Session = sessionmaker(bind=self.db_engine)
-            self._session = Session()
+            self._session = scoped_session(
+                sessionmaker(bind=self.db_engine)
+            )
         return self._session
 
     @property

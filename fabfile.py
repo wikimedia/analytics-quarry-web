@@ -3,7 +3,10 @@ from fabric.api import sudo, env, cd, put, roles
 env.roledefs = {
     'web': ['quarry-main-01.eqiad.wmflabs'],
     'db': ['quarry-main-01.eqiad.wmflabs'],
-    'runner': ['quarry-runner-01.eqiad.wmflabs', 'quarry-runner-test.eqiad.wmflabs']
+    'runner': [
+        'quarry-runner-01.eqiad.wmflabs',
+        'quarry-runner-02.eqiad.wmflabs'
+    ]
 }
 env.use_ssh_config = True
 

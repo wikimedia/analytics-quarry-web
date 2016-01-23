@@ -27,8 +27,7 @@ try:
     queries = cur.fetchall()
     logging.info("Found %s queries running", len(queries))
     to_kill = [q for q in queries
-               if q[5] > config['QUERY_TIME_LIMIT']
-               and q[4] != 'Sleep']
+               if q[5] > config['QUERY_TIME_LIMIT'] and q[4] != 'Sleep']
     logging.info("Found %s queries to kill", len(to_kill))
     for q in to_kill:
         try:

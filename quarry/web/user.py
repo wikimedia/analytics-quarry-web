@@ -1,4 +1,5 @@
 from flask import Blueprint, session, redirect, g, render_template
+from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 from sqlalchemy import desc, func
 from models.user import User, UserGroup
@@ -36,7 +37,10 @@ def sudo(username):
 def user_page(user_name):
     # Munge the user_name, and hope
     user_name = user_name.replace('_', ' ').lower()
-    user = g.conn.session.query(User).filter(func.lower(User.username) == user_name).one()
+    try:
+        user = g.conn.session.query(User).filter(func.lower(User.username) == user_name).one()
+    except NoResultFound:
+        return 'User not found', 404
     stats = {
         'query_count': g.conn.session.query(func.count(Query.id)).filter(Query.user_id == user.id).scalar(),
         'stars_count': g.conn.session.query(func.count(Star.id)).filter(Star.user_id == user.id).scalar()

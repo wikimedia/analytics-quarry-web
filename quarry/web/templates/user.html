@@ -23,7 +23,7 @@
             <ul class="query-items-list">
                 {% for query in published_queries %}
                 <li class="query-item">
-                    <a class="query-title" href="/query/{{query.id}}">{{query.title}}</a>
+                    <a class="query-title" href="/query/{{query.id}}">{% if query.title %}{{query.title}}{% else %}Untitled query #{{query.id}}{% endif %}</a>
                     <small>{{query.last_touched|timesince}}</small>
                 </li>
                 {% else %}
@@ -36,7 +36,7 @@
             <ul class="query-items-list">
                 {% for star in stars %}
                 <li class="query-item">
-                    <a class="query-title" href="/query/{{star.query.id}}">{{star.query.title}}</a>
+                    <a class="query-title" href="/query/{{star.query.id}}">{% if star.query.title %}{{star.query.title}}{% else %}Untitled query #{{star.query.id}}{% endif %}</a>
                 </li>
                 {% else %}
                     This user has not starred any queries yet.
@@ -49,7 +49,7 @@
         <ul class="query-items-list">
             {% for query in draft_queries %}
             <li class="query-item">
-                <a class="query-title" href="/query/{{query.id}}">{{query.title}}</a>
+                <a class="query-title" href="/query/{{query.id}}">{% if query.title %}{{query.title}}{% else %}Untitled query #{{query.id}}{% endif %}</a>
                 <small>{{query.last_touched|timesince}}</small>
             </li>
             {% else %}

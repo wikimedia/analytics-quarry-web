@@ -266,7 +266,7 @@ def output_result(qrun_id, resultset_id=0, format='json'):
             qrun.id,
             format
         )
-        response.headers['Content-Disposition'] = 'attachment; filename="%s"' % filename
+        response.headers['Content-Disposition'] = 'attachment; filename="%s"' % filename.encode('utf-8')
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 

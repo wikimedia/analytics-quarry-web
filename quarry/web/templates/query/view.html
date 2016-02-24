@@ -23,24 +23,10 @@
     <div class="row" id="title-container">
 
 
-        <div class="col-md-12">
+        <div class="col-md-10">
             <h2><input type="textbox" id="title" {% if jsvars.can_edit %}placeholder="Click to add title..."{% else %}readonly{% endif %} value="{% if query.title %}{{query.title}}{% endif %}"> </input></h2>
         </div>
-        {% if query.parent %}
-        <div class='col-md-12'>
-            <small>
-            Fork of
-            <a href='/query/{{query.parent.id}}'>
-                {% if query.parent.title %}
-                {{ query.parent.title }}
-                {% else %}
-                Untitled query #{{ query.parent.id }}
-                {% endif %}
-            </a>
-            by <a href='/{{ query.parent.user.username }}'>{{ query.parent.user.username }}</a>
-        </small>
-        </div>
-        {% endif %}
+
 
         <div class="col-md-2" id="title-actions-container">
             {% if user and not jsvars.can_edit %}
@@ -59,6 +45,21 @@
         </div>
     </div>
     <div class="query-status">
+        {% if query.parent %}
+        <div>
+            <small>
+            Fork of
+            <a href='/query/{{query.parent.id}}'>
+                {% if query.parent.title %}
+                {{ query.parent.title }}
+                {% else %}
+                Untitled query #{{ query.parent.id }}
+                {% endif %}
+            </a>
+            by <a href='/{{ query.parent.user.username }}'>{{ query.parent.user.username }}</a>
+        </small>
+        </div>
+        {% endif %}
         <span class="only-not-published">This query is marked as a draft</span>
         <span class="only-published">This query has been published</span>
         by <a href="/{{query.user.username}}">{{query.user.username}}</a>.

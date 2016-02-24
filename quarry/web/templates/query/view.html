@@ -21,17 +21,40 @@
 {% block content %}
 <div id="content" class="container {% if jsvars.can_edit %}edit{% else %}no-edit{% endif %} {% if jsvars.is_starred %}starred{% endif %} {% if query.published %}published {% endif %}">
     <div class="row" id="title-container">
-        <div class="col-md-10">
+
+
+        <div class="col-md-12">
             <h2><input type="textbox" id="title" {% if jsvars.can_edit %}placeholder="Click to add title..."{% else %}readonly{% endif %} value="{% if query.title %}{{query.title}}{% endif %}"> </input></h2>
         </div>
+        {% if query.parent %}
+        <div class='col-md-12'>
+            <small>
+            Fork of
+            <a href='/query/{{query.parent.id}}'>
+                {% if query.parent.title %}
+                {{ query.parent.title }}
+                {% else %}
+                Untitled query #{{ query.parent.id }}
+                {% endif %}
+            </a>
+            by <a href='/{{ query.parent.user.username }}'>{{ query.parent.user.username }}</a>
+        </small>
+        </div>
+        {% endif %}
+
         <div class="col-md-2" id="title-actions-container">
             {% if user and not jsvars.can_edit %}
-                <button id="un-star-query" type="button" class="btn btn-info btn-sm only-starred">
+                <a id="un-star-query" class="btn btn-info btn-sm only-starred">
                     <span class="glyphicon glyphicon-star"></span> Unstar
-                </button>
-                <button id="star-query" type="button" class="btn btn-info btn-sm only-non-starred">
+                </a>
+                <a id="star-query" class="btn btn-info btn-sm only-non-starred">
                     <span class="glyphicon glyphicon-star-empty"></span> Star
-                </button>
+                </a>
+            {% endif %}
+            {% if not jsvars.can_edit %}
+            <a id="fork-query" href="/fork/{{ query.id }}"class="btn btn-info btn-sm">
+                Fork
+            </a>
             {% endif %}
         </div>
     </div>

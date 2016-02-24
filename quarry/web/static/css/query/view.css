@@ -36,7 +36,7 @@ table#query-results-sampled {
     border: none;
 }
 
-#title-actions-container button {
+#title-actions-container a {
     margin-top: 18px;
     float: right;
 }

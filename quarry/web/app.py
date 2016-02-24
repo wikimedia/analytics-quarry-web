@@ -127,6 +127,27 @@ def new_query():
     return redirect(url_for('query_show', query_id=query.id))
 
 
+@app.route("/fork/<int:id>")
+def fork_query(id):
+    if get_user() is None:
+        return redirect("/login?next=fork/{id}".format(id=id))
+    query = Query()
+    query.user = get_user()
+    parent_query = g.conn.session.query(Query).filter(Query.id == id).one()
+    query.title = parent_query.title
+    query.parent_id = parent_query.id
+    query.description = parent_query.description
+    g.conn.session.add(query)
+    g.conn.session.commit()
+
+    query_rev = QueryRevision(query_id=query.id, text=parent_query.latest_rev.text)
+    query.latest_rev = query_rev
+    g.conn.session.add(query)
+    g.conn.session.add(query_rev)
+    g.conn.session.commit()
+    return redirect(url_for('query_show', query_id=query.id))
+
+
 @app.route("/query/<int:query_id>")
 def query_show(query_id):
     query = g.conn.session.query(Query).filter(Query.id == query_id).one()

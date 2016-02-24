@@ -11,7 +11,7 @@ class Query(Base):
     user_id = Column(Integer, ForeignKey('user.id'))
     title = Column(Unicode(1024))
     last_touched = Column(DateTime)
-    parent_id = Column(Integer)
+    parent_id = Column(Integer, ForeignKey('query.id'))
     latest_rev_id = Column(Integer, ForeignKey('query_revision.id'))
     published = Column(Boolean, default=False)
     description = Column(UnicodeText)
@@ -24,6 +24,9 @@ class Query(Base):
     latest_rev = relationship('QueryRevision',
                               primaryjoin='Query.latest_rev_id == QueryRevision.id',
                               uselist=False)
+    parent = relationship('Query',
+                          remote_side=[id],
+                          uselist=False)
 
     def to_json(self):
         return {

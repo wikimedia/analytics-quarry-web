@@ -37,11 +37,9 @@
                     <span class="glyphicon glyphicon-star-empty"></span> Star
                 </a>
             {% endif %}
-            {% if not jsvars.can_edit %}
-            <a id="fork-query" href="/fork/{{ query.id }}"class="btn btn-info btn-sm">
+            <a id="fork-query" title="Create a copy of this query to modify and execute" href="/fork/{{ query.id }}"class="btn btn-info btn-sm">
                 Fork
             </a>
-            {% endif %}
         </div>
     </div>
     <div class="query-status">

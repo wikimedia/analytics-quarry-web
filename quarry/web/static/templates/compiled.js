@@ -36,7 +36,11 @@ output += "/csv?download=true\">CSV</a></li>\n                    <li><a href=\"
 output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.opts.autoescape);
 output += "/output/";
 output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.opts.autoescape);
-output += "/csv?download=true&encoding=utf-16\">Excel (UTF-16 CSV)</a></li>\n                </ul>\n            </div>\n        </div>\n    </div>\n    <table class='table'></table>\n</div>\n";
+output += "/csv?download=true&encoding=utf-16\">Excel (UTF-16 CSV)</a></li>\n                    <li><a href=\"/run/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.opts.autoescape);
+output += "/output/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.opts.autoescape);
+output += "/wikitable?download=true\">Wikitable</a></li>\n                </ul>\n            </div>\n        </div>\n    </div>\n    <table class='table'></table>\n</div>\n";
 cb(null, output);
 ;
 } catch (e) {

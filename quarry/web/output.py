@@ -12,6 +12,8 @@ def get_formatted_response(format, queryrun, reader, resultset_id):
         return separated_formatter(reader, resultset_id, ',')
     elif format == 'tsv':
         return separated_formatter(reader, resultset_id, "\t")
+    elif format == 'wikitable':
+        return wikitable_formatter(reader, resultset_id)
 
 
 class OneLineRetainer(object):
@@ -64,3 +66,31 @@ def json_formatter(qrun, reader, resultset_id):
     }
     return Response(json.dumps(data),
                     mimetype='application/json')
+
+
+def _stringfy(data, encoding='utf-8'):
+    if isinstance(data, unicode):
+        return data.encode(encoding)
+    elif isinstance(data, str):
+        return data
+    else:
+        return str(data)
+
+
+def wikitable_formatter(reader, resultset_id):
+    rows = list(reader.get_rows(resultset_id))
+    header = rows[0]
+    del rows[0]
+
+    def respond():
+        yield '{| class="wikitable"'
+        yield '!' + '!!'.join(map(_stringfy, header))
+
+        for row in rows:
+            yield '|-'
+            yield '|' + '||'.join(map(_stringfy, row))
+
+        yield '|}'
+
+    return Response('\n'.join(list(respond())),
+                    content_type='text/plain; charset=utf-8')

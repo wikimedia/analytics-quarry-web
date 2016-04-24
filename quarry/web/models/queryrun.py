@@ -45,10 +45,10 @@ class QueryRun(Base):
             'qrun': self.id,
             'user': self.rev.query.user.username
         }
-        ret = "/*%s*/\n" % json.dumps(meta)
-        for db in self.rev.get_dbs():
-            ret += "use %s; %s\n" % (db, self.rev.text)
-        return ret
+        return "/*%s*/ %s" % (
+            json.dumps(meta),
+            self.rev.text
+        )
 
     def to_json(self):
         return {

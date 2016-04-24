@@ -1,7 +1,3 @@
-import json
-import operator
-import os
-import requests
 from fabric.api import sudo, env, cd, put, roles
 
 env.roledefs = {
@@ -20,41 +16,6 @@ code_dir = '/srv/quarry'
 
 def sr(cmd):
     return sudo(cmd, user='quarry')
-
-
-def generate_dbname_mapping():
-    specials = [
-        ["centralauth_p", "CentralAuth"],
-        ["meta_p", "Meta (information about databases)"],
-        ["heartbeat_p", "Heartbeat (replication lag info)"]
-    ]
-    family_map = {
-        'wiki': 'Wikipedia',  # hysterical raisins
-        'wikiquote': 'Wikiquote',
-        'wikinews': 'Wikinews',
-        'wiktionary': 'Wiktionary',
-        'wikivoyage': 'Wikivoyage',
-        'wikiversity': 'Wikiversity',
-        'wikisource': 'Wikisource',
-        'wikibooks': 'Wikibooks'
-    }
-    banned_dbs = ['labswiki', 'labtestwiki']  # https://phabricator.wikimedia.org/T89548
-    r = requests.get("https://meta.wikimedia.org/w/api.php?action=sitematrix&format=json&" +
-                     "smstate=all%7Cclosed%7Cfishbowl")
-    wikis = []
-    for key, value in r.json()['sitematrix'].items():
-        if key == 'specials':
-            for special in value:
-                wikis.append((special['dbname'] + "_p", special['sitename']))
-        elif key != 'count':
-            langname = value['localname']
-            for site in value['site']:
-                if site['dbname'] not in banned_dbs:
-                    wikis.append((site['dbname'] + "_p", langname + ' ' + family_map[site['code']]))
-
-    wikis.sort(key=operator.itemgetter(1))
-    with open(os.path.join(os.path.dirname(__file__), 'quarry/web/dbs.json'), 'w') as f:
-        json.dump(specials + wikis, f)
 
 
 @roles('web', 'runner')

@@ -167,20 +167,12 @@ def query_show(query_id):
     if query.latest_rev and query.latest_rev.latest_run_id:
         jsvars['qrun_id'] = query.latest_rev.latest_run_id
 
-    if query.latest_rev:
-        queried_dbs = query.latest_rev.get_dbs()
-    else:
-        queried_dbs = [g.conn.config['REPLICA_DB']]
-
-    dbs = json.load(open(os.path.join(__dir__, "dbs.json")))
-
     return render_template(
         "query/view.html",
         user=get_user(),
         query=query,
         jsvars=jsvars,
-        latest_rev=query.latest_rev,
-        dbs=[(db, label, db in queried_dbs) for db, label in dbs if db not in QueryRevision.BAD_DATABASES]
+        latest_rev=query.latest_rev
     )
 
 
@@ -215,7 +207,6 @@ def api_run_query():
     if get_user() is None:
         return "Authentication required", 401
     text = request.form['text']
-    dbs = request.form['dbs']
     query = g.conn.session.query(Query).filter(Query.id == request.form['query_id']).one()
 
     if query.latest_rev and query.latest_rev.latest_run:
@@ -226,7 +217,7 @@ def api_run_query():
             g.conn.session.add(query.latest_rev.latest_run)
             g.conn.session.commit()
 
-    query_rev = QueryRevision(query_id=query.id, text=text, dbs=dbs)
+    query_rev = QueryRevision(query_id=query.id, text=text)
     query.latest_rev = query_rev
 
     # XXX (phuedx, 2014/08/08): This deviates from the pre-existing

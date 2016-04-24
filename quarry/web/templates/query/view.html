@@ -74,14 +74,6 @@
         {% endif %}
     </div>
     <div>
-        <h3>Databases</h3>
-        <select id="dbs" multiple="multiple">
-        {% for db, label, selected in dbs %}
-            <option value="{{db}}"{% if selected %} selected="selected"{% endif %}>{{label}}</option>
-        {% endfor %}
-        </select>
-    </div>
-    <div>
         <h3>SQL</h3>
         <textarea id="code">{% if latest_rev %}{{ latest_rev.text }}{%endif%}</textarea>
     </div>

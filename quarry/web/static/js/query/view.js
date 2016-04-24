@@ -66,7 +66,6 @@ $( function() {
     $('#run-code').click( function() {
         $.post( "/api/query/run", {
             text: editor.getValue(),
-            dbs: $('#dbs').val().join(';'),
             query_id: vars.query_id
         }).done( function( data ) {
             var d = JSON.parse(data);
@@ -150,15 +149,4 @@ $( function() {
     if ( vars.qrun_id ) {
         checkStatus(vars.qrun_id);
     }
-
-    var $dbFilter = $( '<input>' );
-    $( '#dbs' ).parent().append( '<br>', document.createTextNode( 'Filter: ' ), $dbFilter );
-    $dbFilter.on( 'keydown mouseup cut paste change input select', function () {
-        var substr = $( this ).val().toLowerCase();
-        $( '#dbs option' ).each( function () {
-            var $this = $( this ),
-                search = $this.val() + $this.text().toLowerCase();
-            $this.toggle( search.indexOf( substr ) !== -1 );
-        } );
-    } );
 } );

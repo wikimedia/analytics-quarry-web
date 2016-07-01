@@ -180,10 +180,13 @@ def query_show(query_id):
 def query_output_redirect(query_id, resultset_id, format):
     query = g.conn.session.query(Query).filter(Query.id == query_id).one()
     qrun_id = query.latest_rev.latest_run_id
-    return redirect(
+    resp = redirect(
         url_for('output_result', qrun_id=qrun_id,
                 resultset_id=resultset_id, format=format)
-        )
+    )
+    # CORS on the redirect
+    resp.headers.add('Access-Control-Allow-Origin', '*')
+    return resp
 
 
 @app.route('/api/query/meta', methods=['POST'])

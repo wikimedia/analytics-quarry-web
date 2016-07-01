@@ -180,9 +180,11 @@ def query_show(query_id):
 def query_output_redirect(query_id, resultset_id, format):
     query = g.conn.session.query(Query).filter(Query.id == query_id).one()
     qrun_id = query.latest_rev.latest_run_id
+    # FIXME: Enforce HTTPS everywhere in a nicer way!
     resp = redirect(
         url_for('output_result', qrun_id=qrun_id,
-                resultset_id=resultset_id, format=format)
+                resultset_id=resultset_id, format=format,
+                _external=True, _schema='https')
     )
     # CORS on the redirect
     resp.headers.add('Access-Control-Allow-Origin', '*')

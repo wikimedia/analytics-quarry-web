@@ -212,6 +212,9 @@ def api_run_query():
     text = request.form['text']
     query = g.conn.session.query(Query).filter(Query.id == request.form['query_id']).one()
 
+    if query.user_id != get_user().id:
+        return "Authorization denied", 403
+
     if query.latest_rev and query.latest_rev.latest_run:
         result = worker.run_query.AsyncResult(query.latest_rev.latest_run.task_id)
         if not result.ready():

@@ -184,7 +184,7 @@ def query_output_redirect(query_id, resultset_id, format):
     resp = redirect(
         url_for('output_result', qrun_id=qrun_id,
                 resultset_id=resultset_id, format=format,
-                _external=True, _schema='https')
+                _external=True, _scheme='https')
     )
     # CORS on the redirect
     resp.headers.add('Access-Control-Allow-Origin', '*')

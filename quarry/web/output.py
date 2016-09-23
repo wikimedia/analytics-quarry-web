@@ -1,5 +1,7 @@
-from flask import Response
 import json
+
+from flask import Response
+
 import unicodecsv
 
 
@@ -46,7 +48,7 @@ def json_line_formatter(reader, resultset_id):
             if headers is None:
                 headers = row
                 continue
-            yield json.dumps(dict(zip(headers, row)))
+            yield json.dumps(dict(zip(headers, row))) + "\n"
 
     return Response(respond(), content_type='application/json')
 

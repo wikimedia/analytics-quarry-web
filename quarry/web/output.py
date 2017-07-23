@@ -2,7 +2,9 @@ import json
 
 from flask import Response
 
+from StringIO import StringIO
 import unicodecsv
+import xlsxwriter
 
 
 def get_formatted_response(format, queryrun, reader, resultset_id):
@@ -16,6 +18,8 @@ def get_formatted_response(format, queryrun, reader, resultset_id):
         return separated_formatter(reader, resultset_id, "\t")
     elif format == 'wikitable':
         return wikitable_formatter(reader, resultset_id)
+    elif format == 'xlsx':
+        return xlsx_formatter(reader, resultset_id)
 
 
 class OneLineRetainer(object):
@@ -96,3 +100,28 @@ def wikitable_formatter(reader, resultset_id):
 
     return Response('\n'.join(list(respond())),
                     content_type='text/plain; charset=utf-8')
+
+
+def xlsx_formatter(reader, resultset_id):
+    rows = reader.get_rows(resultset_id)
+
+    output = StringIO()
+    workbook = xlsxwriter.Workbook(output, {'constant_memory': True})
+    worksheet = workbook.add_worksheet()
+
+    for row_num, row in enumerate(rows):
+        for col_num, cell in enumerate(row):
+            if isinstance(cell, str):
+                # xlsxwriter expects unicode, but just in case the input is
+                # somehow not UTF-8, we replace them to not get an UnicodeError
+                # from within xlsxwriter.
+                cell = cell.decode('utf-8', 'replace')
+            # TODO: write_row?
+            worksheet.write(row_num, col_num, cell)
+
+    workbook.close()
+    output.seek(0)
+
+    return Response(output.read(),
+                    mimetype='application/vnd.openxmlformats-'
+                             'officedocument.spreadsheetml.sheet')

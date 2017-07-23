@@ -23,3 +23,4 @@ six==1.7.3
 translitcodec==0.3
 unicodecsv==0.9.4
 wsgiref==0.1.2
+xlsxwriter==0.5.2

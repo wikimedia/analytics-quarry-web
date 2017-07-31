@@ -1,8 +1,10 @@
-(function() {(window.nunjucksPrecompiled = window.nunjucksPrecompiled || {})["query-resultset.html"] = (function() {function root(env, context, frame, runtime, cb) {
+(function() {(window.nunjucksPrecompiled = window.nunjucksPrecompiled || {})["query-resultset.html"] = (function() {
+function root(env, context, frame, runtime, cb) {
 var lineno = null;
 var colno = null;
 var output = "";
 try {
+var parentTemplate = null;
 output += "<div>\n    <div class=\"row resultset-header\">\n        <div class='resultset-header col-md-8'>\n            ";
 if(runtime.contextOrFrameLookup(context, frame, "only_resultset")) {
 output += "\n            Resultset\n            ";
@@ -41,7 +43,11 @@ output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "ru
 output += "/output/";
 output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.opts.autoescape);
 output += "/xlsx?download=true\">Excel XLSX</a></li>\n                </ul>\n            </div>\n        </div>\n    </div>\n    <table class='table'></table>\n</div>\n";
+if(parentTemplate) {
+parentTemplate.rootRenderFunc(env, context, frame, runtime, cb);
+} else {
 cb(null, output);
+}
 ;
 } catch (e) {
   cb(runtime.handleError(e, lineno, colno));
@@ -50,16 +56,19 @@ cb(null, output);
 return {
 root: root
 };
+
 })();
 })();
-(function() {(window.nunjucksPrecompiled = window.nunjucksPrecompiled || {})["query-status.html"] = (function() {function root(env, context, frame, runtime, cb) {
+(function() {(window.nunjucksPrecompiled = window.nunjucksPrecompiled || {})["query-status.html"] = (function() {
+function root(env, context, frame, runtime, cb) {
 var lineno = null;
 var colno = null;
 var output = "";
 try {
+var parentTemplate = null;
 if(runtime.contextOrFrameLookup(context, frame, "status") == "failed") {
 output += "\n<strong>Error</strong>\n<pre>";
-output += runtime.suppressValue(runtime.memberLookup((runtime.contextOrFrameLookup(context, frame, "extra")),"error", env.opts.autoescape), env.opts.autoescape);
+output += runtime.suppressValue(runtime.memberLookup((runtime.contextOrFrameLookup(context, frame, "extra")),"error"), env.opts.autoescape);
 output += "</pre>\n";
 ;
 }
@@ -75,7 +84,12 @@ output += "\nThis query is waiting to be executed\n";
 }
 else {
 if(runtime.contextOrFrameLookup(context, frame, "status") == "running") {
-output += "\nThis query is currently executing\n";
+output += "\nThis query is currently executing... \n";
+if(runtime.memberLookup((runtime.contextOrFrameLookup(context, frame, "extra")),"connection_id")) {
+output += "\n<button id=\"show-explain\" type=\"button\" class=\"btn btn-default btn-xs\">Explain</button>\n";
+;
+}
+output += "\n";
 ;
 }
 ;
@@ -85,7 +99,11 @@ output += "\nThis query is currently executing\n";
 ;
 }
 output += "\n";
+if(parentTemplate) {
+parentTemplate.rootRenderFunc(env, context, frame, runtime, cb);
+} else {
 cb(null, output);
+}
 ;
 } catch (e) {
   cb(runtime.handleError(e, lineno, colno));
@@ -94,5 +112,7 @@ cb(null, output);
 return {
 root: root
 };
+
 })();
 })();
+

@@ -56,6 +56,10 @@ def run_query(query_run_id):
             celery_log.info("Check result for qrun:%s failed, with message: %s", qrun.id, check_result[0])
             raise pymysql.DatabaseError(0, check_result[1])
         cur = conn.replica.cursor()
+        cur.execute('SELECT CONNECTION_ID();')
+        qrun.extra_info = json.dumps({'connection_id': cur.fetchall()[0][0]})
+        conn.session.add(qrun)
+        conn.session.commit()
         cur.execute(qrun.augmented_sql)
         output = SQLiteResultWriter(qrun, celery.conf.OUTPUT_PATH_TEMPLATE)
         if cur.description:

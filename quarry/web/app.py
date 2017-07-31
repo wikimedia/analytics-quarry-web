@@ -344,5 +344,33 @@ def output_query_meta(query_id):
     )
 
 
+@app.route("/explain/<int:connection_id>")
+def output_explain(connection_id):
+    cur = g.conn.replica.cursor()
+    try:
+        cur.execute('SHOW EXPLAIN FOR %d;' % connection_id)
+    except cur.InternalError as e:
+        if e[0] in [1094, 1915, 1933]:
+            # 1094 = Unknown thread id
+            # 1915, 1933 = Target is not running an EXPLAINable command
+            return Response(json.dumps(
+                {
+                    'headers': ['Error'],
+                    'rows': [['Hmm... Is the SQL actually running?!']],
+                }, default=json_formatter),
+                mimetype='application/json',
+            )
+        else:
+            raise
+    else:
+        return Response(json.dumps(
+            {
+                'headers': [c[0] for c in cur.description],
+                'rows': cur.fetchall(),
+            }, default=json_formatter),
+            mimetype='application/json',
+        )
+
+
 if __name__ == '__main__':
     app.run(port=5000, host="0.0.0.0")

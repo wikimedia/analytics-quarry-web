@@ -6,5 +6,8 @@ This query took longer than 30 minutes to execute and was killed.
 {% elif status == 'queued' %}
 This query is waiting to be executed
 {% elif status == 'running' %}
-This query is currently executing
+This query is currently executing...
+{% if extra.connection_id %}
+<button id="show-explain" type="button" class="btn btn-default btn-xs">Explain</button>
+{% endif %}
 {% endif %}

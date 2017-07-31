@@ -8,6 +8,7 @@ $( function() {
                 .replace(/>/g, '&gt;');
     }
 
+    CodeMirror.extendMode( 'sql', { electricChars: ')' } );
     var editor = CodeMirror.fromTextArea( $("#code")[0], {
         mode: "text/x-mariadb",
         theme: "monokai",

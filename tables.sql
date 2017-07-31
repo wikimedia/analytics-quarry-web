@@ -56,3 +56,4 @@ CREATE TABLE IF NOT EXISTS star(
 );
 CREATE INDEX IF NOT EXISTS star_user_id_index ON star(user_id);
 CREATE INDEX IF NOT EXISTS star_query_id_index ON star(query_id);
+CREATE UNIQUE INDEX IF NOT EXISTS star_user_query_index ON star(user_id, query_id);

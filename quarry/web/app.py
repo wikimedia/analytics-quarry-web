@@ -12,6 +12,7 @@ import yaml
 import output
 import os
 from sqlalchemy import desc, func
+from sqlalchemy.exc import IntegrityError
 from redissession import RedisSessionInterface
 from connections import Connections
 from utils.pagination import RangeBasedPagination
@@ -110,7 +111,13 @@ def star_query():
         star.user = get_user()
         star.query = query
         g.conn.session.add(star)
-        g.conn.session.commit()
+        try:
+            g.conn.session.commit()
+        except IntegrityError as e:
+            if e[0] == 1062:  # Duplicate
+                g.conn.session.rollback()
+            else:
+                raise
         return ""
     else:
         return "Query not found", 404

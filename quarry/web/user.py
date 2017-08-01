@@ -12,6 +12,7 @@ user_blueprint = Blueprint('user', __name__)
 def get_user():
     if 'user_id' in session:
         if not hasattr(g, '_user'):
+            session.permanent = True
             g._user = g.conn.session.query(User).filter(User.id == session['user_id']).one()
         return g._user
     else:

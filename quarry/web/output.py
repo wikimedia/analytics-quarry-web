@@ -116,8 +116,16 @@ def xlsx_formatter(reader, resultset_id):
                 # somehow not UTF-8, we replace them to not get an UnicodeError
                 # from within xlsxwriter.
                 cell = cell.decode('utf-8', 'replace')
-            # TODO: write_row?
-            worksheet.write(row_num, col_num, cell)
+            # T175285: xlsx can't do urls longer than 255 chars.
+            # We first try writing it with write(), if it fails due to
+            # type-specific errors (return code < -1; 0 is success and -1 is
+            # generic row/col dimension error), we use write_string to force
+            # writing as string type, which has a max of 32767 chars.
+            # This only works when cell is a string, however; so only string
+            # will use fallback.
+            if (worksheet.write(row_num, col_num, cell) < -1 and
+                    isinstance(cell, basestring)):
+                worksheet.write_string(row_num, col_num, cell)
 
     workbook.close()
     output.seek(0)

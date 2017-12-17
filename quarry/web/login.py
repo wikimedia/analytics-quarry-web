@@ -3,6 +3,7 @@ from mwoauth import ConsumerToken, Handshaker
 from .models.user import User
 from requests import __version__ as requests_version
 from socket import getfqdn
+from sqlalchemy.exc import IntegrityError
 
 auth = Blueprint('auth', __name__)
 
@@ -42,7 +43,7 @@ def oauth_callback():
         user_agent=user_agent
     )
     access_token = handshaker.complete(session['request_token'], request.query_string)
-    session['acces_token'] = access_token
+    session['access_token'] = access_token
     identity = handshaker.identify(access_token)
     wiki_uid = identity['sub']
     user = g.conn.session.query(User).filter(User.wiki_uid == wiki_uid).first()
@@ -50,6 +51,17 @@ def oauth_callback():
         user = User(username=identity['username'], wiki_uid=wiki_uid)
         g.conn.session.add(user)
         g.conn.session.commit()
+    elif user.username != identity['username']:
+        user.username = identity['username']
+        g.conn.session.add(user)
+        try:
+            g.conn.session.commit()
+        except IntegrityError as e:
+            if e[0] == 1062:  # Duplicate
+                g.conn.session.rollback()
+            else:
+                raise
+
     session['user_id'] = user.id
     return_to_url = session.get('return_to_url')
     del session['request_token']

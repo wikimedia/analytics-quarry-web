@@ -100,11 +100,19 @@ def run_query(query_run_id):
     except pymysql.OperationalError as e:
         write_error(qrun, e[1])
     finally:
+        conn.close_session()
+
         if cur is not False:
             # It is possible the cursor was never created,
             # so check before we try to close it
-            cur.close()
-        conn.close_session()
+            try:
+                cur.close()
+            except pymysql.OperationalError as e:
+                if e[0] == 2013:
+                    # Lost connection to MySQL server during query
+                    pass
+                else:
+                    raise
 
 
 def write_error(qrun, error):

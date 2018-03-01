@@ -13,10 +13,10 @@ CREATE TABLE resultsets (id, headers, rowcount)
 class SQLiteResultWriter(object):
     def __init__(self, qrun, path_template):
         self.qrun = qrun
-        path = path_template % (qrun.rev.query.user.id, qrun.rev.query.id, qrun.id)
-        if not os.path.exists(os.path.dirname(path)):
-            os.makedirs(os.path.dirname(path))
-        self.db = sqlite3.connect(path)
+        self.path = path_template % (qrun.rev.query.user.id, qrun.rev.query.id, qrun.id)
+        if not os.path.exists(os.path.dirname(self.path)):
+            os.makedirs(os.path.dirname(self.path))
+        self.db = sqlite3.connect(self.path)
         self.db.text_factory = str
         self.db.execute(INITIAL_SQL)
         self.resultset_id = 0
@@ -64,6 +64,10 @@ class SQLiteResultWriter(object):
 
     def close(self):
         self.db.close()
+
+    def destroy(self):
+        self.close()
+        os.remove(self.path)
 
     def get_resultsets(self):
         return self._resultsets

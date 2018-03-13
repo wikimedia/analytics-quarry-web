@@ -1,13 +1,18 @@
+import contextlib
+import json
+import os
+import signal
+import yaml
+
 import pymysql
-from celery.utils.log import get_task_logger
-from models.queryrun import QueryRun
-from results import SQLiteResultWriter
+
 from celery import Celery
 from celery.signals import worker_process_init, worker_process_shutdown
+from celery.utils.log import get_task_logger
+
 from connections import Connections
-import yaml
-import os
-import json
+from models.queryrun import QueryRun
+from results import SQLiteResultWriter
 
 
 __dir__ = os.path.dirname(__file__)
@@ -25,12 +30,30 @@ except IOError:
 conn = None
 
 
+# TODO: use python stopit after Halfak teaches me how to package properly
+@contextlib.contextmanager
+def raise_after(seconds, exc_gen):
+    def handler(*args, **kwargs):
+        raise exc_gen()
+
+    old_handler = signal.getsignal(signal.SIGALRM)
+    signal.signal(signal.SIGALRM, handler)
+    old_time = signal.alarm(seconds)
+
+    try:
+        yield
+    finally:
+        assert signal.getsignal(signal.SIGALRM) == handler
+        signal.signal(signal.SIGALRM, old_handler)
+        signal.alarm(old_time)
+
+
 class CustomQueryError(Exception):
     pass
 
 
 @worker_process_init.connect
-def init(sender, signal):
+def init(*args, **kwargs):
     global conn
 
     conn = Connections(celery.conf)
@@ -38,7 +61,7 @@ def init(sender, signal):
 
 
 @worker_process_shutdown.connect
-def shutdown(sender, signal, pid, exitcode):
+def shutdown(*args, **kwargs):
     global conn
     conn.close_all()
     celery_log.info("Closed all connection")
@@ -67,24 +90,23 @@ def run_query(query_run_id):
         cur.execute(qrun.augmented_sql)
         output = SQLiteResultWriter(qrun, celery.conf.OUTPUT_PATH_TEMPLATE)
         try:
-            while True:
-                if cur.description:
-                    max_rows = 65536  # T188564
-                    if cur.rowcount > max_rows:
-                        raise CustomQueryError(
-                            'Too many results! Did you add some conditions or a limit to '
-                            'the number of results? If you want tens of thousands or more '
-                            'results, such as the titles of all articles, Wikimedia Dumps '
-                            'at dumps.wikimedia.org will be a better option.')
-                    output.start_resultset([c[0] for c in cur.description], cur.rowcount)
-                    rows = cur.fetchmany(10)
-                    while rows:
-                        output.add_rows(rows)
+            with raise_after(60, lambda: CustomQueryError(
+                'Too many results! Did you add some conditions or a limit to '
+                'the number of results? If you want tens of thousands or more '
+                'results, such as the titles of all articles, Wikimedia Dumps '
+                'at dumps.wikimedia.org will be a better option.')
+            ):  # T188564
+                while True:
+                    if cur.description:
+                        output.start_resultset([c[0] for c in cur.description], cur.rowcount)
                         rows = cur.fetchmany(10)
-                    output.end_resultset()
-                if not cur.nextset():
-                    break
-            output.close()
+                        while rows:
+                            output.add_rows(rows)
+                            rows = cur.fetchmany(10)
+                        output.end_resultset()
+                    if not cur.nextset():
+                        break
+                output.close()
         except Exception:
             # Destroy the file, we won't need it.
             output.destroy()

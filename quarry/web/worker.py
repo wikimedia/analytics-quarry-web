@@ -90,7 +90,7 @@ def run_query(query_run_id):
         cur.execute(qrun.augmented_sql)
         output = SQLiteResultWriter(qrun, celery.conf.OUTPUT_PATH_TEMPLATE)
         try:
-            with raise_after(60, lambda: CustomQueryError(
+            with raise_after(10 * 60, lambda: CustomQueryError(
                 'Too many results! Did you add some conditions or a limit to '
                 'the number of results? If you want tens of thousands or more '
                 'results, such as the titles of all articles, Wikimedia Dumps '

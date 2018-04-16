@@ -42,6 +42,10 @@ output += "/wikitable?download=true\">Wikitable</a></li>\n                    <l
 output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.opts.autoescape);
 output += "/output/";
 output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.opts.autoescape);
+output += "/html?download=true\">HTML</a></li>\n                    <li><a href=\"/run/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "run_id"), env.opts.autoescape);
+output += "/output/";
+output += runtime.suppressValue(runtime.contextOrFrameLookup(context, frame, "resultset_id"), env.opts.autoescape);
 output += "/xlsx?download=true\">Excel XLSX</a></li>\n                </ul>\n            </div>\n        </div>\n    </div>\n    <table class='table'></table>\n</div>\n";
 if(parentTemplate) {
 parentTemplate.rootRenderFunc(env, context, frame, runtime, cb);

@@ -1,6 +1,6 @@
 import json
 
-from flask import Response
+from flask import Response, escape
 
 from StringIO import StringIO
 import unicodecsv
@@ -20,6 +20,8 @@ def get_formatted_response(format, queryrun, reader, resultset_id):
         return wikitable_formatter(reader, resultset_id)
     elif format == 'xlsx':
         return xlsx_formatter(reader, resultset_id)
+    elif format == 'html':
+        return html_formatter(reader, resultset_id)
 
 
 class OneLineRetainer(object):
@@ -133,3 +135,27 @@ def xlsx_formatter(reader, resultset_id):
     return Response(output.read(),
                     mimetype='application/vnd.openxmlformats-'
                              'officedocument.spreadsheetml.sheet')
+
+
+def html_formatter(reader, resultset_id):
+    rows = list(reader.get_rows(resultset_id))
+    header = rows[0]
+    del rows[0]
+
+    def respond():
+        yield '<table>\n'
+        yield '<tr>'
+        for col in map(_stringfy, header):
+            yield '<th scope="col">%s</th>' % escape(col)
+        yield'</tr>\n'
+
+        for row in rows:
+            yield '<tr>'
+            for col in map(_stringfy, row):
+                yield '<td>%s</td>' % escape(col)
+            yield'</tr>\n'
+
+        yield '</table>'
+
+    return Response('\n'.join(list(respond())),
+                    content_type='text/html; charset=utf-8')

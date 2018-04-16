@@ -16,7 +16,7 @@
 <script src="/static/js/query/view.js"> </script>
 {% endblock %}
 {% block title %}
-{{query.title}} - Quarry
+{% if query.title %}{{query.title}}{% else %}Untitled query #{{ query.id }}{% endif %} - Quarry
 {% endblock %}
 {% block content %}
 <div id="content" class="container {% if jsvars.can_edit %}edit{% else %}no-edit{% endif %} {% if jsvars.is_starred %}starred{% endif %} {% if query.published %}published {% endif %}">

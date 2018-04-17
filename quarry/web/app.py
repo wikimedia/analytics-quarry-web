@@ -202,7 +202,12 @@ def query_output_redirect(query_id, resultset_id, format):
 def api_set_meta():
     if get_user() is None:
         return "Authentication required", 401
+
     query = g.conn.session.query(Query).filter(Query.id == request.form['query_id']).one()
+
+    if query.user_id != get_user().id:
+        return "Authorization denied", 403
+
     if 'title' in request.form:
         query.title = request.form['title']
     if 'published' in request.form:

@@ -26,7 +26,7 @@ conn = None
 
 
 @worker_process_init.connect
-def init(sender, signal):
+def init(*args, **kwargs):
     global conn
 
     conn = Connections(celery.conf)
@@ -34,7 +34,7 @@ def init(sender, signal):
 
 
 @worker_process_shutdown.connect
-def shutdown(sender, signal, pid, exitcode):
+def shutdown(*args, **kwargs):
     global conn
     conn.close_all()
     celery_log.info("Closed all connection")

@@ -1,0 +1,27 @@
+[[source]]
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+
+[dev-packages]
+
+[packages]
+
+# base
+redis = "*"
+celery = "*"
+sqlalchemy = "*"
+unicodecsv = "*"
+translitcodec = "*"
+pyyaml = "*"
+pymysql = "*"
+
+# web
+flask = "*"
+mwoauth = "*"
+xlsxwriter = "*"
+
+# runner: none
+# killer: none
+
+[requires]
+python_version = "3.5"

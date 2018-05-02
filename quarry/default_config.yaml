@@ -13,6 +13,7 @@ CELERY_RESULT_BACKEND: 'redis://'
 CELERYD_CONCURRENCY: 24  # Since all tasks are IO bound
 CELERY_ACKS_LATE: True  # Tasks are idempotent!
 CELERY_TRACK_STARTED: True
+CELERYD_PREFETCH_MULTIPLIER: 1 # Tasks can run for a long time
 # Just query the quarry database itself.
 REPLICA_HOST: 'localhost'
 REPLICA_DB: 'quarry'

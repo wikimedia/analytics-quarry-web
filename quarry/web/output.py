@@ -145,14 +145,14 @@ def html_formatter(reader, resultset_id):
     def respond():
         yield '<table>\n'
         yield '<tr>'
-        for col in map(_stringfy, header):
-            yield '<th scope="col">%s</th>' % escape(col)
+        for col in header:
+            yield '<th scope="col">%s</th>' % escape(col.decode('utf-8'))
         yield'</tr>\n'
 
         for row in rows:
             yield '<tr>'
-            for col in map(_stringfy, row):
-                yield '<td>%s</td>' % escape(col)
+            for col in row:
+                yield '<td>%s</td>' % escape(col.decode('utf-8'))
             yield'</tr>\n'
 
         yield '</table>'

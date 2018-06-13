@@ -1,5 +1,6 @@
 # The OAUTH tokens are callbacks to a localhost domain
 # it is ok that they are public.
+# MAINTENANCE_MSG: 'This site is currently under maintenance. Some features may not work as expected.'
 OAUTH_CONSUMER_TOKEN: "e9bfbacf0b29a8ea64712b209c24ee36"
 OAUTH_SECRET_TOKEN: "83ed4ac72176286f5c7798459f0a6b16a96853c4"
 SECRET_KEY: 'aaarggghhpleaserescuemeiamstuckinarandomnumbergeneratorfactory'

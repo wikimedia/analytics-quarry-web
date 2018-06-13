@@ -26,3 +26,10 @@
 .navbar-brand {
     margin-top: -14px;
 }
+
+.maintenance-msg {
+    margin-bottom: 0px;
+    border-bottom-width: 0px;
+    text-align: center;
+    font-size: 18.75px;
+}

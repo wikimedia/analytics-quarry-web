@@ -26,8 +26,14 @@
     <script src="//tools-static.wmflabs.org/cdnjs/ajax/libs/twitter-bootstrap/3.2.0/js/bootstrap.min.js"></script>
     {% block head %} {% endblock %}
 </head>
+
 <body>
 <div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
+    {% if config['MAINTENANCE_MSG'] %}
+    <div class="alert alert-warning maintenance-msg">
+        <p>{{ config['MAINTENANCE_MSG'] }}</p>
+    </div>
+    {% endif %}
     <div class="container">
         <div class="navbar-header">
             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -69,13 +75,13 @@
                 <li><a href="/login?next={{request.path}}">Login</a></li>
             {% endif  %}
             </ul>
-
         </div><!--/.nav-collapse -->
     </div>
-
 </div>
+
 {% block content %}
 {% endblock %}
+
 <div id="footer">
     <div class="container">
         <div class="row">

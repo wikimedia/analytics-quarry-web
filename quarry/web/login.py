@@ -1,6 +1,6 @@
 from flask import Blueprint, request, session, redirect, g
 from mwoauth import ConsumerToken, Handshaker
-from models.user import User
+from .models.user import User
 
 auth = Blueprint('auth', __name__)
 

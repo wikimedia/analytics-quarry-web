@@ -1,4 +1,5 @@
 import re
+import codecs
 
 _punct_re = re.compile(r'[\t !"#$%&\'()*\-/<=>?@\[\\\]^_`{|},.]+')
 
@@ -26,11 +27,11 @@ def json_formatter(dt):
     raise TypeError(dt)
 
 
-def slugify(text, delim=u'-'):
+def slugify(text, delim='-'):
     """Generates an ASCII-only slug."""
     result = []
     for word in _punct_re.split(text.lower()):
-        word = word.encode('translit/long')
+        word = codecs.encode(word, 'translit/long')
         if word:
             result.append(word)
-    return unicode(delim.join(result))
+    return str(delim.join(result))

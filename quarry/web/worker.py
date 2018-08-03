@@ -1,10 +1,10 @@
 import pymysql
 from celery.utils.log import get_task_logger
-from models.queryrun import QueryRun
-from results import SQLiteResultWriter
+from .models.queryrun import QueryRun
+from .results import SQLiteResultWriter
 from celery import Celery
 from celery.signals import worker_process_init, worker_process_shutdown
-from connections import Connections
+from .connections import Connections
 import yaml
 import os
 import json
@@ -89,7 +89,7 @@ def run_query(query_run_id):
                 "Time limit exceeded for qrun:%s, thread:%s attempting to kill",
                 qrun.id, conn.replica.thread_id()
             )
-            print 'got killed'
+            print('got killed')
             qrun.status = QueryRun.STATUS_KILLED
             conn.session.add(qrun)
             conn.session.commit()

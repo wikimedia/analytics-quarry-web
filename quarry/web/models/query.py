@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, ForeignKey, Unicode, DateTime, Boolean, UnicodeText
 from sqlalchemy.orm import relationship
-from base import Base
-from user import User  # noqa
+from .base import Base
+from .user import User  # noqa
 
 
 class Query(Base):

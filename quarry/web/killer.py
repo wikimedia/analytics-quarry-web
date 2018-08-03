@@ -3,7 +3,7 @@ import os
 import yaml
 import logging
 import pymysql
-from connections import Connections
+from .connections import Connections
 
 __dir__ = os.path.dirname(__file__)
 config = yaml.load(open(os.path.join(__dir__, "../default_config.yaml")))

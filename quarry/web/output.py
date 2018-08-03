@@ -2,9 +2,9 @@ import json
 
 from flask import Response, escape
 
-from StringIO import StringIO
-import unicodecsv
+from io import BytesIO
 import xlsxwriter
+import csv
 
 
 def get_formatted_response(format, queryrun, reader, resultset_id):
@@ -24,25 +24,21 @@ def get_formatted_response(format, queryrun, reader, resultset_id):
         return html_formatter(reader, resultset_id)
 
 
-class OneLineRetainer(object):
+class MultipleLinesRetainer(object):  # TODO: generator ?
     def __init__(self):
-        self.last_written = None
+        self.content = ''
 
     def write(self, value):
-        self.last_written = value
+        self.content += value
 
 
 def separated_formatter(reader, resultset_id, delim=','):
     rows = reader.get_rows(resultset_id)
-    retainer = OneLineRetainer()
-    writer = unicodecsv.writer(retainer, delimiter=delim)
+    retainer = MultipleLinesRetainer()
+    csvobject = csv.writer(retainer)
+    csvobject.writerows(rows)
 
-    def respond():
-        for row in rows:
-            writer.writerow(row)
-            yield retainer.last_written
-
-    return Response(respond(), content_type='text/csv')
+    return Response(retainer.content, content_type='text/csv')
 
 
 def json_line_formatter(reader, resultset_id):
@@ -54,7 +50,7 @@ def json_line_formatter(reader, resultset_id):
             if headers is None:
                 headers = row
                 continue
-            yield json.dumps(dict(zip(headers, row))) + "\n"
+            yield json.dumps(dict(list(zip(headers, row)))) + "\n"
 
     return Response(respond(), content_type='application/json')
 
@@ -76,15 +72,6 @@ def json_formatter(qrun, reader, resultset_id):
                     mimetype='application/json')
 
 
-def _stringfy(data, encoding='utf-8'):
-    if isinstance(data, unicode):
-        return data.encode(encoding)
-    elif isinstance(data, str):
-        return data
-    else:
-        return str(data)
-
-
 def wikitable_formatter(reader, resultset_id):
     rows = list(reader.get_rows(resultset_id))
     header = rows[0]
@@ -92,11 +79,11 @@ def wikitable_formatter(reader, resultset_id):
 
     def respond():
         yield '{| class="wikitable"'
-        yield '!' + '!!'.join(map(_stringfy, header))
+        yield '!' + '!!'.join(map(str, header))
 
         for row in rows:
             yield '|-'
-            yield '|' + '||'.join(map(_stringfy, row))
+            yield '|' + '||'.join(map(str, row))
 
         yield '|}'
 
@@ -107,17 +94,12 @@ def wikitable_formatter(reader, resultset_id):
 def xlsx_formatter(reader, resultset_id):
     rows = reader.get_rows(resultset_id)
 
-    output = StringIO()
-    workbook = xlsxwriter.Workbook(output, {'constant_memory': True})
+    output = BytesIO()
+    workbook = xlsxwriter.Workbook(output)
     worksheet = workbook.add_worksheet()
 
     for row_num, row in enumerate(rows):
         for col_num, cell in enumerate(row):
-            if isinstance(cell, str):
-                # xlsxwriter expects unicode, but just in case the input is
-                # somehow not UTF-8, we replace them to not get an UnicodeError
-                # from within xlsxwriter.
-                cell = cell.decode('utf-8', 'replace')
             # T175285: xlsx can't do urls longer than 255 chars.
             # We first try writing it with write(), if it fails due to
             # type-specific errors (return code < -1; 0 is success and -1 is
@@ -126,7 +108,7 @@ def xlsx_formatter(reader, resultset_id):
             # This only works when cell is a string, however; so only string
             # will use fallback.
             if (worksheet.write(row_num, col_num, cell) < -1 and
-                    isinstance(cell, basestring)):
+                    isinstance(cell, str)):
                 worksheet.write_string(row_num, col_num, cell)
 
     workbook.close()
@@ -146,13 +128,13 @@ def html_formatter(reader, resultset_id):
         yield '<table>\n'
         yield '<tr>'
         for col in header:
-            yield '<th scope="col">%s</th>' % escape(col.decode('utf-8'))
+            yield '<th scope="col">%s</th>' % escape(col)
         yield'</tr>\n'
 
         for row in rows:
             yield '<tr>'
             for col in row:
-                yield '<td>%s</td>' % escape(col.decode('utf-8'))
+                yield '<td>%s</td>' % escape(col)
             yield'</tr>\n'
 
         yield '</table>'

@@ -1,10 +1,10 @@
 #!/bin/bash
 DEBIAN_FRONTEND=noninteractive apt-get update
-DEBIAN_FRONTEND=noninteractive apt-get install --quiet --yes python-virtualenv redis-server mariadb-server
+DEBIAN_FRONTEND=noninteractive apt-get install --quiet --yes python3-venv redis-server mariadb-server
 mkdir -p /srv/results
 chown vagrant:vagrant /srv/results
 mkdir -p /srv/venv
-virtualenv /srv/venv
+/usr/bin/python3 -m venv /srv/venv
 /srv/venv/bin/pip install --upgrade pip wheel
 /srv/venv/bin/pip install --upgrade -r /vagrant/requirements.txt
 ln -f -s /vagrant/quarry-web-dev.service /etc/systemd/system/

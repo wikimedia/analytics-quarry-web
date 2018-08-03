@@ -2,9 +2,9 @@ from flask import Blueprint, session, redirect, g, render_template
 from sqlalchemy.orm.exc import NoResultFound
 from sqlalchemy.orm import joinedload
 from sqlalchemy import desc, func
-from models.user import User, UserGroup
-from models.star import Star
-from models.query import Query
+from .models.user import User, UserGroup
+from .models.star import Star
+from .models.query import Query
 
 user_blueprint = Blueprint('user', __name__)
 

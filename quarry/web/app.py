@@ -1,26 +1,26 @@
 from flask import Flask, render_template, redirect, g, request, url_for, Response
-from models.query import Query
-from models.queryrevision import QueryRevision
-from models.queryrun import QueryRun
-from models.star import Star
-from results import SQLiteResultReader
-from utils import json_formatter, slugify
+from .models.query import Query
+from .models.queryrevision import QueryRevision
+from .models.queryrun import QueryRun
+from .models.star import Star
+from .results import SQLiteResultReader
+from .utils import json_formatter, slugify
 # This just provides the translit/long codec, unused otherwise
 import translitcodec  # NOQA
 import json
 import yaml
-import output
+from . import output
 import os
 from sqlalchemy import desc, func
 from sqlalchemy.exc import IntegrityError
-from redissession import RedisSessionInterface
-from connections import Connections
-from utils.pagination import RangeBasedPagination
-import worker
+from .redissession import RedisSessionInterface
+from .connections import Connections
+from .utils.pagination import RangeBasedPagination
+from . import worker
 
-from login import auth
-from user import user_blueprint, get_user, get_preferences
-from webhelpers import templatehelpers
+from .login import auth
+from .user import user_blueprint, get_user, get_preferences
+from .webhelpers import templatehelpers
 
 __dir__ = os.path.dirname(__file__)
 
@@ -46,7 +46,7 @@ class QueriesRangeBasedPagination(RangeBasedPagination):
         get_params.update({
             'from': page_key, 'limit': limit})
         return url_for('query_runs_all', **dict(
-            [(key, value) for key, value in get_params.items()])
+            [(key, value) for key, value in list(get_params.items())])
         )
 
     def order_queryset(self):
@@ -307,7 +307,7 @@ def output_result(qrun_id, resultset_id=0, format='json'):
             qrun.id,
             format
         )
-        response.headers['Content-Disposition'] = 'attachment; filename="%s"' % filename.encode('utf-8')
+        response.headers['Content-Disposition'] = 'attachment; filename="%s"' % filename
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
@@ -363,7 +363,7 @@ def output_explain(connection_id):
     try:
         cur.execute('SHOW EXPLAIN FOR %d;' % connection_id)
     except cur.InternalError as e:
-        if e[0] in [1094, 1915, 1933]:
+        if e.args[0] in [1094, 1915, 1933]:
             # 1094 = Unknown thread id
             # 1915, 1933 = Target is not running an EXPLAINable command
             return Response(json.dumps(

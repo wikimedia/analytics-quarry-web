@@ -20,6 +20,12 @@ def get_user():
     return user
 
 
+def get_preferences():
+    if 'preferences' not in session:
+        session['preferences'] = {}
+    return session['preferences']
+
+
 @user_blueprint.route("/sudo/<string:username>")
 def sudo(username):
     user = get_user()
@@ -65,5 +71,6 @@ def user_page(user_name):
         stats=stats,
         draft_queries=draft_queries,
         published_queries=published_queries,
-        stars=stars
+        stars=stars,
+        jsvars={'preferences': get_preferences() if get_user() else {}}
     )

@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% block head %}
+<script src="/static/js/user.js"></script>
 <link href="/static/css/user.css" rel="stylesheet">
 {% endblock %}
 {% block content %}
@@ -44,18 +45,31 @@
             </ul>
         </div>
     </div>
-    <div>
-        <h3>Draft Queries</h3>
-        <ul class="query-items-list">
-            {% for query in draft_queries %}
-            <li class="query-item">
-                <a class="query-title" href="/query/{{query.id}}">{% if query.title %}{{query.title}}{% else %}Untitled query #{{query.id}}{% endif %}</a>
-                <small>{{query.last_touched|timesince}}</small>
-            </li>
-            {% else %}
-                This user has not drafted any queries
-            {% endfor %}
-        </ul>
+    <div class="row">
+        <div class="col-md-6 query-list-container">
+            <h3>Draft Queries</h3>
+            <ul class="query-items-list">
+                {% for query in draft_queries %}
+                <li class="query-item">
+                    <a class="query-title" href="/query/{{query.id}}">{% if query.title %}{{query.title}}{% else %}Untitled query #{{query.id}}{% endif %}</a>
+                    <small>{{query.last_touched|timesince}}</small>
+                </li>
+                {% else %}
+                    This user has not drafted any queries
+                {% endfor %}
+            </ul>
+        </div>
+        {% if user and user == display_user %}
+        <div class="col-md-6 query-list-container query-useroptions">
+            <h3>My options <small>&beta;eta</small></h3>
+            <ul class="query-items-list">
+                <li class="query-item" id="option-useNotifications">
+                    <label><input type="checkbox" id="option-useNotifications-checkbox"> Receive notifications when query have been executed (requires keeping the query tab open in your browser)</label>
+                    <div class="error">Your browser doesn't supports notifications :(</div>
+                </li>
+            </ul>
+        </div>
+        {% endif %}
     </div>
 </div>
 {% endblock %}

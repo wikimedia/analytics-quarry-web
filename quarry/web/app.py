@@ -19,7 +19,7 @@ from utils.pagination import RangeBasedPagination
 import worker
 
 from login import auth
-from user import user_blueprint, get_user
+from user import user_blueprint, get_user, get_preferences
 from webhelpers import templatehelpers
 
 __dir__ = os.path.dirname(__file__)
@@ -168,7 +168,8 @@ def query_show(query_id):
         'query_id': query.id,
         'can_edit': can_edit,
         'is_starred': is_starred,
-        'published': query.published
+        'published': query.published,
+        'preferences': get_preferences()
     }
 
     if query.latest_rev and query.latest_rev.latest_run_id:
@@ -382,6 +383,26 @@ def output_explain(connection_id):
             }, default=json_formatter),
             mimetype='application/json',
         )
+
+
+@app.route("/api/preferences/get/<key>")
+def pref_get(key):
+    if get_user() is None:
+        return "Authentication required", 401
+
+    if key in get_preferences():
+        return Response(json.dumps({'key': key, 'value': get_preferences()[key]}))
+    else:
+        return Response(json.dumps({'key': key, 'error': 'novalue'}))
+
+
+@app.route("/api/preferences/set/<key>/<value>")
+def pref_set(key, value):
+    if get_user() is None:
+        return "Authentication required", 401
+
+    get_preferences()[key] = (None if value == 'null' else value)
+    return Response(json.dumps({'key': key, 'success': ''})), 201
 
 
 if __name__ == '__main__':

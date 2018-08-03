@@ -75,13 +75,13 @@ $( function() {
             $("#query-result-error").hide();
             $("#query-result-success").hide();
             clearTimeout( window.lastStatusCheck );
-            checkStatus(d.qrun_id);
+            checkStatus( d.qrun_id, false );
         } );
 
         return false;
     } );
 
-    function checkStatus(qrun_id) {
+    function checkStatus( qrun_id, silent ) {
         var url = '/run/' + qrun_id + '/status';
         $.get( url ).done( function( data ) {
             $( "#query-status" ).html( 'Query status: <strong>' + data.status + '</strong>' );
@@ -91,8 +91,12 @@ $( function() {
             if ( data.status === 'complete' ) {
                 // kick off other things!
                 populateResults( qrun_id, 0, data.extra.resultsets.length );
+                if ( !silent && vars.preferences[ 'use_notifications' ] ) {
+                    var title = $( '#title' ).val() ? '"' + $( '#title' ).val() + '"' : 'Untitled query #' + vars.query_id;
+                    sendNotification( title + ' execution has been completed' );
+                }
             } else if ( data.status === 'queued' || data.status === 'running' ) {
-                window.lastStatusCheck = setTimeout( function() { checkStatus( qrun_id ); }, 5000 );
+                window.lastStatusCheck = setTimeout( function() { checkStatus( qrun_id, false ); }, 5000 );
             }
 
             $( '#show-explain' ).off().click( function () {
@@ -168,7 +172,19 @@ $( function() {
         } );
     }
 
+    function sendNotification( text ) {
+        if ( Notification.permission === 'granted' ) {
+            var notification = new Notification( 'Quarry', {
+                icon: '/static/img/quarry-logo-icon.svg',
+                body: text,
+            } );
+        } else {
+            console.log( "Can't send notification, permission value is set to " + Notification.permission );
+            $.get( '/api/preferences/set/use_notifications/null' );
+        }
+    }
+
     if ( vars.qrun_id ) {
-        checkStatus(vars.qrun_id);
+        checkStatus( vars.qrun_id, true );
     }
 } );

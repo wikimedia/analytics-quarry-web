@@ -37,7 +37,8 @@ app.register_blueprint(auth)
 app.register_blueprint(user_blueprint)
 app.register_blueprint(templatehelpers)
 
-app.session_interface = RedisSessionInterface()
+global_conn = Connections(app.config)
+app.session_interface = RedisSessionInterface(global_conn.redis)
 
 
 class QueriesRangeBasedPagination(RangeBasedPagination):

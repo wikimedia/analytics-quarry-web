@@ -28,12 +28,12 @@
 </head>
 
 <body>
-<div class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-    {% if config['MAINTENANCE_MSG'] %}
-    <div class="alert alert-warning maintenance-msg">
-        <p>{{ config['MAINTENANCE_MSG'] }}</p>
-    </div>
-    {% endif %}
+{% if config['MAINTENANCE_MSG'] %}
+<div class="alert alert-warning maintenance-msg">
+    <p>{{ config['MAINTENANCE_MSG'] }}</p>
+</div>
+{% endif %}
+<div class="navbar navbar-inverse" role="navigation">
     <div class="container">
         <div class="navbar-header">
             <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -100,4 +100,3 @@
 </div>
 </body>
 </html>
-

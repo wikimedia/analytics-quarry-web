@@ -35,7 +35,7 @@ class Connections(object):
     @property
     def redis(self):
         if not hasattr(self, '_redis'):
-            self._redis = redis.StrictRedis(
+            self._redis = redis.Redis(
                 host=self.config['REDIS_HOST'],
                 port=self.config['REDIS_PORT'],
                 db=self.config['REDIS_DB']

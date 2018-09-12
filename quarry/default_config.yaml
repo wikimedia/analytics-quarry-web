@@ -7,8 +7,8 @@ SECRET_KEY: 'aaarggghhpleaserescuemeiamstuckinarandomnumbergeneratorfactory'
 DEBUG: True
 DB_HOST: 'localhost'
 DB_NAME: 'quarry'
-DB_USER: 'root'
-DB_PASSWORD: ''
+DB_USER: 'quarry'
+DB_PASSWORD: 'quarry'
 BROKER_URL: 'redis://'
 CELERY_RESULT_BACKEND: 'redis://'
 CELERYD_CONCURRENCY: 24  # Since all tasks are IO bound
@@ -18,8 +18,8 @@ CELERYD_PREFETCH_MULTIPLIER: 1 # Tasks can run for a long time
 # Just query the quarry database itself.
 REPLICA_HOST: 'localhost'
 REPLICA_DB: 'quarry'
-REPLICA_USER: 'root'
-REPLICA_PASSWORD: ''
+REPLICA_USER: 'quarry'
+REPLICA_PASSWORD: 'quarry'
 REPLICA_PORT: 3306
 OUTPUT_PATH_TEMPLATE: '/srv/results/%s/%s/%s.json'
 REDIS_HOST: '127.0.0.1'

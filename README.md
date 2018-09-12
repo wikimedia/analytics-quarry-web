@@ -1,4 +1,4 @@
-## Setting up a local environment ##
+## Setting up a local testing environment ##
 
 Quarry uses [Vagrant](https://www.vagrantup.com/) to set up a local environment.
 You can set it up by:
@@ -19,3 +19,11 @@ The dev setups are set up to use auto-reloading when any files are changed. If t
 2. Run `sudo service quarry-* restart`
 
 This will restart both the web server and the celery worker nodes.
+
+## Useful commands ##
+
+To pre-compile nunjucks templates:
+`nunjucks-precompile quarry/web/static/templates/ > quarry/web/static/templates/compiled.js`
+
+To update requirements.txt with later versions:
+`pipenv lock -r > requirements.txt`

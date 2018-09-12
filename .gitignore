@@ -4,3 +4,6 @@ include/
 .idea/
 .Python
 *.pyc
+.venv/
+venv/
+node_modules/

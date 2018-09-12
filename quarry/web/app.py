@@ -115,7 +115,7 @@ def star_query():
         try:
             g.conn.session.commit()
         except IntegrityError as e:
-            if e[0] == 1062:  # Duplicate
+            if e.args[0] == 1062:  # Duplicate
                 g.conn.session.rollback()
             else:
                 raise

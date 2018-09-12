@@ -84,7 +84,7 @@ def run_query(query_run_id):
         conn.session.add(qrun)
         conn.session.commit()
     except pymysql.InternalError as e:
-        if e[0] == 1317:  # Query interrupted
+        if e.args[0] == 1317:  # Query interrupted
             celery_log.info(
                 "Time limit exceeded for qrun:%s, thread:%s attempting to kill",
                 qrun.id, conn.replica.thread_id()
@@ -94,11 +94,11 @@ def run_query(query_run_id):
             conn.session.add(qrun)
             conn.session.commit()
         else:  # Surfacing it to the user is always better than just silently failing
-            write_error(qrun, e[1])
+            write_error(qrun, e.args[1])
     except pymysql.DatabaseError as e:
-        write_error(qrun, e[1])
+        write_error(qrun, e.args[1])
     except pymysql.OperationalError as e:
-        write_error(qrun, e[1])
+        write_error(qrun, e.args[1])
     finally:
         conn.close_session()
 
@@ -108,7 +108,7 @@ def run_query(query_run_id):
             try:
                 cur.close()
             except pymysql.OperationalError as e:
-                if e[0] == 2013:
+                if e.args[0] == 2013:
                     # Lost connection to MySQL server during query
                     pass
                 else:

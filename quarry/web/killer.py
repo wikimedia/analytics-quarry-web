@@ -34,7 +34,7 @@ try:
             cur.execute('KILL QUERY %s', q[0])
             logging.info("Killed query with thread_id:%s" % q[0])
         except pymysql.InternalError as e:
-            if e[0] == 1094:  # Error code for 'no such thread'
+            if e.args[0] == 1094:  # Error code for 'no such thread'
                 logging.info('Query with thread_id:%s dead before it could be killed')
             else:
                 raise

@@ -23,16 +23,16 @@ class SQLiteResultWriter(object):
         self._resultsets = []
 
     def _get_current_resultset_table(self):
-        return u"resultset_%s" % self.resultset_id
+        return "resultset_%s" % self.resultset_id
 
     def start_resultset(self, columns, rowcount):
         self._resultsets.append({'headers': columns, 'rowcount': rowcount})
         sanitized_columns = [self._quote_identifier(c) for c in columns]
         table_name = self._get_current_resultset_table()
-        sql = u"CREATE TABLE %s (__id__ INTEGER PRIMARY KEY, %s)" % (table_name, u', '.join(sanitized_columns))
+        sql = "CREATE TABLE %s (__id__ INTEGER PRIMARY KEY, %s)" % (table_name, ', '.join(sanitized_columns))
         self.db.execute(sql)
         self.db.execute(
-            u"INSERT INTO resultsets (id, headers, rowcount) VALUES (?, ?, ?)",
+            "INSERT INTO resultsets (id, headers, rowcount) VALUES (?, ?, ?)",
             (self.resultset_id, json.dumps(columns), rowcount)
         )
         self.db.commit()
@@ -49,13 +49,13 @@ class SQLiteResultWriter(object):
                     sanitized_row.append(c.isoformat())
                 elif isinstance(c, str):
                     # Hack!
-                    sanitized_row.append(c.decode('utf-8', errors='ignore'))
+                    sanitized_row.append(c)
                 elif isinstance(c, Decimal):
                     sanitized_row.append(float(c))
                 else:
                     sanitized_row.append(c)
             sanitized_rows.append(sanitized_row)
-        sql = u"INSERT INTO %s VALUES (NULL, %s)" % (table_name, (u"?," * self.column_count)[:-1])
+        sql = "INSERT INTO %s VALUES (NULL, %s)" % (table_name, ("?," * self.column_count)[:-1])
         self.db.executemany(sql, sanitized_rows)
         self.db.commit()
 
@@ -79,7 +79,7 @@ class SQLiteResultWriter(object):
             replacement, _ = error_handler(error)
             encodable = encodable.replace("\x00", replacement)
 
-        return u'"' + encodable.replace('"', '""') + u'"'
+        return '"' + encodable.replace('"', '""') + '"'
 
 
 class SQLiteResultReader(object):
@@ -92,7 +92,7 @@ class SQLiteResultReader(object):
     def get_resultsets(self):
         try:
             cur = self.db.cursor()
-            cur.execute(u'SELECT id, headers, rowcount FROM resultsets ORDER BY id')
+            cur.execute('SELECT id, headers, rowcount FROM resultsets ORDER BY id')
             rows = cur.fetchall()
             return [dict(id=r[0], headers=json.loads(r[1]), rows=r[2]) for r in rows]
         finally:
@@ -102,7 +102,7 @@ class SQLiteResultReader(object):
         table_name = 'resultset_%d' % resultset_id
         try:
             cur = self.db.cursor()
-            cur.execute(u'SELECT * FROM %s ORDER BY __id__' % table_name)
+            cur.execute('SELECT * FROM %s ORDER BY __id__' % table_name)
             yield [c[0] for c in cur.description[1:]]
             rows = cur.fetchmany(10)
             while rows:

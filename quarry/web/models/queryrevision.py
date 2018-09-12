@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, Unicode, ForeignKey, DateTime
 from sqlalchemy.orm import relationship
-from base import Base
-from query import Query  # noqa
+from .base import Base
+from .query import Query  # noqa
 
 
 class QueryRevision(Base):

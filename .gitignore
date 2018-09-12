@@ -7,3 +7,4 @@ include/
 .venv/
 venv/
 node_modules/
+config.yaml

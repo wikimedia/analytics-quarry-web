@@ -51,7 +51,8 @@ class Connections(object):
                 user=self.config['REPLICA_USER'],
                 passwd=self.config['REPLICA_PASSWORD'],
                 port=self.config['REPLICA_PORT'],
-                charset='utf8'
+                charset='utf8',
+                client_flag=pymysql.constants.CLIENT.MULTI_STATEMENTS
             )
         else:
             self._replica.ping(reconnect=True)

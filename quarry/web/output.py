@@ -1,10 +1,10 @@
+import csv
 import json
+import types
 
 from flask import Response, escape
-
-from io import BytesIO
+from werkzeug.contrib.iterio import IterI
 import xlsxwriter
-import csv
 
 
 def get_formatted_response(format, queryrun, reader, resultset_id):
@@ -15,7 +15,7 @@ def get_formatted_response(format, queryrun, reader, resultset_id):
     elif format == 'csv':
         return separated_formatter(reader, resultset_id, ',')
     elif format == 'tsv':
-        return separated_formatter(reader, resultset_id, "\t")
+        return separated_formatter(reader, resultset_id, '\t')
     elif format == 'wikitable':
         return wikitable_formatter(reader, resultset_id)
     elif format == 'xlsx':
@@ -25,21 +25,54 @@ def get_formatted_response(format, queryrun, reader, resultset_id):
     return Response('Bad file format', status=400)
 
 
-class MultipleLinesRetainer(object):  # TODO: generator ?
-    def __init__(self):
-        self.content = ''
+class _JSONEncoder(json.JSONEncoder):
+    def default(self, o):
+        if isinstance(o, types.GeneratorType):
+            # HACK: Fake a list
+            return type('_FakeList', (list,), {
+                '__iter__': lambda self: o,
+                '__bool__': lambda self: True
+            })()
+        elif isinstance(o, bytes):
+            return o.decode('utf-8', 'surrogateescape')
+        else:
+            return super().default(o)
 
-    def write(self, value):
-        self.content += value
+
+def _join_lines(gen):
+    for v in gen:
+        yield v
+        yield '\n'
+
+
+def _stringify_results(rows):
+    for row in rows:
+        r = list(row)
+        for i, v in enumerate(r):
+            if isinstance(v, bytes):
+                r[i] = v.decode('utf-8', 'surrogateescape')
+        yield r
+
+
+class _IterI(IterI):
+    def write(self, s):
+        if s:
+            oldpos = self.pos
+            super().write(s)
+
+            # flush every 1k pos
+            if (self.pos) // 1024 > oldpos // 1024:
+                self.flush()
 
 
 def separated_formatter(reader, resultset_id, delim=','):
-    rows = reader.get_rows(resultset_id)
-    retainer = MultipleLinesRetainer()
-    csvobject = csv.writer(retainer)
-    csvobject.writerows(rows)
+    rows = _stringify_results(reader.get_rows(resultset_id))
 
-    return Response(retainer.content, content_type='text/csv')
+    def respond(stream):
+        csvobject = csv.writer(stream)
+        csvobject.writerows(rows)
+
+    return Response(_IterI(respond), content_type='text/html; charset=utf-8')
 
 
 def json_line_formatter(reader, resultset_id):
@@ -51,15 +84,16 @@ def json_line_formatter(reader, resultset_id):
             if headers is None:
                 headers = row
                 continue
-            yield json.dumps(dict(list(zip(headers, row)))) + "\n"
+            yield json.dumps(dict(zip(headers, row)),
+                             cls=_JSONEncoder,
+                             check_circular=False)
 
-    return Response(respond(), content_type='application/json')
+    return Response(_join_lines(respond()), mimetype='application/json')
 
 
 def json_formatter(qrun, reader, resultset_id):
-    rows = list(reader.get_rows(resultset_id))
-    header = rows[0]
-    del rows[0]
+    rows = reader.get_rows(resultset_id)
+    header = next(rows)
     data = {
         'meta': {
             'run_id': qrun.id,
@@ -69,61 +103,60 @@ def json_formatter(qrun, reader, resultset_id):
         'headers': header,
         'rows': rows
     }
-    return Response(json.dumps(data),
-                    mimetype='application/json')
+
+    def respond(stream):
+        json.dump(data, stream, cls=_JSONEncoder, check_circular=False)
+
+    return Response(_IterI(respond), mimetype='application/json')
 
 
 def wikitable_formatter(reader, resultset_id):
-    rows = list(reader.get_rows(resultset_id))
-    header = rows[0]
-    del rows[0]
+    rows = _stringify_results(reader.get_rows(resultset_id))
+    header = next(rows)
 
     def respond():
         yield '{| class="wikitable"'
-        yield '!' + '!!'.join(map(str, header))
-
+        yield '!' + '!!'.join(header)
         for row in rows:
             yield '|-'
-            yield '|' + '||'.join(map(str, row))
+            yield '|' + '||'.join(row)
 
         yield '|}'
 
-    return Response('\n'.join(list(respond())),
+    return Response(_join_lines(respond()),
                     content_type='text/plain; charset=utf-8')
 
 
 def xlsx_formatter(reader, resultset_id):
-    rows = reader.get_rows(resultset_id)
+    rows = _stringify_results(reader.get_rows(resultset_id))
 
-    output = BytesIO()
-    workbook = xlsxwriter.Workbook(output)
-    worksheet = workbook.add_worksheet()
+    def respond(stream):
+        workbook = xlsxwriter.Workbook(stream, {'constant_memory': True})
+        worksheet = workbook.add_worksheet()
 
-    for row_num, row in enumerate(rows):
-        for col_num, cell in enumerate(row):
-            # T175285: xlsx can't do urls longer than 255 chars.
-            # We first try writing it with write(), if it fails due to
-            # type-specific errors (return code < -1; 0 is success and -1 is
-            # generic row/col dimension error), we use write_string to force
-            # writing as string type, which has a max of 32767 chars.
-            # This only works when cell is a string, however; so only string
-            # will use fallback.
-            if (worksheet.write(row_num, col_num, cell) < -1 and
-                    isinstance(cell, str)):
-                worksheet.write_string(row_num, col_num, cell)
+        for row_num, row in enumerate(rows):
+            for col_num, cell in enumerate(row):
+                # T175285: xlsx can't do urls longer than 255 chars.
+                # We first try writing it with write(), if it fails due to
+                # type-specific errors (return code < -1; 0 is success and -1
+                # is generic row/col dimension error), we use write_string to
+                # force writing as string type, which has a max of 32767 chars.
+                # This only works when cell is a string, however; so only
+                # string will use fallback.
+                if (worksheet.write(row_num, col_num, cell) < -1 and
+                        isinstance(cell, str)):
+                    worksheet.write_string(row_num, col_num, cell)
 
-    workbook.close()
-    output.seek(0)
+        workbook.close()
 
-    return Response(output.read(),
+    return Response(_IterI(respond),
                     mimetype='application/vnd.openxmlformats-'
                              'officedocument.spreadsheetml.sheet')
 
 
 def html_formatter(reader, resultset_id):
-    rows = list(reader.get_rows(resultset_id))
-    header = rows[0]
-    del rows[0]
+    rows = _stringify_results(reader.get_rows(resultset_id))
+    header = next(rows)
 
     def respond():
         yield '<table>\n'
@@ -140,5 +173,5 @@ def html_formatter(reader, resultset_id):
 
         yield '</table>'
 
-    return Response('\n'.join(list(respond())),
+    return Response(_join_lines(respond()),
                     content_type='text/html; charset=utf-8')

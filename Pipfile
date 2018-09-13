@@ -17,6 +17,7 @@ pymysql = "*"
 
 # web
 flask = "*"
+greenlet = "*"
 mwoauth = "*"
 xlsxwriter = "*"
 

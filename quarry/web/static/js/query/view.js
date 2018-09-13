@@ -186,5 +186,7 @@ $( function() {
 
     if ( vars.qrun_id ) {
         checkStatus( vars.qrun_id, true );
+    } else {
+        $( '#query-status' ).text( 'This query has never yet been executed' );
     }
 } );

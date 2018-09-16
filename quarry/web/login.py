@@ -1,10 +1,15 @@
 from flask import Blueprint, request, session, redirect, g
 from mwoauth import ConsumerToken, Handshaker
 from .models.user import User
+from requests import __version__ as requests_version
+from socket import getfqdn
 
 auth = Blueprint('auth', __name__)
 
 oauth_token = None
+# User-agent used by mwoauth requests made during oauth handshake
+user_agent = 'Quarry %s (https://wikitech.wikimedia.org/wiki/Nova_Resource:Quarry) Python-requests/%s' \
+                    % (getfqdn(), requests_version)
 
 
 @auth.record
@@ -20,7 +25,8 @@ def record_oauth_token(state):
 def login():
     handshaker = Handshaker(
         "https://meta.wikimedia.org/w/index.php",
-        oauth_token
+        oauth_token,
+        user_agent=user_agent
     )
     redirect_url, request_token = handshaker.initiate()
     session['request_token'] = request_token
@@ -32,7 +38,8 @@ def login():
 def oauth_callback():
     handshaker = Handshaker(
         "https://meta.wikimedia.org/w/index.php",
-        oauth_token
+        oauth_token,
+        user_agent=user_agent
     )
     access_token = handshaker.complete(session['request_token'], request.query_string)
     session['acces_token'] = access_token

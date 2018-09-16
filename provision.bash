@@ -1,4 +1,5 @@
 #!/bin/bash
+hostnamectl set-hostname quarryvagrant.localdomain
 DEBIAN_FRONTEND=noninteractive apt-get update
 DEBIAN_FRONTEND=noninteractive apt-get install --quiet --yes python3-venv redis-server mariadb-server
 mkdir -p /srv/results

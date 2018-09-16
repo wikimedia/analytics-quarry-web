@@ -21,7 +21,7 @@ REPLICA_DB: 'quarry'
 REPLICA_USER: 'quarry'
 REPLICA_PASSWORD: 'quarry'
 REPLICA_PORT: 3306
-OUTPUT_PATH_TEMPLATE: '/srv/results/%s/%s/%s.json'
+OUTPUT_PATH_TEMPLATE: '/srv/results/%s/%s/%s.sqlite'
 REDIS_HOST: '127.0.0.1'
 REDIS_PORT: 6379
 REDIS_DB: 0

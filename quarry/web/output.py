@@ -69,7 +69,7 @@ def separated_formatter(reader, resultset_id, delim=','):
     rows = _stringify_results(reader.get_rows(resultset_id))
 
     def respond(stream):
-        csvobject = csv.writer(stream)
+        csvobject = csv.writer(stream, delimiter=delim)
         csvobject.writerows(rows)
 
     return Response(_IterI(respond), content_type='text/html; charset=utf-8')

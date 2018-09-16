@@ -8,3 +8,4 @@ include/
 venv/
 node_modules/
 config.yaml
+.vagrant/

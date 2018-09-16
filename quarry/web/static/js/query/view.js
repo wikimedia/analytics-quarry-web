@@ -150,6 +150,14 @@ $( function () {
 		$table.DataTable().draw();
 	}
 
+	function slugifyTitle() {
+		return ( $( '#title' ).val() || 'untitled' )
+			.toLowerCase()
+			.split( /[\t !"#$%&'()*-/<=>?@[\\\]^_`{|},.]+/g )
+			.filter( function ( word ) { return word; } )
+			.join( '-' );
+	}
+
 	function populateResults( qrun_id, resultset_id, till ) {
 		var url = '/run/' + qrun_id + '/output/' + resultset_id + '/json';
 		console.log( url );
@@ -159,7 +167,9 @@ $( function () {
 					resultset_number: resultset_id + 1,
 					rowcount: data.rows.length,
 					resultset_id: resultset_id,
-					run_id: qrun_id
+					run_id: qrun_id,
+					query_id: vars.query_id,
+					slugify_title: slugifyTitle()
 				} ) ),
 				$table = tableContainer.find( 'table' );
 			$( '#query-result' ).append( tableContainer );

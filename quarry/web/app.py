@@ -4,9 +4,7 @@ from .models.queryrevision import QueryRevision
 from .models.queryrun import QueryRun
 from .models.star import Star
 from .results import SQLiteResultReader
-from .utils import json_formatter, slugify
-# This just provides the translit/long codec, unused otherwise
-import translitcodec  # NOQA
+from .utils import json_formatter
 import json
 import yaml
 from . import output
@@ -296,19 +294,6 @@ def output_result(qrun_id, resultset_id=0, format='json'):
     qrun = g.conn.session.query(QueryRun).get(qrun_id)
     reader = SQLiteResultReader(qrun, app.config['OUTPUT_PATH_TEMPLATE'])
     response = output.get_formatted_response(format, qrun, reader, resultset_id)
-    if request.args.get('download', 'false') == 'true':
-        # Download this!
-        if qrun.rev.query.title:
-            query_name = qrun.rev.query.title
-        else:
-            query_name = 'untitled'
-        filename = "quarry-%s-%s-run%s.%s" % (
-            qrun.rev.query.id,
-            slugify(query_name),
-            qrun.id,
-            format
-        )
-        response.headers['Content-Disposition'] = 'attachment; filename="%s"' % filename
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 

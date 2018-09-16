@@ -14,13 +14,17 @@
                     Download data <span class="caret"></span>
                 </button>
                 <ul class="dropdown-menu" role="menu">
-                    <li><a href="/run/{{run_id}}/output/{{resultset_id}}/tsv?download=true">TSV</a></li>
-                    <li><a href="/run/{{run_id}}/output/{{resultset_id}}/json?download=true">JSON</a></li>
-                    <li><a href="/run/{{run_id}}/output/{{resultset_id}}/json-lines?download=true">JSON Lines</a></li>
-                    <li><a href="/run/{{run_id}}/output/{{resultset_id}}/csv?download=true">CSV</a></li>
-                    <li><a href="/run/{{run_id}}/output/{{resultset_id}}/wikitable?download=true">Wikitable</a></li>
-                    <li><a href="/run/{{run_id}}/output/{{resultset_id}}/html?download=true">HTML</a></li>
-                    <li><a href="/run/{{run_id}}/output/{{resultset_id}}/xlsx?download=true">Excel XLSX</a></li>
+                    {% for format, formatname in {
+                        'tsv': 'TSV',
+                        'json': 'JSON',
+                        'json-lines': 'JSON Lines',
+                        'csv': 'CSV',
+                        'wikitable': 'Wikitable',
+                        'html': 'HTML',
+                        'xlsx': 'Excel XLSX'
+                    } %}
+                    <li><a href="/run/{{run_id}}/output/{{resultset_id}}/{{format}}" download="quarry-{{query_id}}-{{slugify_title}}-run{{run_id}}.{{format}}">{{formatname}}</a></li>
+                    {% endfor %}
                 </ul>
             </div>
         </div>

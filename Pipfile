@@ -10,7 +10,6 @@ verify_ssl = true
 redis = "*"
 celery = "*"
 sqlalchemy = "*"
-translitcodec = "*"
 pyyaml = "*"
 pymysql = "*"
 

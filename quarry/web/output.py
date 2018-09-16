@@ -22,6 +22,7 @@ def get_formatted_response(format, queryrun, reader, resultset_id):
         return xlsx_formatter(reader, resultset_id)
     elif format == 'html':
         return html_formatter(reader, resultset_id)
+    return Response('Bad file format', status=400)
 
 
 class MultipleLinesRetainer(object):  # TODO: generator ?

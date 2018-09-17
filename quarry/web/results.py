@@ -47,9 +47,6 @@ class SQLiteResultWriter(object):
             for c in row:
                 if isinstance(c, datetime):
                     sanitized_row.append(c.isoformat())
-                elif isinstance(c, str):
-                    # Hack!
-                    sanitized_row.append(c)
                 elif isinstance(c, Decimal):
                     sanitized_row.append(float(c))
                 else:

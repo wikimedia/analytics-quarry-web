@@ -116,10 +116,10 @@ def wikitable_formatter(reader, resultset_id):
 
     def respond():
         yield '{| class="wikitable"'
-        yield '!' + '!!'.join(header)
+        yield '!' + '!!'.join(map(str, header))
         for row in rows:
             yield '|-'
-            yield '|' + '||'.join(row)
+            yield '|' + '||'.join(map(str, row))
 
         yield '|}'
 

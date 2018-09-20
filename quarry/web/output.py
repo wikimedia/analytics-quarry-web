@@ -1,4 +1,5 @@
 import csv
+import itertools
 import json
 import types
 
@@ -28,11 +29,16 @@ def get_formatted_response(format, queryrun, reader, resultset_id):
 class _JSONEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, types.GeneratorType):
-            # HACK: Fake a list
-            return type('_FakeList', (list,), {
-                '__iter__': lambda self: o,
-                '__bool__': lambda self: True
-            })()
+            try:
+                first = next(o)
+            except StopIteration:
+                return []
+            else:
+                # HACK: Fake a list
+                return type('_FakeList', (list,), {
+                    '__iter__': lambda self: itertools.chain((first,), o),
+                    '__bool__': lambda self: True
+                })()
         elif isinstance(o, bytes):
             return o.decode('utf-8', 'surrogateescape')
         else:

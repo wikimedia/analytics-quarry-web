@@ -28,7 +28,7 @@
                 <td><a href="/query/{{query.id}}">{% if query.title %}{{query.title}}{% else %}Untitled query #{{query.id}}{% endif %}</a></td>
                 <td><a href="/{{query.user.username}}">{{query.user.username}}</a></td>
                 <td>{{query.latest_rev.latest_run.status_message}}</td>
-                <td>{{query.latest_rev.latest_run.timestamp|timesince}}</td>
+                <td title="{{query.latest_rev.latest_run.timestamp}} UTC">{{query.latest_rev.latest_run.timestamp|timesince}}</td>
             </tr>
         {% else %}
             <tr>

@@ -1,4 +1,5 @@
 from flask import Flask, render_template, redirect, g, request, url_for, Response
+from .models.user import UserGroup
 from .models.query import Query
 from .models.queryrevision import QueryRevision
 from .models.queryrun import QueryRun
@@ -226,7 +227,9 @@ def api_run_query():
     text = request.form['text']
     query = g.conn.session.query(Query).filter(Query.id == request.form['query_id']).one()
 
-    if query.user_id != get_user().id:
+    if query.user_id != get_user().id or \
+            g.conn.session.query(UserGroup).filter(UserGroup.user_id == get_user().id) \
+            .filter(UserGroup.group_name == 'blocked').first():
         return "Authorization denied", 403
 
     if query.latest_rev and query.latest_rev.latest_run:

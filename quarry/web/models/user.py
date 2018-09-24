@@ -16,7 +16,11 @@ class User(Base):
 
 class UserGroup(Base):
     __tablename__ = 'user_group'
-
+    """
+    Currently used groups:
+    - sudo: can become any user
+    - blocked: can't run queries
+    """
     id = Column(Integer, primary_key=True)
     user_id = Column(Integer, ForeignKey('user.id'))
     group_name = Column(Unicode(255))

@@ -89,7 +89,9 @@ $( function () {
 				nunjucks.render( 'query-status.html', data )
 			);
 			if ( data.status === 'complete' ) {
-				// kick off other things!
+				if ( data.extra.runningtime ) {
+					$( '#query-result' ).prepend( '<p>Executed in ' + data.extra.runningtime + ' seconds.</p>' );
+				}
 				populateResults( qrun_id, 0, data.extra.resultsets.length );
 				if ( !silent && vars.preferences.use_notifications ) {
 					var title = $( '#title' ).val() ? '"' + $( '#title' ).val() + '"' : 'Untitled query #' + vars.query_id;
@@ -160,7 +162,6 @@ $( function () {
 
 	function populateResults( qrun_id, resultset_id, till ) {
 		var url = '/run/' + qrun_id + '/output/' + resultset_id + '/json';
-		console.log( url );
 		$.get( url ).done( function ( data ) {
 			var tableContainer = $( nunjucks.render( 'query-resultset.html', {
 					only_resultset: resultset_id === till - 1,

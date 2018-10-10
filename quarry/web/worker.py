@@ -8,6 +8,7 @@ from .connections import Connections
 import yaml
 import os
 import json
+import timeit
 
 
 __dir__ = os.path.dirname(__file__)
@@ -60,7 +61,9 @@ def run_query(query_run_id):
         qrun.extra_info = json.dumps({'connection_id': cur.fetchall()[0][0]})
         conn.session.add(qrun)
         conn.session.commit()
+        starttime = timeit.default_timer()
         cur.execute(qrun.augmented_sql)
+        stoptime = timeit.default_timer()
         output = SQLiteResultWriter(qrun, celery.conf.OUTPUT_PATH_TEMPLATE)
         if cur.description:
             output.start_resultset([c[0] for c in cur.description], cur.rowcount)
@@ -79,7 +82,8 @@ def run_query(query_run_id):
                 output.end_resultset()
         output.close()
         qrun.status = QueryRun.STATUS_COMPLETE
-        qrun.extra_info = json.dumps({'resultsets': output.get_resultsets()})
+        qrun.extra_info = json.dumps({'resultsets': output.get_resultsets(),
+                                      'runningtime': '%.2f' % (stoptime - starttime)})
         celery_log.info("Completed run for qrun:%s successfully", qrun.id)
         conn.session.add(qrun)
         conn.session.commit()

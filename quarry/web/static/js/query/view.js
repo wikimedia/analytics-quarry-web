@@ -89,10 +89,14 @@ $( function () {
 				nunjucks.render( 'query-status.html', data )
 			);
 			if ( data.status === 'complete' ) {
-				if ( data.extra.runningtime ) {
-					$( '#query-result' ).prepend( '<p>Executed in ' + data.extra.runningtime + ' seconds.</p>' );
+				if ( data.extra.resultsets.length ) {
+					populateResults( qrun_id, 0, data.extra.resultsets.length );
+				} else {
+					$( '#query-result' ).prepend( '<p id="emptyresultsetmsg">This query returned no results.</p>' );
 				}
-				populateResults( qrun_id, 0, data.extra.resultsets.length );
+				if ( data.extra.runningtime ) {
+					$( '#query-result' ).prepend( '<p id="exectimemsg">Executed in ' + data.extra.runningtime + ' seconds.</p>' );
+				}
 				if ( !silent && vars.preferences.use_notifications ) {
 					var title = $( '#title' ).val() ? '"' + $( '#title' ).val() + '"' : 'Untitled query #' + vars.query_id;
 					sendNotification( title + ' execution has been completed' );

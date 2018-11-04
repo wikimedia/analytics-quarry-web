@@ -30,7 +30,7 @@
 <body>
 {% if config['MAINTENANCE_MSG'] %}
 <div class="alert alert-warning maintenance-msg">
-    <p>{{ config['MAINTENANCE_MSG'] }}</p>
+    <p>{{ config['MAINTENANCE_MSG'] | safe }}</p>
 </div>
 {% endif %}
 <div class="navbar navbar-inverse" role="navigation">

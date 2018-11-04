@@ -30,7 +30,6 @@ try:
 except IOError:
     # Is ok if we can't load config.yaml
     pass
-app.config['DEBUG'] = True
 
 app.register_blueprint(auth)
 app.register_blueprint(user_blueprint)

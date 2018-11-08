@@ -1,25 +1,26 @@
+import json
+import os
+import sqlite3
+
 from flask import Flask, render_template, redirect, g, request, url_for, Response
+from sqlalchemy import desc, func
+from sqlalchemy.exc import IntegrityError
+import yaml
+
+from . import worker, output
+from .connections import Connections
+from .login import auth
 from .models.user import UserGroup
 from .models.query import Query
 from .models.queryrevision import QueryRevision
 from .models.queryrun import QueryRun
 from .models.star import Star
-from .results import SQLiteResultReader
-from .utils import json_formatter
-import json
-import yaml
-from . import output
-import os
-import sqlite3
-from sqlalchemy import desc, func
-from sqlalchemy.exc import IntegrityError
 from .redissession import RedisSessionInterface
-from .connections import Connections
-from .utils.pagination import RangeBasedPagination
-from . import worker
-
-from .login import auth
+from .results import SQLiteResultReader
 from .user import user_blueprint, get_user, get_preferences
+from .utils import json_formatter
+from .utils import monkey as _unused  # noqa: F401
+from .utils.pagination import RangeBasedPagination
 from .health import health_blueprint
 from .webhelpers import templatehelpers
 

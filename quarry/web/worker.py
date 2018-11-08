@@ -1,14 +1,17 @@
-import pymysql
-from celery.utils.log import get_task_logger
-from .models.queryrun import QueryRun
-from .results import SQLiteResultWriter
+import json
+import os
+import timeit
+
 from celery import Celery
 from celery.signals import worker_process_init, worker_process_shutdown
-from .connections import Connections
+from celery.utils.log import get_task_logger
+import pymysql
 import yaml
-import os
-import json
-import timeit
+
+from .connections import Connections
+from .models.queryrun import QueryRun
+from .results import SQLiteResultWriter
+from .utils import monkey as _unused  # noqa: F401
 
 
 __dir__ = os.path.dirname(__file__)

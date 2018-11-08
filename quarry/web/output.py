@@ -40,7 +40,7 @@ class _JSONEncoder(json.JSONEncoder):
                     '__bool__': lambda self: True
                 })()
         elif isinstance(o, bytes):
-            return o.decode('utf-8', 'surrogateescape')
+            return o.decode('utf-8')
         else:
             return super().default(o)
 
@@ -56,7 +56,7 @@ def _stringify_results(rows):
         r = list(row)
         for i, v in enumerate(r):
             if isinstance(v, bytes):
-                r[i] = v.decode('utf-8', 'surrogateescape')
+                r[i] = v.decode('utf-8')
         yield r
 
 

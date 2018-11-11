@@ -82,3 +82,7 @@ table#query-results-sampled {
 .resultset-header {
     margin-bottom: 12px;
 }
+
+div.dataTables_info {
+	margin: 0 0 10.5px;
+}

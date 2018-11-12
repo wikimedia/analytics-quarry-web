@@ -10,6 +10,7 @@ import json
 import yaml
 from . import output
 import os
+import sqlite3
 from sqlalchemy import desc, func
 from sqlalchemy.exc import IntegrityError
 from .redissession import RedisSessionInterface
@@ -294,8 +295,17 @@ def run_status(qrun_id):
 @app.route("/run/<int:qrun_id>/output/<int:resultset_id>/<string:format>")
 def output_result(qrun_id, resultset_id=0, format='json'):
     qrun = g.conn.session.query(QueryRun).get(qrun_id)
-    reader = SQLiteResultReader(qrun, app.config['OUTPUT_PATH_TEMPLATE'])
-    response = output.get_formatted_response(format, qrun, reader, resultset_id)
+    if not qrun:
+        response = Response('No such query_run id', status=404)
+    else:
+        reader = SQLiteResultReader(qrun, app.config['OUTPUT_PATH_TEMPLATE'])
+        try:
+            response = output.get_formatted_response(format, qrun, reader, resultset_id)
+        except sqlite3.OperationalError as e:
+            if e.args[0].startswith('no such table'):
+                response = Response('No such resultset id', status=404)
+            else:
+                raise
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 

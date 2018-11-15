@@ -50,6 +50,10 @@ class QueryRun(Base):
             self.rev.text
         )
 
+    @property
+    def runningtime(self):
+        return json.loads(self.extra_info).get('runningtime', 'Unknown')
+
     def to_json(self):
         return {
             'id': self.id,

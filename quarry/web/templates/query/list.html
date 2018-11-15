@@ -20,6 +20,7 @@
                 <th>Author</th>
                 <th>Status</th>
                 <th>Last run</th>
+                <th>Execution time</th>
             </tr>
         {% endif %}
         <tbody>
@@ -29,6 +30,7 @@
                 <td><a href="/{{query.user.username}}">{{query.user.username}}</a></td>
                 <td>{{query.latest_rev.latest_run.status_message}}</td>
                 <td title="{{query.latest_rev.latest_run.timestamp}} UTC">{{query.latest_rev.latest_run.timestamp|timesince}}</td>
+                <td>{{query.latest_rev.latest_run.runningtime}} seconds</td>
             </tr>
         {% else %}
             <tr>

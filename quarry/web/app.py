@@ -20,6 +20,7 @@ from . import worker
 
 from .login import auth
 from .user import user_blueprint, get_user, get_preferences
+from .health import health_blueprint
 from .webhelpers import templatehelpers
 
 __dir__ = os.path.dirname(__file__)
@@ -33,6 +34,7 @@ except IOError:
     pass
 
 app.register_blueprint(auth)
+app.register_blueprint(health_blueprint)
 app.register_blueprint(user_blueprint)
 app.register_blueprint(templatehelpers)
 

@@ -314,6 +314,8 @@ def output_result(qrun_id, resultset_id=0, format='json'):
 def output_run_meta(qrun_id):
     qrun = g.conn.session.query(QueryRun).get(qrun_id)
 
+    if not qrun:
+        return Response('No such query run id', status=404)
     return Response(json.dumps(
         {
             'run': qrun,
@@ -329,6 +331,8 @@ def output_run_meta(qrun_id):
 def output_rev_meta(rev_id):
     rev = g.conn.session.query(QueryRevision).get(rev_id)
 
+    if not rev:
+        return Response('No such query revision id', status=404)
     return Response(json.dumps(
         {
             'latest_run': rev.latest_run,
@@ -344,6 +348,8 @@ def output_rev_meta(rev_id):
 def output_query_meta(query_id):
     query = g.conn.session.query(Query).get(query_id)
 
+    if not query:
+        return Response('No such query id', status=404)
     return Response(json.dumps(
         {
             'latest_run': query.latest_rev.latest_run,

@@ -60,6 +60,34 @@ def _stringify_results(rows):
         yield r
 
 
+TEST_CSV_INJECTION_PREFIXS = '=-+@'
+
+
+def _inner_csv_injection_escape(element):
+    """
+    Escape possible CSV injection. T209226
+    """
+    if not isinstance(element, (bytes, str)):
+        return element
+    # str to convert bytes to unicode
+    if str(element).lstrip(' ').startswith('\t') or \
+        (not element and str(element).lstrip()[0]
+         not in TEST_CSV_INJECTION_PREFIXS):
+        return element
+    if isinstance(element, bytes):
+        return type(element)(b'\t') + element
+    elif isinstance(element, str):
+        return type(element)('\t') + element
+
+
+def _csv_injection_escape(rows):
+    for row in rows:
+        r = list(row)
+        for i, v in enumerate(r):
+            r[i] = _inner_csv_injection_escape(v)
+        yield r
+
+
 class _IterI(IterI):
     def write(self, s):
         if s:
@@ -72,7 +100,8 @@ class _IterI(IterI):
 
 
 def separated_formatter(reader, resultset_id, delim=','):
-    rows = _stringify_results(reader.get_rows(resultset_id))
+    rows = _stringify_results(_csv_injection_escape(
+        reader.get_rows(resultset_id)))
 
     def respond(stream):
         csvobject = csv.writer(stream, delimiter=delim)
@@ -134,7 +163,8 @@ def wikitable_formatter(reader, resultset_id):
 
 
 def xlsx_formatter(reader, resultset_id):
-    rows = _stringify_results(reader.get_rows(resultset_id))
+    rows = _stringify_results(_csv_injection_escape(
+        reader.get_rows(resultset_id, )))
 
     def respond(stream):
         workbook = xlsxwriter.Workbook(stream, {'constant_memory': True})

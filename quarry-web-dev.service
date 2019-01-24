@@ -5,3 +5,6 @@ Description=Development web server for quarry
 ExecStart=/srv/venv/bin/python /vagrant/quarry.wsgi
 User=vagrant
 group=vagrant
+
+[Install]
+WantedBy=multi-user.target

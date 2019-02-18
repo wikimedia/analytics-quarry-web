@@ -291,7 +291,8 @@ def run_status(qrun_id):
     qrun = g.conn.session.query(QueryRun).get(qrun_id)
     return Response(json.dumps({
         'status': qrun.status_message,
-        'extra': json.loads(qrun.extra_info or "{}")
+        'extra': json.loads(qrun.extra_info or '{}'),
+        'timestamp': qrun.timestamp.strftime('%s')
     }), mimetype='application/json', headers={'Access-Control-Allow-Origin': '*'})
 
 

@@ -94,15 +94,26 @@ $( function () {
 				} else {
 					$( '#query-result' ).prepend( '<p id="emptyresultsetmsg">This query returned no results.</p>' );
 				}
+
+				let runningdate = new Date( data.timestamp * 1000 ),
+					// Compatibility handling, old requests do not have the execution time stored.
+					headertext = 'Executed on ';
 				if ( data.extra.runningtime ) {
-					$( '#query-result' ).prepend( '<p id="exectimemsg">Executed in ' + data.extra.runningtime + ' seconds.</p>' );
+					headertext = 'Executed in ' + data.extra.runningtime + ' seconds as of ';
 				}
+				$( '#query-result' ).prepend(
+					'<p id="queryheadermsg">' + headertext + '<span title="' + runningdate.toString() + '">' +
+					runningdate.toDateString() + '</span>.</p>'
+				);
+
 				if ( !silent && vars.preferences.use_notifications ) {
-					var title = $( '#title' ).val() ? '"' + $( '#title' ).val() + '"' : 'Untitled query #' + vars.query_id;
+					let title = $( '#title' ).val() ? '"' + $( '#title' ).val() + '"' : 'Untitled query #' + vars.query_id;
 					sendNotification( title + ' execution has been completed' );
 				}
 			} else if ( data.status === 'queued' || data.status === 'running' ) {
-				window.lastStatusCheck = setTimeout( function () { checkStatus( qrun_id, false ); }, 5000 );
+				window.lastStatusCheck = setTimeout( function () {
+					checkStatus( qrun_id, false );
+				}, 5000 );
 			}
 
 			$( '#show-explain' ).off().click( function () {

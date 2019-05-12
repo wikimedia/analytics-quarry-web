@@ -289,6 +289,8 @@ def query_runs_all():
 @app.route('/run/<int:qrun_id>/status')
 def run_status(qrun_id):
     qrun = g.conn.session.query(QueryRun).get(qrun_id)
+    if not qrun:
+        return Response('No such query_run id', status=404)
     return Response(json.dumps({
         'status': qrun.status_message,
         'extra': json.loads(qrun.extra_info or '{}'),
@@ -317,7 +319,6 @@ def output_result(qrun_id, resultset_id=0, format='json'):
 @app.route("/run/<int:qrun_id>/meta")
 def output_run_meta(qrun_id):
     qrun = g.conn.session.query(QueryRun).get(qrun_id)
-
     if not qrun:
         return Response('No such query run id', status=404)
     return Response(json.dumps(
@@ -334,7 +335,6 @@ def output_run_meta(qrun_id):
 @app.route("/rev/<int:rev_id>/meta")
 def output_rev_meta(rev_id):
     rev = g.conn.session.query(QueryRevision).get(rev_id)
-
     if not rev:
         return Response('No such query revision id', status=404)
     return Response(json.dumps(
@@ -351,7 +351,6 @@ def output_rev_meta(rev_id):
 @app.route("/query/<int:query_id>/meta")
 def output_query_meta(query_id):
     query = g.conn.session.query(Query).get(query_id)
-
     if not query:
         return Response('No such query id', status=404)
     return Response(json.dumps(

@@ -34,5 +34,16 @@
     margin-bottom: 0px;
     border-bottom-width: 0px;
     text-align: center;
-    font-weight: bold;
+}
+
+.flashes {
+    padding: 0px 40px;
+}
+
+.alert {
+    font-weight: 400;
+}
+
+body {
+    font-size: 12px;
 }

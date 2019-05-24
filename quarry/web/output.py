@@ -69,15 +69,19 @@ def _inner_csv_injection_escape(element):
     """
     if not isinstance(element, (bytes, str)):
         return element
+
     # str to convert bytes to unicode
-    if str(element).lstrip(' ').startswith('\t') or \
-        (not element and str(element).lstrip()[0]
-         not in TEST_CSV_INJECTION_PREFIXS):
+    if str(element).lstrip(' ').startswith('\t'):
         return element
-    if isinstance(element, bytes):
-        return type(element)(b'\t') + element
-    elif isinstance(element, str):
-        return type(element)('\t') + element
+
+    if element and str(element).lstrip()[0] \
+            in TEST_CSV_INJECTION_PREFIXS:
+        if isinstance(element, bytes):
+            return type(element)(b'\t') + element
+        elif isinstance(element, str):
+            return type(element)('\t') + element
+
+    return element
 
 
 def _csv_injection_escape(rows):

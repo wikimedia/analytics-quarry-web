@@ -239,7 +239,7 @@ $( function () {
 				}
 				$( '#query-result' ).prepend(
 					'<p id="queryheadermsg">' + headertext + '<span title="' + runningdate.toString() + '">' +
-					runningdate.toDateString() + '</span>.</p>'
+					runningdate.toUTCString().replace( 'GMT', 'UTC' ) + '</span>.</p>'
 				);
 
 				if ( !silent && vars.preferences.use_notifications ) {

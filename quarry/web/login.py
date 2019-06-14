@@ -1,9 +1,11 @@
-from flask import Blueprint, request, session, redirect, g
+from flask import Blueprint, request, session, redirect, g, flash, url_for
 from mwoauth import ConsumerToken, Handshaker
+from mwoauth.errors import OAuthException
 from .models.user import User
 from requests import __version__ as requests_version
 from socket import getfqdn
 from sqlalchemy.exc import IntegrityError
+from logging import exception
 
 auth = Blueprint('auth', __name__)
 
@@ -42,7 +44,13 @@ def oauth_callback():
         oauth_token,
         user_agent=user_agent
     )
-    access_token = handshaker.complete(session['request_token'], request.query_string)
+    try:
+        access_token = handshaker.complete(session['request_token'], request.query_string)
+    except (OAuthException, KeyError) as e:
+        exception(e)
+        flash('Fatal error occured while login (%s). Please try again after cleaning the cookies in your browser.'
+              % str(e), 'danger')
+        return redirect(url_for('index'))
     session['access_token'] = access_token
     identity = handshaker.identify(access_token)
     wiki_uid = identity['sub']
@@ -51,6 +59,7 @@ def oauth_callback():
         user = User(username=identity['username'], wiki_uid=wiki_uid)
         g.conn.session.add(user)
         g.conn.session.commit()
+        flash('Welcome to Quarry, %s!' % user.username, 'success')
     elif user.username != identity['username']:
         user.username = identity['username']
         g.conn.session.add(user)

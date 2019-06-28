@@ -52,12 +52,12 @@ class QueryRun(Base):
 
     @property
     def runningtime(self):
-        return json.loads(self.extra_info).get('runningtime', 'Unknown')
+        return json.loads(self.extra_info or '{}').get('runningtime', 'Unknown')
 
     def to_json(self):
         return {
             'id': self.id,
             'status': self.status_message,
             'timestamp': self.timestamp,
-            'extra': json.loads(self.extra_info or "{}"),
+            'extra': json.loads(self.extra_info or '{}'),
         }

@@ -75,7 +75,8 @@
     </div>
     <div>
         <h3>SQL</h3>
-        <textarea id="code">{% if latest_rev %}{{ latest_rev.text }}{%endif%}</textarea>
+        <button id="togglehl" class="btn btn-primary btn-sm pull-right">Toggle Highlighting</button>
+        <textarea id="code" readonly="{{ !jsvars.can_edit }}">{% if latest_rev %}{{ latest_rev.text }}{%endif%}</textarea>
     </div>
     <div id="sql-actions-container" class="row">
         <div class='col-md-8 only-edit'>

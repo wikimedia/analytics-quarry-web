@@ -9,13 +9,16 @@ $( function () {
 	}
 
 	CodeMirror.extendMode( 'sql', { electricChars: ')' } );
-	var editor = CodeMirror.fromTextArea( $( '#code' )[ 0 ], {
-		mode: 'text/x-mariadb',
-		theme: 'monokai',
-		readOnly: !vars.can_edit,
-		matchBrackets: true
-	} );
+	function makeEditor() {
+		return CodeMirror.fromTextArea( $( '#code' )[ 0 ], {
+			mode: 'text/x-mariadb',
+			theme: 'monokai',
+			readOnly: !vars.can_edit,
+			matchBrackets: true
+		} );
+	}
 
+	var editor = makeEditor();
 	$( '#query-description' ).autosize();
 
 	if ( vars.can_edit ) {
@@ -28,6 +31,15 @@ $( function () {
 			} );
 		} );
 	}
+
+	$( '#togglehl' ).click( function () {
+		if ( editor === null ) {
+			editor = makeEditor();
+		} else {
+			editor.toTextArea();
+			editor = null;
+		}
+	} );
 
 	$( '#un-star-query' ).click( function () {
 		$.post( '/api/query/unstar', {
@@ -66,7 +78,7 @@ $( function () {
 
 	$( '#run-code' ).click( function () {
 		$.post( '/api/query/run', {
-			text: editor.getValue(),
+			text: $( '#code' ).val(),
 			query_id: vars.query_id
 		} ).done( function ( data ) {
 			var d = JSON.parse( data );

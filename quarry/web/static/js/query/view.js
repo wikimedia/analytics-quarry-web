@@ -78,7 +78,7 @@ $( function () {
 
 	$( '#run-code' ).click( function () {
 		$.post( '/api/query/run', {
-			text: $( '#code' ).val(),
+			text: editor !== null ? editor.getValue() : $( '#code' ).val(),
 			query_id: vars.query_id
 		} ).done( function ( data ) {
 			var d = JSON.parse( data );

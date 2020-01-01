@@ -66,6 +66,13 @@ table#query-results-sampled {
     min-height: 144px;
 }
 
+#code {
+    font-family: Monaco, Consolas, "Ubuntu Mono", monospace;
+    width: 100%;
+    height: auto;
+    min-height: 144px;
+}
+
 .no-edit .only-edit {
     display: none;
 }

@@ -107,11 +107,16 @@ def separated_formatter(reader, resultset_id, delim=','):
     rows = _stringify_results(_csv_injection_escape(
         reader.get_rows(resultset_id)))
 
+    mime_type = 'text/csv' if delim == ',' else 'text/tab-separated-values'
+    content_type = mime_type + '; charset=utf-8'
+
     def respond(stream):
         csvobject = csv.writer(stream, delimiter=delim)
         csvobject.writerows(rows)
 
-    return Response(_IterI(respond), content_type='text/html; charset=utf-8')
+    return Response(_IterI(respond),
+                    mimetype=mime_type,
+                    content_type=content_type)
 
 
 def json_line_formatter(reader, resultset_id):

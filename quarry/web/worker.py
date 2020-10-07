@@ -11,6 +11,7 @@ import yaml
 from .connections import Connections
 from .models.queryrun import QueryRun
 from .results import SQLiteResultWriter
+from .replica import Replica
 from .utils import monkey as _unused  # noqa: F401
 
 
@@ -32,8 +33,10 @@ conn = None
 @worker_process_init.connect
 def init(*args, **kwargs):
     global conn
+    global repl
 
     conn = Connections(celery.conf)
+    repl = Replica(celery.conf)
     celery_log.info("Initialized lazy loaded connections")
 
 
@@ -41,6 +44,7 @@ def init(*args, **kwargs):
 def shutdown(*args, **kwargs):
     global conn
     conn.close_all()
+    del repl.connection
     celery_log.info("Closed all connection")
 
 
@@ -59,7 +63,9 @@ def run_query(query_run_id):
         if check_result is not True:
             celery_log.info("Check result for qrun:%s failed, with message: %s", qrun.id, check_result[0])
             raise pymysql.DatabaseError(0, check_result[1])
-        cur = conn.replica.cursor()
+
+        repl.connection = qrun.rev.query_database
+        cur = repl.connection.cursor()
         cur.execute('SELECT CONNECTION_ID();')
         qrun.extra_info = json.dumps({'connection_id': cur.fetchall()[0][0]})
         conn.session.add(qrun)
@@ -94,7 +100,7 @@ def run_query(query_run_id):
         if e.args[0] == 1317:  # Query interrupted
             celery_log.info(
                 "Time limit exceeded for qrun:%s, thread:%s attempting to kill",
-                qrun.id, conn.replica.thread_id()
+                qrun.id, repl.connection.thread_id()
             )
             print('got killed')
             qrun.status = QueryRun.STATUS_KILLED

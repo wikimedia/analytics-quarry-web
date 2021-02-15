@@ -4,25 +4,24 @@ OAUTH_CONSUMER_TOKEN: "e9bfbacf0b29a8ea64712b209c24ee36"
 OAUTH_SECRET_TOKEN: "83ed4ac72176286f5c7798459f0a6b16a96853c4"
 SECRET_KEY: 'aaarggghhpleaserescuemeiamstuckinarandomnumbergeneratorfactory'
 DEBUG: True
-DB_HOST: 'localhost'
+DB_HOST: 'db'
 DB_NAME: 'quarry'
 DB_USER: 'quarry'
 DB_PASSWORD: 'quarry'
-BROKER_URL: 'redis://'
-CELERY_RESULT_BACKEND: 'redis://'
+BROKER_URL: 'redis://redis'
 CELERYD_CONCURRENCY: 24  # Since all tasks are IO bound
 CELERY_ACKS_LATE: True  # Tasks are idempotent!
 CELERY_TRACK_STARTED: True
 CELERYD_PREFETCH_MULTIPLIER: 1 # Tasks can run for a long time
 # Just query the quarry database itself.
-REPLICA_HOST: 'localhost'
 REPLICA_DOMAIN: ''
+REPLICA_HOST: 'db'
 REPLICA_DB: 'quarry'
 REPLICA_USER: 'quarry'
 REPLICA_PASSWORD: 'quarry'
 REPLICA_PORT: 3306
-OUTPUT_PATH_TEMPLATE: '/srv/results/%s/%s/%s.sqlite'
-REDIS_HOST: '127.0.0.1'
+OUTPUT_PATH_TEMPLATE: '/results/%s/%s/%s.sqlite'
+REDIS_HOST: 'redis'
 REDIS_PORT: 6379
 REDIS_DB: 0
 QUERY_TIME_LIMIT: 60  # 1 minute

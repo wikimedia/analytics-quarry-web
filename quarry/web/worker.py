@@ -45,7 +45,7 @@ def shutdown(*args, **kwargs):
     global conn
     conn.close_all()
     del repl.connection
-    celery_log.info("Closed all connection")
+    celery_log.info("Closed all connections")
 
 
 @celery.task(name='worker.run_query')

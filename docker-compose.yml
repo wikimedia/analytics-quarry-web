@@ -1,0 +1,34 @@
+version: "3.3"
+
+services:
+
+  web:
+    build: .
+    volumes:
+      - .:/app
+      - results:/results
+    ports:
+      - "5000:5000"
+
+  worker:
+    build: .
+    volumes:
+      - .:/app
+      - results:/results
+    entrypoint: ["celery", "worker", "--app=quarry.web.worker"]
+
+  redis:
+    image: redis:alpine
+
+  db:
+    image: mariadb:10.1.48-bionic
+    volumes:
+      - ./schema.sql:/docker-entrypoint-initdb.d/schema.sql
+    environment:
+      MYSQL_USER: quarry
+      MYSQL_PASSWORD: quarry
+      MYSQL_DATABASE: quarry
+      MYSQL_RANDOM_ROOT_PASSWORD: 1
+
+volumes:
+     results:

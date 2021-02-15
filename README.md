@@ -1,24 +1,25 @@
+# Quarry
+[Quarry](https://quarry.wmflabs.org/) is a web service that allows to perform SQL 
+queries against Wikipedia and sister projects databases.
+
 ## Setting up a local testing environment ##
 
-Quarry uses [Vagrant](https://www.vagrantup.com/) to set up a local environment.
-You can set it up by:
+Quarry uses [Docker](https://docs.docker.com/engine/install/) to set up a local
+environment. You can set it up by:
 
-1. [Download](https://www.vagrantup.com/downloads.html) and install Vagrant
-2. Download and install [VirtualBox](https://www.virtualbox.org/)
+1. [Download](https://docs.docker.com/engine/install/) and install Docker and
+   docker-compose (ship with the first on Windows)
 3. Clone the [Quarry repository](https://github.com/wikimedia/analytics-quarry-web)
-4. Run `vagrant up`
-5. Access your local quarry instance on `localhost:5000`
+4. Run `docker-compose up`
+
+A web server will be setup. Change to python files will trigger an automatic reload
+of the server, and your modifications will imediatelly be taken into account.
+A worker node is also created to execute your queries in the background (uses the
+same image). Finally, redis and database instances are started.
 
 The default instance queries the quarry database itself :)
 
-### Reloading after making a change ###
-
-The dev setups are set up to use auto-reloading when any files are changed. If that does not work well, you can reload them manually by:
-
-1. Run `vagrant ssh`
-2. Run `sudo service quarry-* restart`
-
-This will restart both the web server and the celery worker nodes.
+To stop, run `docker-compose stop`.
 
 ## Useful commands ##
 
@@ -27,3 +28,6 @@ To pre-compile nunjucks templates:
 
 To update requirements.txt with later versions:
 `pipenv lock -r > requirements.txt`
+
+See also commands listed in the mainters documentation:
+https://wikitech.wikimedia.org/wiki/Portal:Data_Services/Admin/Quarry

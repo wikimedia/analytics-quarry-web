@@ -23,11 +23,12 @@ $( function () {
 
 	if ( vars.can_edit ) {
 		$( '#title' ).blur( function () {
+			var title = $( '#title' ).val();
 			$.post( '/api/query/meta', {
 				query_id: vars.query_id,
-				title: $( '#title' ).val()
+				title: title
 			} ).done( function ( /* data */ ) {
-				// Uh, do nothing
+				document.title = ( title || 'Untitled query #' + vars.query_id ) + ' - Quarry';
 			} );
 		} );
 	}

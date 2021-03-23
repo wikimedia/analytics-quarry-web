@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import sqlite3
 
 from flask import Flask, render_template, redirect, g, request, url_for, Response
@@ -9,6 +10,7 @@ import yaml
 
 from . import worker, output
 from .connections import Connections
+from .replica import Replica
 from .login import auth
 from .models.user import UserGroup
 from .models.query import Query
@@ -75,11 +77,13 @@ class QueriesRangeBasedPagination(RangeBasedPagination):
 @app.before_request
 def setup_context():
     g.conn = Connections(app.config)
+    g.replica = Replica(app.config)
 
 
 @app.teardown_request
 def kill_context(exception=None):
     g.conn.close_all()
+    del g.replica.connection
 
 
 @app.route("/")
@@ -150,7 +154,11 @@ def fork_query(id):
     g.conn.session.add(query)
     g.conn.session.commit()
 
-    query_rev = QueryRevision(query_id=query.id, text=parent_query.latest_rev.text)
+    query_rev = QueryRevision(
+        query_id=query.id,
+        query_database=parent_query.latest_rev.query_database,
+        text=parent_query.latest_rev.text
+        )
     query.latest_rev = query_rev
     g.conn.session.add(query)
     g.conn.session.add(query_rev)
@@ -228,7 +236,11 @@ def api_run_query():
     if get_user() is None:
         return "Authentication required", 401
     text = request.form['text']
+    query_database = request.form['query_database'].lower().replace(" ", "")
     query = g.conn.session.query(Query).filter(Query.id == request.form['query_id']).one()
+    regex = re.compile(r"^(?:(?:centralauth|meta|[a-z]*wik[a-z]+)(?:_p)?)|quarry?$")
+    if not regex.match(query_database):
+        return "Bad database name", 400
 
     if query.user_id != get_user().id or \
             g.conn.session.query(UserGroup).filter(UserGroup.user_id == get_user().id) \
@@ -243,7 +255,7 @@ def api_run_query():
             g.conn.session.add(query.latest_rev.latest_run)
             g.conn.session.commit()
 
-    query_rev = QueryRevision(query_id=query.id, text=text)
+    query_rev = QueryRevision(query_id=query.id, query_database=query_database, text=text)
     query.latest_rev = query_rev
 
     # XXX (phuedx, 2014/08/08): This deviates from the pre-existing
@@ -366,7 +378,7 @@ def output_query_meta(query_id):
 
 @app.route("/explain/<int:connection_id>")
 def output_explain(connection_id):
-    cur = g.conn.replica.cursor()
+    cur = g.replica.connection.cursor()
     try:
         cur.execute('SHOW EXPLAIN FOR %d;' % connection_id)
     except cur.InternalError as e:

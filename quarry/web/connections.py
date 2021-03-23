@@ -1,4 +1,3 @@
-import pymysql
 import redis
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, scoped_session
@@ -42,26 +41,8 @@ class Connections(object):
             )
         return self._redis
 
-    @property
-    def replica(self):
-        if not hasattr(self, '_replica'):
-            self._replica = pymysql.connect(
-                host=self.config['REPLICA_HOST'],
-                db=self.config['REPLICA_DB'],
-                user=self.config['REPLICA_USER'],
-                passwd=self.config['REPLICA_PASSWORD'],
-                port=self.config['REPLICA_PORT'],
-                charset='utf8',
-                client_flag=pymysql.constants.CLIENT.MULTI_STATEMENTS
-            )
-        else:
-            self._replica.ping(reconnect=True)
-        return self._replica
-
     def close_all(self):
         # Redis doesn't need to be closed
-        if hasattr(self, '_replica'):
-            self._replica.close()
         if hasattr(self, '_session'):
             self._session.close()
         if hasattr(self, '_db_engine'):

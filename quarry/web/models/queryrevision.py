@@ -9,6 +9,7 @@ class QueryRevision(Base):
 
     id = Column(Integer, primary_key=True)
     text = Column(Unicode(4096))
+    query_database = Column(Unicode(128))
     query_id = Column(Integer, ForeignKey('query.id'))
     timestamp = Column(DateTime)
     latest_run_id = Column(Integer, ForeignKey('query_run.id'))
@@ -35,6 +36,7 @@ class QueryRevision(Base):
         return {
             'id': self.id,
             'sql': self.text,
+            'query_database': self.query_database,
             'timestamp': self.timestamp,
             'latest_run': self.latest_run.id,
         }

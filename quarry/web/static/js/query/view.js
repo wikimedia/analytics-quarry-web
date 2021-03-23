@@ -80,16 +80,21 @@ $( function () {
 	$( '#run-code' ).click( function () {
 		$.post( '/api/query/run', {
 			text: editor !== null ? editor.getValue() : $( '#code' ).val(),
+			query_database: $( '#query-db' ).val(),
 			query_id: vars.query_id
-		} ).done( function ( data ) {
-			var d = JSON.parse( data );
-			vars.output_url = d.output_url;
-			$( '#query-progress' ).show();
-			$( '#query-result-error' ).hide();
-			$( '#query-result-success' ).hide();
-			clearTimeout( window.lastStatusCheck );
-			checkStatus( d.qrun_id, false );
-		} );
+		} )
+			.done( function ( data ) {
+				var d = JSON.parse( data );
+				vars.output_url = d.output_url;
+				$( '#query-progress' ).show();
+				$( '#query-result-error' ).hide();
+				$( '#query-result-success' ).hide();
+				clearTimeout( window.lastStatusCheck );
+				checkStatus( d.qrun_id, false );
+			} )
+			.fail( function ( resp ) {
+				alert( resp.responseText );
+			} );
 
 		return false;
 	} );

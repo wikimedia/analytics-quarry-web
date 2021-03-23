@@ -20,8 +20,11 @@ class Replica:
             self.database_name = "localhost"
             self.database_p = self.dbname
         elif self.dbname == "meta" or self.dbname == "meta_p":
-            self.database_name = "meta_p"
-            self.database_p = "s7"
+            self.database_name = "s7"
+            self.database_p = "meta_p"
+        elif self.dbname == "centralauth" or self.dbname == "centralauth_p":
+            self.database_name = "s7"
+            self.database_p = "centralauth_p"
         else:
             self.database_name = (
                 self.dbname

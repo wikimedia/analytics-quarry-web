@@ -75,7 +75,7 @@
     </div>
     <div>
         {% if jsvars.can_edit or latest_rev.query_database %}
-        <textarea id="query-db" {% if jsvars.can_edit %}placeholder="Click to enter database"{% else %}readonly{% endif %}>{% if latest_rev %}{{latest_rev.query_database}}{% endif %}</textarea>
+        <textarea id="query-db" {% if jsvars.can_edit %}placeholder="Click to enter database"{% else %}readonly{% endif %}>{% if latest_rev %}{{latest_rev.query_database if latest_rev.query_database}}{% endif %}</textarea>
         {% endif %}
     </div>
     <div>

@@ -48,7 +48,8 @@ class Replica:
             return self._replica.ping(reconnect=True)  # Reuse connections
 
         if hasattr(self, "_replica"):
-            self._replica.close()
+            if self._replica.open:
+                self._replica.close()
 
         self.dbname = db
         self._db_name_mangler()
@@ -68,4 +69,7 @@ class Replica:
     def connection(self):
         self.dbname = ""
         if hasattr(self, "_replica"):
-            self._replica.close()
+            if self._replica.open:
+                self._replica.close()
+
+            delattr(self, "_replica")

@@ -1,6 +1,5 @@
 import json
 import os
-import re
 import sqlite3
 
 from flask import Flask, render_template, redirect, g, request, url_for, Response
@@ -22,6 +21,7 @@ from .results import SQLiteResultReader
 from .user import user_blueprint, get_user, get_preferences
 from .utils import json_formatter
 from .utils import monkey as _unused  # noqa: F401
+from .utils import valid_dbname
 from .utils.pagination import RangeBasedPagination
 from .health import health_blueprint
 from .webhelpers import templatehelpers
@@ -238,8 +238,7 @@ def api_run_query():
     text = request.form['text']
     query_database = request.form['query_database'].lower().replace(" ", "")
     query = g.conn.session.query(Query).filter(Query.id == request.form['query_id']).one()
-    regex = re.compile(r"^(?:(?:centralauth|meta|[a-z]*wik[a-z]+)(?:_p)?)|quarry?$")
-    if not regex.match(query_database):
+    if not valid_dbname(query_database):
         return "Bad database name", 400
 
     if query.user_id != get_user().id or \

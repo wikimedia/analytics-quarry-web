@@ -12,12 +12,14 @@ environment. You can set it up by:
 3. Clone the [Quarry repository](https://github.com/wikimedia/analytics-quarry-web)
 4. Run `docker-compose up`
 
-A web server will be setup. Change to python files will trigger an automatic reload
-of the server, and your modifications will imediatelly be taken into account.
+A web server will be setup, available at http://localhost:5000. Change to python
+files will trigger an automatic reload of the server, and your modifications
+will imediatelly be taken into account.
 A worker node is also created to execute your queries in the background (uses the
-same image). Finally, redis and database instances are started.
+same image). Finally, redis and database instances are also started.
 
-The default instance queries the quarry database itself :)
+In your local environment, you can query Quarry internal db itself. Use then
+"quarry" as database name.
 
 To stop, run `docker-compose stop`.
 

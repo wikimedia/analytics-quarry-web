@@ -16,9 +16,12 @@ class Replica:
                 "Attempting connection before a database is selected"
             )
 
-        if self.dbname == "quarry":  # This means we are in a vagrant dev env
-            self.database_name = "localhost"
-            self.database_p = self.dbname
+        # Special case for docker development setup where connexion is made to
+        # "db" container and "quarry" database
+        from .app import app  # here to avoid cyclyc import
+        if app.config['DEBUG'] and self.dbname == "quarry":
+            self.database_name = "db"
+            self.database_p = "quarry"
         elif self.dbname == "meta" or self.dbname == "meta_p":
             self.database_name = "s7"
             self.database_p = "meta_p"

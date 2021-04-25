@@ -9,6 +9,7 @@ DB_NAME: 'quarry'
 DB_USER: 'quarry'
 DB_PASSWORD: 'quarry'
 BROKER_URL: 'redis://redis'
+CELERY_RESULT_BACKEND: 'redis://redis'
 CELERYD_CONCURRENCY: 24  # Since all tasks are IO bound
 CELERY_ACKS_LATE: True  # Tasks are idempotent!
 CELERY_TRACK_STARTED: True

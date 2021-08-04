@@ -8,7 +8,7 @@ Quarry uses [Docker](https://docs.docker.com/engine/install/) to set up a local
 environment. You can set it up by:
 
 1. [Download](https://docs.docker.com/engine/install/) and install Docker and
-   docker-compose (ship with the first on Windows)
+   [docker-compose](https://docs.docker.com/compose/) (already ships with docker on Windows and Mac)
 3. Clone the [Quarry repository](https://github.com/wikimedia/analytics-quarry-web)
 4. Run `docker-compose up`
 

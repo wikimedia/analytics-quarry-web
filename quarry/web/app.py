@@ -1,6 +1,7 @@
 import json
 import os
 import sqlite3
+import ast
 
 from flask import Flask, render_template, redirect, g, request, url_for, Response
 from sqlalchemy import desc, func
@@ -246,6 +247,7 @@ def api_run_query():
             .filter(UserGroup.group_name == 'blocked').first():
         return "Authorization denied", 403
 
+    # Determine if already run, to update status in case job was killed
     if query.latest_rev and query.latest_rev.latest_run:
         result = worker.run_query.AsyncResult(query.latest_rev.latest_run.task_id)
         if not result.ready():
@@ -274,6 +276,32 @@ def api_run_query():
     g.conn.session.commit()
     return json.dumps({
         'qrun_id': query_run.id
+    })
+
+
+@app.route('/api/query/stop', methods=['POST'])
+def api_stop_query():
+    if get_user() is None:
+        return "Authentication required", 401
+
+    qrun_id = request.form['qrun_id']
+    db_of_process = request.form['query_database']
+
+# the db process id of the running job is stored in the query_run table while
+# the job is running. We can take this pid over to the database running the
+# query to stop the job
+    query_run = g.conn.session.query(QueryRun).filter(QueryRun.id == qrun_id)
+    result_dictionary = ast.literal_eval(query_run[0].extra_info)
+    if "connection_id" in result_dictionary:
+        g.replica.connection = db_of_process
+        cur = g.replica.connection.cursor()
+        cur.execute('KILL %s;', (result_dictionary["connection_id"]),)
+        output = "job stopped"
+    else:
+        output = "job not running"
+
+    return json.dumps({
+        'stopped': output
     })
 
 
@@ -375,6 +403,11 @@ def output_query_meta(query_id):
     )
 
 
+# mdipietro 2021/08/04 couldn't get the connection to work here
+# very possibly just not understanding it. Though a:
+# g.replica.connection = <db>
+# line might help if indeed it isn't working
+# noted in T288170
 @app.route("/explain/<int:connection_id>")
 def output_explain(connection_id):
     cur = g.replica.connection.cursor()

@@ -1,5 +1,5 @@
 # Use official python base image, small and debian edition
-FROM python:3.5.3-slim
+FROM python:3.7.11-slim
 
 # Update debian packages
 RUN apt-get update && \

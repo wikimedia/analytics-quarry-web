@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS query_revision(
     timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 CREATE INDEX IF NOT EXISTS query_rev_query_id_index ON query_revision(query_id);
+CREATE INDEX IF NOT EXISTS query_rev_query_database_index ON query_revision(query_database);
 
 CREATE TABLE IF NOT EXISTS query_run(
     id INT UNSIGNED NOT NULL PRIMARY KEY AUTO_INCREMENT,

@@ -20,6 +20,100 @@ $( function () {
 
 	var editor = makeEditor();
 	$( '#query-description' ).autosize();
+	$.ajax( {
+		url: '/api/dbs',
+		success: function ( data ) {
+			addAutocompleteDB( document.getElementById( 'query-db' ), data.dbs );
+		}
+	} );
+
+	function addAutocompleteDB( input_elem, options ) {
+		/* Autocomplete an input element from the given array
+		adapted from https://www.w3schools.com/howto/howto_js_autocomplete.asp*/
+		var currentFocus;
+		input_elem.addEventListener( 'input', function () {
+			var list_elem, i, val = this.value;
+			closeAllLists();
+			if ( !val ) { return false; }
+			currentFocus = -1;
+
+			list_elem = $( '<div></div>', {
+				id: this.id + '-autocomplete-list',
+				'class': 'autocomplete-items'
+			} );
+			list_elem.appendTo( input_elem.parentElement );
+			for ( i = 0; i < options.length; i++ ) {
+				/* check if the item starts with the same letters as the text field value:*/
+				if ( options[ i ].substr( 0, val.length ).toUpperCase() === val.toUpperCase() ) {
+					$( '<div><strong>' + options[ i ].substr( 0, val.length ) + options[ i ].substr( val.length ) + '</strong><input type="hidden" value="' + options[ i ] + '">' )
+						.on( {
+							click: function () {
+								input_elem.value = this.getElementsByTagName( 'input' )[ 0 ].value;
+								closeAllLists();
+							}
+						} )
+						.appendTo( list_elem );
+					console.log( 'Got a matching element to', val, '  -> ', options[ i ] );
+				}
+			}
+		} );
+
+		input_elem.addEventListener( 'keydown', function ( e ) {
+			var list_elem = document.getElementById( this.id + '-autocomplete-list' );
+			if ( list_elem ) { list_elem = list_elem.getElementsByTagName( 'div' ); }
+			if ( e.keyCode === 40 ) {
+				/* If the arrow DOWN key is pressed,
+				increase the currentFocus variable:*/
+				currentFocus++;
+				/* and and make the current item more visible:*/
+				addActive( list_elem );
+			} else if ( e.keyCode === 38 ) {
+				/* If the arrow UP key is pressed,
+				decrease the currentFocus variable:*/
+				currentFocus--;
+				/* and and make the current item more visible:*/
+				addActive( list_elem );
+			} else if ( e.keyCode === 13 ) {
+				/* If the ENTER key is pressed, prevent the form from being submitted,*/
+				e.preventDefault();
+				if ( currentFocus > -1 ) {
+				/* and simulate a click on the "active" item:*/
+					if ( list_elem ) { list_elem[ currentFocus ].click(); }
+				}
+			}
+		} );
+
+		function addActive( list_elem ) {
+			/* tag the next item in the list as active by adding the autocomplete-active class*/
+			if ( !list_elem ) { return false; }
+			removeActive( list_elem );
+			if ( currentFocus >= list_elem.length ) { currentFocus = 0; }
+			if ( currentFocus < 0 ) { currentFocus = ( list_elem.length - 1 ); }
+			list_elem[ currentFocus ].classList.add( 'autocomplete-active' );
+		}
+
+		function removeActive( list_elem ) {
+			/* clear all active items from the list*/
+			for ( var i = 0; i < list_elem.length; i++ ) {
+				list_elem[ i ].classList.remove( 'autocomplete-active' );
+			}
+		}
+
+		function closeAllLists( not_to_close ) {
+			/* close all autocomplete lists in the document, except the one passed as an argument:*/
+			var i, autocomplete_items = document.getElementsByClassName( 'autocomplete-items' );
+			for ( i = 0; i < autocomplete_items.length; i++ ) {
+				if ( not_to_close !== autocomplete_items[ i ] && not_to_close !== input_elem ) {
+					autocomplete_items[ i ].parentNode.removeChild( autocomplete_items[ i ] );
+				}
+			}
+		}
+
+		/* clear all autocomplete lists if there's a click anywhere */
+		document.addEventListener( 'click', function ( e ) {
+			closeAllLists( e.target );
+		} );
+	}
 
 	if ( vars.can_edit ) {
 		$( '#title' ).blur( function () {

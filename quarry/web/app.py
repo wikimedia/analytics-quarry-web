@@ -434,3 +434,28 @@ def pref_set(key, value):
 
 if __name__ == '__main__':
     app.run(port=5000, host="0.0.0.0")
+
+
+@app.route("/api/dbs")
+def get_dbs():
+    known_dbs = g.conn.session.query(QueryRevision.query_database).distinct().all()
+    return Response(
+        json.dumps(
+            {
+                'dbs': list(
+                    set(
+                        db_result[-1].strip()
+                        for db_result in known_dbs
+                        # the db data might be NULL, empty strings or spaces+tabs only so this helps a bit to show only
+                        # likely names
+                        if db_result[-1] and db_result[-1].strip()
+                    )
+                )
+            }
+        ),
+        mimetype='application/json'
+    )
+
+
+if __name__ == '__main__':
+    app.run(port=5000, host="0.0.0.0")

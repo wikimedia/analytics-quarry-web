@@ -73,9 +73,9 @@
         <textarea id="query-description" {% if jsvars.can_edit %}placeholder="Click to add description..."{% else %}readonly{% endif %}>{% if query.description %}{{query.description}}{% endif %}</textarea>
         {% endif %}
     </div>
-    <div class="query-db-parent">
+    <div>
         {% if jsvars.can_edit or latest_rev.query_database %}
-        <input id="query-db" {% if jsvars.can_edit %}placeholder="Enter the db name here..."{% else %}readonly{% endif %}>{% if latest_rev %}{{latest_rev.query_database if latest_rev.query_database}}{% endif %}</input>
+        <textarea id="query-db" {% if jsvars.can_edit %}placeholder="Click to enter database"{% else %}readonly{% endif %}>{% if latest_rev %}{{latest_rev.query_database if latest_rev.query_database}}{% endif %}</textarea>
         {% endif %}
     </div>
     <div>

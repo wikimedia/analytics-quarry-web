@@ -1,13 +1,4 @@
 $( function () {
-	// set option to stop if currently running
-	if ( vars.qrun_id ) {
-		$.get( '/run/' + vars.qrun_id + '/status' ).done( function ( data ) {
-			if ( data.status === 'running' ) {
-				document.getElementById( 'run-code' ).innerHTML = 'Stop';
-			}
-		} );
-	}
-
 	function htmlEscape( str ) {
 		return String( str )
 			.replace( /&/g, '&amp;' )
@@ -160,6 +151,14 @@ $( function () {
 				}, 5000 );
 			}
 
+			/* separating this section from the above, similar, section as this has to
+			do with the status button where the above has to do with the status results.
+			They already diverge a little in purpose, could diverge more later */
+			if ( data.status === 'queued' || data.status === 'running' ) {
+				document.getElementById( 'run-code' ).innerHTML = 'Stop';
+			} else {
+				document.getElementById( 'run-code' ).innerHTML = 'Submit Query';
+			}
 			$( '#show-explain' ).off().click( function () {
 				$.get( '/explain/' + data.extra.connection_id ).done( function ( data ) {
 					var $table = $( '#explain-results-table' );

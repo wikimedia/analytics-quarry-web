@@ -15,7 +15,7 @@ services:
     volumes:
       - .:/app
       - results:/results
-    entrypoint: ["celery", "worker", "--app=quarry.web.worker"]
+    entrypoint: ["celery", "--app", "quarry.web.worker", "worker", ]
 
   redis:
     image: redis:alpine

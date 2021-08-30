@@ -499,10 +499,6 @@ def pref_set(key, value):
     )
 
 
-if __name__ == '__main__':
-    app.run(port=5000, host="0.0.0.0")
-
-
 @app.route("/api/dbs")
 def get_dbs():
     known_dbs = g.conn.session.query(QueryRevision.query_database).distinct().all()

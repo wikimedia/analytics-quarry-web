@@ -16,12 +16,19 @@ A web server will be setup, available at http://localhost:5000. Change to python
 files will trigger an automatic reload of the server, and your modifications
 will imediatelly be taken into account.
 A worker node is also created to execute your queries in the background (uses the
-same image). Finally, redis and database instances are also started.
+same image). Finally, redis and two database instances are also started.
+
+One database is your quarry database the other is a wikireplica-like database
+named `mywiki`. This (or `mywiki_p`) is the correct thing to enter in the
+database field on all local test queries.
 
 In your local environment, you can query Quarry internal db itself. Use then
 "quarry" as database name.
 
-To stop, run `docker-compose stop`.
+To stop, run `docker-compose stop` or hit CTRL-C on the terminal your docker-compose
+is running in. After that, to start with code changes, you'll want to `docker-compose down`
+to clean up. Also, this creates a docker volume where sqlite versions of query
+results are found. That will not be cleaned up unless you run `docker-compose down -v`
 
 ## Useful commands ##
 

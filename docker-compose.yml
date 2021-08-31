@@ -20,6 +20,17 @@ services:
   redis:
     image: redis:alpine
 
+  # wikireplica simulator
+  mywiki:
+    image: mariadb:10.4-focal
+    volumes:
+      - ./docker-replica/replica.sql:/docker-entrypoint-initdb.d/replica.sql
+    environment:
+      MYSQL_USER: repl
+      MYSQL_PASSWORD: repl
+      MYSQL_DATABASE: repl
+      MYSQL_RANDOM_ROOT_PASSWORD: 1
+
   db:
     image: mariadb:10.1.48-bionic
     volumes:

@@ -16,10 +16,10 @@ CELERY_TRACK_STARTED: True
 CELERYD_PREFETCH_MULTIPLIER: 1 # Tasks can run for a long time
 # Just query the quarry database itself.
 REPLICA_DOMAIN: ''
-REPLICA_HOST: 'db'
-REPLICA_DB: 'quarry'
-REPLICA_USER: 'quarry'
-REPLICA_PASSWORD: 'quarry'
+REPLICA_HOST: 'mywiki'
+REPLICA_DB: 'mywiki_p'
+REPLICA_USER: 'repl'
+REPLICA_PASSWORD: 'repl'
 REPLICA_PORT: 3306
 OUTPUT_PATH_TEMPLATE: '/results/%s/%s/%s.sqlite'
 REDIS_HOST: 'redis'

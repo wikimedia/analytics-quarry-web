@@ -6,9 +6,9 @@ import pymysql
 from connections import Connections
 
 __dir__ = os.path.dirname(__file__)
-config = yaml.load(open(os.path.join(__dir__, "../default_config.yaml")))
+config = yaml.safe_load(open(os.path.join(__dir__, "../default_config.yaml")))
 try:
-    config.update(yaml.load(open(os.path.join(__dir__, "../config.yaml"))))
+    config.update(yaml.safe_load(open(os.path.join(__dir__, "../config.yaml"))))
 except IOError:
     # is ok if we do not have config.yaml
     pass

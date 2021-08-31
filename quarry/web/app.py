@@ -30,9 +30,9 @@ from .webhelpers import templatehelpers
 __dir__ = os.path.dirname(__file__)
 
 app = Flask(__name__)
-app.config.update(yaml.load(open(os.path.join(__dir__, "../default_config.yaml"))))
+app.config.update(yaml.safe_load(open(os.path.join(__dir__, "../default_config.yaml"))))
 try:
-    app.config.update(yaml.load(open(os.path.join(__dir__, "../config.yaml"))))
+    app.config.update(yaml.safe_load(open(os.path.join(__dir__, "../config.yaml"))))
 except IOError:
     # Is ok if we can't load config.yaml
     pass

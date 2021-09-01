@@ -28,8 +28,5 @@ To stop, run `docker-compose stop`.
 To pre-compile nunjucks templates:
 `nunjucks-precompile quarry/web/static/templates/ > quarry/web/static/templates/compiled.js`
 
-To update requirements.txt with later versions:
-`pipenv lock -r > requirements.txt`
-
 See also commands listed in the mainters documentation:
 https://wikitech.wikimedia.org/wiki/Portal:Data_Services/Admin/Quarry

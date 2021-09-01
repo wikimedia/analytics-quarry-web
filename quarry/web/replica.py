@@ -16,13 +16,7 @@ class Replica:
                 "Attempting connection before a database is selected"
             )
 
-        # Special case for docker development setup where connexion is made to
-        # "db" container and "quarry" database
-        from .app import app  # here to avoid cyclyc import
-        if app.config['DEBUG'] and self.dbname == "quarry":
-            self.database_name = "db"
-            self.database_p = "quarry"
-        elif self.dbname == "meta" or self.dbname == "meta_p":
+        if self.dbname == "meta" or self.dbname == "meta_p":
             self.database_name = "s7"
             self.database_p = "meta_p"
         elif self.dbname == "centralauth" or self.dbname == "centralauth_p":
@@ -56,10 +50,13 @@ class Replica:
 
         self.dbname = db
         self._db_name_mangler()
+        repl_host = (
+            f"{self.database_name}.{self.config['REPLICA_DOMAIN']}"
+            if self.config["REPLICA_DOMAIN"]
+            else self.database_name
+        )
         self._replica = pymysql.connect(
-            host="{}.{}".format(
-                self.database_name, self.config["REPLICA_DOMAIN"]
-            ),
+            host=repl_host,
             db=self.database_p,
             user=self.config["REPLICA_USER"],
             passwd=self.config["REPLICA_PASSWORD"],

@@ -1,4 +1,4 @@
-from . import valid_dbname
+from quarry.web.utils import valid_dbname
 
 
 PROJECTS = [

@@ -40,9 +40,13 @@ def kill_context(exception=None):
     del g.replica.connection
 
 
-def create_app():
+def create_app(test_config=None):
     app = Flask(__name__)
-    app.config.update(get_config())
+
+    if test_config is None:
+        app.config.update(get_config())
+    else:
+        app.config.from_mapping(test_config)
 
     app.register_blueprint(auth)
     app.register_blueprint(health_blueprint)

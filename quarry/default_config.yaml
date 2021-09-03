@@ -8,12 +8,12 @@ DB_HOST: 'db'
 DB_NAME: 'quarry'
 DB_USER: 'quarry'
 DB_PASSWORD: 'quarry'
-BROKER_URL: 'redis://redis'
-CELERY_RESULT_BACKEND: 'redis://redis'
-CELERYD_CONCURRENCY: 24  # Since all tasks are IO bound
-CELERY_ACKS_LATE: True  # Tasks are idempotent!
-CELERY_TRACK_STARTED: True
-CELERYD_PREFETCH_MULTIPLIER: 1 # Tasks can run for a long time
+broker_url: 'redis://redis'
+result_backend: 'redis://redis'
+worker_concurrency: 24  # Since all tasks are IO bound
+task_acks_late: True  # Tasks are idempotent!
+task_track_started: True
+worker_prefetch_multiplier: 1 # Tasks can run for a long time
 # Just query the quarry database itself.
 REPLICA_DOMAIN: ''
 REPLICA_HOST: 'mywiki'

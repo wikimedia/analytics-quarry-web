@@ -80,6 +80,14 @@ $( function () {
 				/* and simulate a click on the "active" item:*/
 					if ( list_elem ) { list_elem[ currentFocus ].click(); }
 				}
+			} else if ( e.keyCode === 9 ) {
+				/* close dropdown on tab press*/
+				if ( currentFocus > -1 ) {
+				/* if focus was moved before tab press, use it*/
+					if ( list_elem ) { list_elem[ currentFocus ].click(); }
+				} else {
+					closeAllLists();
+				}
 			}
 		} );
 

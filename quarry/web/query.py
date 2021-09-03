@@ -76,7 +76,7 @@ def query_output_redirect(query_id, resultset_id, format):
     # FIXME: Enforce HTTPS everywhere in a nicer way!
     resp = redirect(
         url_for(
-            "output_result",
+            "run.output_result",
             qrun_id=qrun_id,
             resultset_id=resultset_id,
             format=format,
@@ -223,7 +223,7 @@ class QueriesRangeBasedPagination(RangeBasedPagination):
         get_params = dict(request.args)
         get_params.update({"from": page_key, "limit": limit})
         return url_for(
-            "query_runs_all",
+            "query.query_runs_all",
             **dict([(key, value) for key, value in list(get_params.items())])
         )
 

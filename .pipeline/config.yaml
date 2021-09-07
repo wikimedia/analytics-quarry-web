@@ -1,0 +1,8 @@
+pipelines:
+  test:
+    blubberfile: blubber.yaml
+    stages:
+      - name: quarry-test
+        build: quarry-test
+        run: true
+

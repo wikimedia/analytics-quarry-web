@@ -12,6 +12,7 @@ class QueryRun(Base):
     STATUS_KILLED = 3
     STATUS_COMPLETE = 4
     STATUS_SUPERSEDED = 5
+    STATUS_STOPPED = 6
 
     # TODO (phuedx, 2014/08/08): Make this translatable.
     STATUS_MESSAGES = [
@@ -20,7 +21,8 @@ class QueryRun(Base):
         'running',
         'killed',
         'complete',
-        'superseded'
+        'superseded',
+        'stopped'
     ]
 
     __tablename__ = 'query_run'

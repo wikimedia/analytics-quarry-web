@@ -109,7 +109,13 @@ def run_query(query_run_id):
         else:  # Surfacing it to the user is always better than just silently failing
             write_error(qrun, e.args[1])
     except pymysql.DatabaseError as e:
-        write_error(qrun, e.args[1])
+        if e.args[0] == 2013:  # Query stopped gives a lost connection code
+            qrun.status = QueryRun.STATUS_STOPPED
+            conn.session.add(qrun)
+            conn.session.commit()
+            celery_log.info("Stopped run for qrun:%s", qrun.id)
+        else:
+            write_error(qrun, e.args[1])
     finally:
         conn.close_session()
         del repl.connection

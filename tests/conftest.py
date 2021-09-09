@@ -17,6 +17,10 @@ def client(redisdb, mocker):
             "REDIS_HOST": "localhost",
             "REDIS_PORT": 6379,
             "REDIS_DB": None,
+            "DB_USER": "Quarry",
+            "DB_PASSWORD": "no_such_password",
+            "DB_HOST": "no_such_host",
+            "DB_NAME": "Quarry",
         }
     )
 

@@ -1,5 +1,7 @@
 # Use official python base image, small and debian edition
-FROM python:3.7.3-slim
+FROM amd64/python:3.7.3-slim
+
+ARG purpose=dev
 
 # Update debian packages
 RUN apt-get update && \
@@ -14,9 +16,9 @@ RUN useradd -r -m quarry && \
 WORKDIR /app
 
 # Install python dependencies
-COPY requirements.txt /app
-RUN pip install --upgrade pip wheel && \
-    pip install -r requirements.txt
+RUN if [ ${purpose} = "test" ] ; then apt-get install -y tox redis-server; \
+    else pip install --upgrade pip wheel && \
+    pip install -r requirements.txt; fi
 
 # Copy app code
 USER quarry

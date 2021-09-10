@@ -1,7 +1,7 @@
 from sqlalchemy import text
 import json
 
-from alchemy_mock.mocking import UnifiedAlchemyMagicMock
+from mock_alchemy.mocking import UnifiedAlchemyMagicMock
 
 from quarry.web.models.query import Query
 from quarry.web.models.queryrun import QueryRun

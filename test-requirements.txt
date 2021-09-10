@@ -4,5 +4,4 @@ pytest
 pytest-cov
 pytest-mock
 pytest-redis
-alchemy-mock
-mock
+mock-alchemy

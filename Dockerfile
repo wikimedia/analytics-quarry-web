@@ -15,7 +15,8 @@ RUN useradd -r -m quarry && \
 
 WORKDIR /app
 
-# Install python dependencies
+COPY requirements.txt /app
+# Install python or test dependencies
 RUN if [ ${purpose} = "test" ] ; then apt-get install -y tox redis-server; \
     else pip install --upgrade pip wheel && \
     pip install -r requirements.txt; fi

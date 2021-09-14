@@ -13,6 +13,7 @@ conf = {
     "DB_HOST": "no_such_host",
     "DB_NAME": "Quarry",
     "QUERY_RESULTS_PER_PAGE": 3,
+    "OUTPUT_PATH_TEMPLATE": "%s_%s_%s",
 }
 
 

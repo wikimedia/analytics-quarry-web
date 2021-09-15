@@ -144,8 +144,8 @@ def api_stop_query():
     # the db process id of the running job is stored in the query_run table while
     # the job is running. We can take this pid over to the database running the
     # query to stop the job
-    query_run = g.conn.session.query(QueryRun).filter(QueryRun.id == qrun_id)
-    result_dictionary = ast.literal_eval(query_run[0].extra_info)
+    query_run = g.conn.session.query(QueryRun).filter(QueryRun.id == qrun_id).one()
+    result_dictionary = ast.literal_eval(query_run.extra_info)
     if "connection_id" in result_dictionary:
         g.replica.connection = db_of_process
         cur = g.replica.connection.cursor()

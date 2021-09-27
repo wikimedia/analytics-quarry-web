@@ -44,7 +44,8 @@ def health_summary(minutes):
                                 'running': 0,
                                 'killed': 0,
                                 'complete': 0,
-                                'superseded': 0}
+                                'superseded': 0,
+                                'stopped': 0}
 
     for row in statuses:
         query_run_status = row[0]

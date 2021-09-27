@@ -188,7 +188,6 @@ $( function () {
 				.done( function ( data ) {
 					var d = JSON.parse( data );
 					checkStatus( d.qrun_id, false );
-					alert( d.stopped );
 				} )
 				.fail( function ( resp ) {
 					alert( resp.responseText );

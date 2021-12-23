@@ -1,5 +1,5 @@
 # Quarry
-[Quarry](https://quarry.wmflabs.org/) is a web service that allows to perform SQL 
+[Quarry](https://quarry.wmcloud.org/) is a web service that allows to perform SQL 
 queries against Wikipedia and sister projects databases.
 
 ## Setting up a local dev environment ##

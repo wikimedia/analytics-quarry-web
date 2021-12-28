@@ -6,6 +6,7 @@ import yaml
 from .connections import Connections
 from .replica import Replica
 from .login import auth
+from .metrics import metrics_init_app
 from .redissession import RedisSessionInterface
 from .user import user_blueprint, get_user
 from .utils import monkey as _unused  # noqa: F401
@@ -61,6 +62,8 @@ def create_app(test_config=None):
 
     app.before_request(setup_context)
     app.teardown_request(kill_context)
+
+    metrics_init_app(app)
 
     @app.route("/")
     def index():

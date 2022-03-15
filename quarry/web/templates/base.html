@@ -68,7 +68,7 @@
                 <li class="dropdown">
                     <a href="#" data-toggle="dropdown" class="dropdown-toggle">{{ user.username }} <span class="caret"></span></a>
                     <ul class="dropdown-menu" role="menu">
-                        <li><a href="/{{user.username}}">My profile</a></li>
+                        <li><a href="/{{ user.username.replace(' ', '_') }}">My profile</a></li>
                         <li><a href="/logout">Log out</a></li>
                     </ul>
                 </li>

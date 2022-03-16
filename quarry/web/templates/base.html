@@ -48,7 +48,7 @@
             <ul class="nav navbar-nav">
             {% for href, pagename, text in nav_items %}
                 <li{% if pagename == active_page %} class="active"{% endif%}>
-                    <a href="{{ href|e }}">{{ text|e }}</a>
+                    <a href="{{ '/' + user.username.replace(' ', '_')|e if user and href=='/' else href|e }}">{{ text|e }}</a>
                 </li>
             {% endfor %}
                 <li>

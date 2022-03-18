@@ -9,6 +9,10 @@ services:
       - results:/results
     ports:
       - "5000:5000"
+    depends_on:
+      - "db"
+      - "mywiki"
+      - "redis"
 
   worker:
     build: .
@@ -16,6 +20,9 @@ services:
       - .:/app
       - results:/results
     entrypoint: ["celery", "--app", "quarry.web.worker", "worker", ]
+    depends_on:
+      - "db"
+      - "redis"
 
   redis:
     image: redis:alpine

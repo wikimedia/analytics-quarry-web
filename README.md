@@ -31,6 +31,13 @@ to clean up. Also, this creates a docker volume where sqlite versions of query
 results are found. That will not be cleaned up unless you run `docker-compose down -v`
 
 
+### Updating existing containers ###
+
+If you had already run a dev environment (that is, ran `docker-compose up`) you might want to update
+the containers with the new dependencies by running `docker-compose build` before running
+`docker-compose up` again.
+
+
 ## Running tests ##
 
 If you got things working for the dev environment, this should work well. To run

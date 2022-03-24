@@ -34,8 +34,21 @@ def new_query():
     return redirect(url_for("query.query_show", query_id=query.id))
 
 
+@query_blueprint.route("/history/<int:query_id>")
+def query_history(query_id):
+    query = g.conn.session.query(Query).filter(Query.id == query_id).one()
+
+    return render_template(
+        "query/history.html",
+        user=get_user(),
+        queries=query.revs,
+    )
+
+
+@query_blueprint.route("/history/<int:query_id>/<int:rev_id>")
 @query_blueprint.route("/query/<int:query_id>")
-def query_show(query_id):
+def query_show(query_id, rev_id=None):
+    this_rev_text = None
     query = g.conn.session.query(Query).filter(Query.id == query_id).one()
     can_edit = get_user() is not None and get_user().id == query.user_id
     is_starred = False
@@ -55,7 +68,13 @@ def query_show(query_id):
         "preferences": get_preferences(),
     }
 
-    if query.latest_rev and query.latest_rev.latest_run_id:
+    if rev_id:
+        jsvars["qrun_id"] = rev_id
+        for row in query.revs:
+            if row.id == rev_id:
+                this_rev_text = row.text
+                break
+    elif query.latest_rev and query.latest_rev.latest_run_id:
         jsvars["qrun_id"] = query.latest_rev.latest_run_id
 
     return render_template(
@@ -64,6 +83,8 @@ def query_show(query_id):
         query=query,
         jsvars=jsvars,
         latest_rev=query.latest_rev,
+        this_rev_text=this_rev_text,
+        rev_id=rev_id,
     )
 
 
@@ -178,8 +199,9 @@ def output_explain(connection_id):
         )
 
 
+@query_blueprint.route("/fork/<int:id>/<int:rev_id>")
 @query_blueprint.route("/fork/<int:id>")
-def fork_query(id):
+def fork_query(id, rev_id=None):
     if get_user() is None:
         return redirect("/login?next=fork/{id}".format(id=id))
     query = Query()
@@ -191,10 +213,18 @@ def fork_query(id):
     g.conn.session.add(query)
     g.conn.session.commit()
 
+    if rev_id:
+        for row in parent_query.revs:
+            if row.id == rev_id:
+                text = row.text
+                break
+    else:
+        text = parent_query.latest_rev.text
+
     query_rev = QueryRevision(
         query_id=query.id,
         query_database=parent_query.latest_rev.query_database,
-        text=parent_query.latest_rev.text,
+        text=text,
     )
     query.latest_rev = query_rev
     g.conn.session.add(query)

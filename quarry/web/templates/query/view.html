@@ -27,7 +27,6 @@
             <h2><input type="textbox" id="title" {% if jsvars.can_edit %}placeholder="Click to add title..."{% else %}readonly{% endif %} value="{% if query.title %}{{query.title}}{% endif %}"> </input></h2>
         </div>
 
-
         <div class="col-md-2" id="title-actions-container">
             {% if user and not jsvars.can_edit %}
                 <a id="un-star-query" class="btn btn-info btn-sm only-starred">
@@ -37,7 +36,10 @@
                     <span class="glyphicon glyphicon-star-empty"></span> Star
                 </a>
             {% endif %}
-            <a id="fork-query" title="Create a copy of this query to modify and execute" href="/fork/{{ query.id }}" class="btn btn-info btn-sm">
+            <a id="query-history" title="View history of runs for this query" href="/history/{{ query.id }}" class="btn btn-info btn-sm">
+                History
+            </a>
+            <a id="fork-query" title="Create a copy of this query to modify and execute" href="/fork/{{ query.id }}{% if rev_id %}/{{ rev_id }}{% endif %}" class="btn btn-info btn-sm">
                 Fork
             </a>
         </div>
@@ -90,7 +92,7 @@
     <div>
         <button id="togglehl" class="btn btn-primary btn-sm pull-right">Toggle Highlighting</button>
         <h3>SQL</h3>
-        <textarea id="code"{% if not jsvars.can_edit %}readonly{% endif %}>{% if latest_rev %}{{ latest_rev.text }}{% endif %}</textarea>
+        <textarea id="code"{% if not jsvars.can_edit %}readonly{% endif %}>{% if rev_id %}{{ this_rev_text }}{% elif latest_rev %}{{ latest_rev.text }}{% endif %}</textarea>
     </div>
     <div id="sql-actions-container" class="row">
         <div class='col-md-8 only-edit'>

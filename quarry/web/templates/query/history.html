@@ -1,0 +1,29 @@
+{% set active_page = "query-runs-all" %}
+{% extends "base.html" %}
+{% block head %}
+<link rel="stylesheet" href="/static/css/query/list.css">
+{% endblock %}
+{% block content %}
+<div id="content" class="container">
+    <table class="table table-bordered table-hover">
+        {% if queries %}
+            <tr>
+                <th>Query</th>
+                <th>Run</th>
+            </tr>
+        {% endif %}
+        <tbody>
+        {% for query in queries %}
+            <tr>
+                <td><a href="/history/{{query.query_id}}/{{query.id}}">{{query.text}}</a></td>
+                <td>{{query.timestamp|timesince}}</td>
+            </tr>
+        {% else %}
+            <tr>
+                <td>No queries found.</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

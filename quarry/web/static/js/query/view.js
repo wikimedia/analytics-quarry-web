@@ -184,9 +184,8 @@ $( function () {
 			query_database: $( '#query-db' ).val(),
 			qrun_id: vars.qrun_id
 		} )
-			.done( function ( data ) {
-				var d = JSON.parse( data );
-				checkStatus( d.qrun_id, false );
+			.done( function () {
+				checkStatus( vars.qrun_id, false );
 			} )
 			.fail( function ( resp ) {
 				alert( resp.responseText );

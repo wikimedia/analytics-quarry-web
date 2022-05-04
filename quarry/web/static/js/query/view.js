@@ -179,42 +179,40 @@ $( function () {
 		} );
 	} );
 
+	$( '#stop-code' ).click( function () {
+		$.post( '/api/query/stop', {
+			query_database: $( '#query-db' ).val(),
+			qrun_id: vars.qrun_id
+		} )
+			.done( function ( data ) {
+				var d = JSON.parse( data );
+				checkStatus( d.qrun_id, false );
+			} )
+			.fail( function ( resp ) {
+				alert( resp.responseText );
+			} );
+	} );
+
 	$( '#run-code' ).click( function () {
-		if ( document.getElementById( 'run-code' ).innerHTML === 'Stop' ) {
-			$.post( '/api/query/stop', {
-				query_database: $( '#query-db' ).val(),
-				qrun_id: vars.qrun_id
+		$.post( '/api/query/run', {
+			text: editor !== null ? editor.getValue() : $( '#code' ).val(),
+			query_database: $( '#query-db' ).val(),
+			query_id: vars.query_id
+		} )
+			.done( function ( data ) {
+				var d = JSON.parse( data );
+				vars.output_url = d.output_url;
+				$( '#query-progress' ).show();
+				$( '#query-result-error' ).hide();
+				$( '#query-result-success' ).hide();
+				clearTimeout( window.lastStatusCheck );
+				checkStatus( d.qrun_id, false );
+				vars.qrun_id = d.qrun_id;
 			} )
-				.done( function ( data ) {
-					var d = JSON.parse( data );
-					checkStatus( d.qrun_id, false );
-				} )
-				.fail( function ( resp ) {
-					alert( resp.responseText );
-				} );
-			document.getElementById( 'run-code' ).innerHTML = 'Submit Query';
-		} else {
-			$.post( '/api/query/run', {
-				text: editor !== null ? editor.getValue() : $( '#code' ).val(),
-				query_database: $( '#query-db' ).val(),
-				query_id: vars.query_id
-			} )
-				.done( function ( data ) {
-					var d = JSON.parse( data );
-					vars.output_url = d.output_url;
-					$( '#query-progress' ).show();
-					$( '#query-result-error' ).hide();
-					$( '#query-result-success' ).hide();
-					clearTimeout( window.lastStatusCheck );
-					checkStatus( d.qrun_id, false );
-					vars.qrun_id = d.qrun_id;
-					document.getElementById( 'run-code' ).innerHTML = 'Stop';
-				} )
-				.fail( function ( resp ) {
-					alert( resp.responseText );
-				} );
-			return false;
-		}
+			.fail( function ( resp ) {
+				alert( resp.responseText );
+			} );
+		return false;
 	} );
 
 	function checkStatus( qrun_id, silent ) {
@@ -256,9 +254,9 @@ $( function () {
 			do with the status button where the above has to do with the status results.
 			They already diverge a little in purpose, could diverge more later */
 			if ( data.status === 'queued' || data.status === 'running' ) {
-				document.getElementById( 'run-code' ).innerHTML = 'Stop';
+				document.getElementById( 'stop-code' ).style.visibility = 'visible';
 			} else {
-				document.getElementById( 'run-code' ).innerHTML = 'Submit Query';
+				document.getElementById( 'stop-code' ).style.visibility = 'hidden';
 			}
 			$( '#show-explain' ).off().click( function () {
 				$.get( '/explain/' + data.extra.connection_id ).done( function ( data ) {

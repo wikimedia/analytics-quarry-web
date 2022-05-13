@@ -1,5 +1,6 @@
 import ast
 import json
+from pymysql.err import OperationalError
 
 from flask import Blueprint, g, Response, request
 from sqlalchemy.exc import IntegrityError
@@ -149,11 +150,23 @@ def api_stop_query():
     if "connection_id" in result_dictionary:
         g.replica.connection = db_of_process
         cur = g.replica.connection.cursor()
-        cur.execute("KILL %s;", (result_dictionary["connection_id"]))
-        output = "job stopped"
+        try:
+            cur.execute("KILL %s;", (result_dictionary["connection_id"]))
+            output = "job stopped"
+        except OperationalError:
+            output = "job not running"
     else:
         output = "job not running"
 
+    # Stopping the job usually gets a stopped status. However some jobs stopped
+    # before the stop button was pressed, and didn't update the DB to reflect
+    # this. Cleanup here. Should we make a feature that looks for jobs that have
+    # failed, but have not updated the DB to reflect as much, it may be
+    # reasonable to update this clause to match the state offered by a cleanup
+    # feature ("job lost" or some such)
+    query_run.status = QueryRun.STATUS_STOPPED
+    g.conn.session.add(query_run)
+    g.conn.session.commit()
     return json.dumps({"stopped": output})
 
 

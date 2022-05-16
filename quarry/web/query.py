@@ -42,7 +42,7 @@ def query_history(query_id):
     return render_template(
         "query/history.html",
         user=get_user(),
-        queries=query.revs,
+        queries=sorted(query.revs, key=lambda q: q.timestamp, reverse=True)
     )
 
 

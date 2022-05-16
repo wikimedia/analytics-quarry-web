@@ -9,6 +9,7 @@ from flask import (
     redirect,
     request,
     url_for,
+    session,
 )
 from sqlalchemy import desc, func
 
@@ -121,6 +122,10 @@ def query_runs_all():
     if request.args.get("published") == "true":
         queries = queries.filter(Query.published)
         queries_filter = "published"
+        session['recent_queries_link'] = url_for(
+            'query.query_runs_all', published='true')
+    else:
+        session['recent_queries_link'] = url_for('query.query_runs_all')
     limit = int(
         request.args.get(
             "limit", current_app.config.get("QUERY_RESULTS_PER_PAGE", 50)

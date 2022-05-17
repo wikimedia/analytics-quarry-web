@@ -12,6 +12,7 @@ from flask import (
     session,
 )
 from sqlalchemy import desc, func
+from sqlalchemy.orm.exc import NoResultFound
 
 from .models.query import Query
 from .models.queryrevision import QueryRevision
@@ -50,7 +51,10 @@ def query_history(query_id):
 @query_blueprint.route("/query/<int:query_id>")
 def query_show(query_id, rev_id=None):
     this_rev_text = None
-    query = g.conn.session.query(Query).filter(Query.id == query_id).one()
+    try:
+        query = g.conn.session.query(Query).filter(Query.id == query_id).one()
+    except NoResultFound:
+        return Response("No such query id " + str(query_id), status=404)
     can_edit = get_user() is not None and get_user().id == query.user_id
     is_starred = False
     if get_user():

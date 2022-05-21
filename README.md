@@ -40,16 +40,20 @@ the containers with the new dependencies by running `docker-compose build` befor
 
 ## Running tests ##
 
-If you got things working for the dev environment, this should work well. To run
-the tests run:
-`docker-compose -f docker-compose-test.yml run --rm  test`
+1. Set up [Blubber](https://wikitech.wikimedia.org/wiki/Blubber) to run tests:
+https://wikitech.wikimedia.org/wiki/Blubber/Download
+```bash
+blubber() {
+  if [ $# -lt 2 ]; then
+    echo 'Usage: blubber config.yaml variant'
+    return 1
+  fi
+  curl -s -H 'content-type: application/yaml' --data-binary @"$1" https://blubberoid.wikimedia.org/v1/"$2"
+}
+```
+2. Run tests:
+`blubber .pipeline/blubber.yaml quarry-test | docker build --tag blubber-quarry:01 --file - . ; docker run blubber-quarry:01`
 
-That command will clean up after itself as far as the container goes.
-
-It can also be run with:
-`docker-compose -f docker-compose-test.yml run --rm --abort-on-container-exit --exit-code-from test`
-but then you should cleanup after by running `docker-compose -f docker-compose-test.yml down -v` to
-delete the container.
 
 ## Useful commands ##
 

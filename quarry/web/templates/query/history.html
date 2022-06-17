@@ -15,7 +15,7 @@
         <tbody>
         {% for query in queries %}
             <tr>
-                <td><a href="/history/{{query.query_id}}/{{query.id}}">{% if query.text %}{{query.text|truncate(80)}}{% else %}blank query{% endif %}</a></td>
+                <td><a href="/history/{{query.query_id}}/{{query.id}}/{{query.latest_run_id}}">{% if query.text %}{{query.text|truncate(80)}}{% else %}blank query{% endif %}</a></td>
                 <td>{{query.timestamp|timesince}}</td>
             </tr>
         {% else %}

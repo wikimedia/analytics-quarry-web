@@ -47,9 +47,9 @@ def query_history(query_id):
     )
 
 
-@query_blueprint.route("/history/<int:query_id>/<int:rev_id>")
+@query_blueprint.route("/history/<int:query_id>/<int:rev_id>/<int:latest_run_id>")
 @query_blueprint.route("/query/<int:query_id>")
-def query_show(query_id, rev_id=None):
+def query_show(query_id, rev_id=None, latest_run_id=None):
     this_rev_text = None
     try:
         query = g.conn.session.query(Query).filter(Query.id == query_id).one()
@@ -74,7 +74,7 @@ def query_show(query_id, rev_id=None):
     }
 
     if rev_id:
-        jsvars["qrun_id"] = rev_id
+        jsvars["qrun_id"] = latest_run_id
         for row in query.revs:
             if row.id == rev_id:
                 this_rev_text = row.text

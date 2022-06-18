@@ -45,7 +45,7 @@ def user_page(user_name):
     try:
         user = g.conn.session.query(User).filter(func.lower(User.username) == user_name).one()
     except NoResultFound:
-        return render_template("404.html", message="User not found"), 404
+        return render_template("404.html", message="User not found", user=get_user()), 404
     stats = {
         'query_count': g.conn.session.query(func.count(Query.id)).filter(Query.user_id == user.id).scalar(),
         'stars_count': g.conn.session.query(func.count(Star.id)).filter(Star.user_id == user.id).scalar()

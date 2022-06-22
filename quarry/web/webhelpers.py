@@ -1,7 +1,7 @@
 from datetime import datetime
 from flask import Blueprint
 
-templatehelpers = Blueprint('templatehelpers', __name__)
+templatehelpers = Blueprint("templatehelpers", __name__)
 
 
 @templatehelpers.add_app_template_filter

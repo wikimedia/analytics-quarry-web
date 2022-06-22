@@ -19,10 +19,14 @@ __dir__ = os.path.dirname(__file__)
 
 celery_log = get_task_logger(__name__)
 
-celery = Celery('quarry.web.worker')
-celery.conf.update(yaml.safe_load(open(os.path.join(__dir__, "../default_config.yaml"))))
+celery = Celery("quarry.web.worker")
+celery.conf.update(
+    yaml.safe_load(open(os.path.join(__dir__, "../default_config.yaml")))
+)
 try:
-    celery.conf.update(yaml.safe_load(open(os.path.join(__dir__, "../config.yaml"))))
+    celery.conf.update(
+        yaml.safe_load(open(os.path.join(__dir__, "../config.yaml")))
+    )
 except IOError:
     # Is ok if we can not load config.yaml
     pass
@@ -48,33 +52,43 @@ def shutdown(*args, **kwargs):
     celery_log.info("Closed all connections")
 
 
-@celery.task(name='worker.run_query')
+@celery.task(name="worker.run_query")
 def run_query(query_run_id):
     global conn
 
     cur = False
     try:
         celery_log.info("Starting run for qrun:%s", query_run_id)
-        qrun = conn.session.query(QueryRun).filter(QueryRun.id == query_run_id).one()
+        qrun = (
+            conn.session.query(QueryRun)
+            .filter(QueryRun.id == query_run_id)
+            .one()
+        )
         qrun.status = QueryRun.STATUS_RUNNING
         conn.session.add(qrun)
         conn.session.commit()
         check_result = qrun.rev.is_allowed()
         if check_result is not True:
-            celery_log.info("Check result for qrun:%s failed, with message: %s", qrun.id, check_result[0])
+            celery_log.info(
+                "Check result for qrun:%s failed, with message: %s",
+                qrun.id,
+                check_result[0],
+            )
             raise pymysql.DatabaseError(0, check_result[1])
 
         repl.connection = qrun.rev.query_database
         cur = repl.connection.cursor()
-        cur.execute('SELECT CONNECTION_ID();')
-        qrun.extra_info = json.dumps({'connection_id': cur.fetchall()[0][0]})
+        cur.execute("SELECT CONNECTION_ID();")
+        qrun.extra_info = json.dumps({"connection_id": cur.fetchall()[0][0]})
         conn.session.add(qrun)
         conn.session.commit()
         starttime = timeit.default_timer()
         cur.execute(qrun.augmented_sql)
         output = SQLiteResultWriter(qrun, celery.conf.OUTPUT_PATH_TEMPLATE)
         if cur.description:
-            output.start_resultset([c[0] for c in cur.description], cur.rowcount)
+            output.start_resultset(
+                [c[0] for c in cur.description], cur.rowcount
+            )
             rows = cur.fetchmany(10)
             while rows:
                 output.add_rows(rows)
@@ -82,7 +96,9 @@ def run_query(query_run_id):
             output.end_resultset()
         while cur.nextset():
             if cur.description:
-                output.start_resultset([c[0] for c in cur.description], cur.rowcount)
+                output.start_resultset(
+                    [c[0] for c in cur.description], cur.rowcount
+                )
                 rows = cur.fetchmany(10)
                 while rows:
                     output.add_rows(rows)
@@ -91,8 +107,12 @@ def run_query(query_run_id):
         output.close()
         stoptime = timeit.default_timer()
         qrun.status = QueryRun.STATUS_COMPLETE
-        qrun.extra_info = json.dumps({'resultsets': output.get_resultsets(),
-                                      'runningtime': '%.2f' % (stoptime - starttime)})
+        qrun.extra_info = json.dumps(
+            {
+                "resultsets": output.get_resultsets(),
+                "runningtime": "%.2f" % (stoptime - starttime),
+            }
+        )
         celery_log.info("Completed run for qrun:%s successfully", qrun.id)
         conn.session.add(qrun)
         conn.session.commit()
@@ -100,9 +120,10 @@ def run_query(query_run_id):
         if e.args[0] == 1317:  # Query interrupted
             celery_log.info(
                 "Time limit exceeded for qrun:%s, thread:%s attempting to kill",
-                qrun.id, repl.connection.thread_id()
+                qrun.id,
+                repl.connection.thread_id(),
             )
-            print('got killed')
+            print("got killed")
             qrun.status = QueryRun.STATUS_KILLED
             conn.session.add(qrun)
             conn.session.commit()
@@ -135,7 +156,9 @@ def run_query(query_run_id):
 
 def write_error(qrun, error):
     qrun.status = QueryRun.STATUS_FAILED
-    qrun.extra_info = json.dumps({'error': error})
+    qrun.extra_info = json.dumps({"error": error})
     conn.session.add(qrun)
     conn.session.commit()
-    celery_log.info("Completed run for qrun:%s with failure: %s", qrun.id, error)
+    celery_log.info(
+        "Completed run for qrun:%s with failure: %s", qrun.id, error
+    )

@@ -9,21 +9,21 @@ import xlsxwriter
 
 
 def get_formatted_response(format, queryrun, reader, resultset_id):
-    if format == 'json':
+    if format == "json":
         return json_formatter(queryrun, reader, resultset_id)
-    elif format == 'json-lines':
+    elif format == "json-lines":
         return json_line_formatter(reader, resultset_id)
-    elif format == 'csv':
-        return separated_formatter(reader, resultset_id, ',')
-    elif format == 'tsv':
-        return separated_formatter(reader, resultset_id, '\t')
-    elif format == 'wikitable':
+    elif format == "csv":
+        return separated_formatter(reader, resultset_id, ",")
+    elif format == "tsv":
+        return separated_formatter(reader, resultset_id, "\t")
+    elif format == "wikitable":
         return wikitable_formatter(reader, resultset_id)
-    elif format == 'xlsx':
+    elif format == "xlsx":
         return xlsx_formatter(reader, resultset_id)
-    elif format == 'html':
+    elif format == "html":
         return html_formatter(reader, resultset_id)
-    return Response('Bad file format', status=400)
+    return Response("Bad file format", status=400)
 
 
 class _JSONEncoder(json.JSONEncoder):
@@ -35,12 +35,16 @@ class _JSONEncoder(json.JSONEncoder):
                 return []
             else:
                 # HACK: Fake a list
-                return type('_FakeList', (list,), {
-                    '__iter__': lambda self: itertools.chain((first,), o),
-                    '__bool__': lambda self: True
-                })()
+                return type(
+                    "_FakeList",
+                    (list,),
+                    {
+                        "__iter__": lambda self: itertools.chain((first,), o),
+                        "__bool__": lambda self: True,
+                    },
+                )()
         elif isinstance(o, bytes):
-            return o.decode('utf-8')
+            return o.decode("utf-8")
         else:
             return super().default(o)
 
@@ -48,7 +52,7 @@ class _JSONEncoder(json.JSONEncoder):
 def _join_lines(gen):
     for v in gen:
         yield v
-        yield '\n'
+        yield "\n"
 
 
 def _stringify_results(rows):
@@ -56,11 +60,11 @@ def _stringify_results(rows):
         r = list(row)
         for i, v in enumerate(r):
             if isinstance(v, bytes):
-                r[i] = v.decode('utf-8')
+                r[i] = v.decode("utf-8")
         yield r
 
 
-TEST_CSV_INJECTION_PREFIXS = '=-+@'
+TEST_CSV_INJECTION_PREFIXS = "=-+@"
 
 
 def _inner_csv_injection_escape(element):
@@ -71,15 +75,14 @@ def _inner_csv_injection_escape(element):
         return element
 
     # str to convert bytes to unicode
-    if str(element).lstrip(' ').startswith('\t'):
+    if str(element).lstrip(" ").startswith("\t"):
         return element
 
-    if element and str(element).lstrip()[0] \
-            in TEST_CSV_INJECTION_PREFIXS:
+    if element and str(element).lstrip()[0] in TEST_CSV_INJECTION_PREFIXS:
         if isinstance(element, bytes):
-            return type(element)(b'\t') + element
+            return type(element)(b"\t") + element
         elif isinstance(element, str):
-            return type(element)('\t') + element
+            return type(element)("\t") + element
 
     return element
 
@@ -103,20 +106,21 @@ class _IterI(IterI):
                 self.flush()
 
 
-def separated_formatter(reader, resultset_id, delim=','):
-    rows = _stringify_results(_csv_injection_escape(
-        reader.get_rows(resultset_id)))
+def separated_formatter(reader, resultset_id, delim=","):
+    rows = _stringify_results(
+        _csv_injection_escape(reader.get_rows(resultset_id))
+    )
 
-    mime_type = 'text/csv' if delim == ',' else 'text/tab-separated-values'
-    content_type = mime_type + '; charset=utf-8'
+    mime_type = "text/csv" if delim == "," else "text/tab-separated-values"
+    content_type = mime_type + "; charset=utf-8"
 
     def respond(stream):
         csvobject = csv.writer(stream, delimiter=delim)
         csvobject.writerows(rows)
 
-    return Response(_IterI(respond),
-                    mimetype=mime_type,
-                    content_type=content_type)
+    return Response(
+        _IterI(respond), mimetype=mime_type, content_type=content_type
+    )
 
 
 def json_line_formatter(reader, resultset_id):
@@ -128,30 +132,30 @@ def json_line_formatter(reader, resultset_id):
             if headers is None:
                 headers = row
                 continue
-            yield json.dumps(dict(zip(headers, row)),
-                             cls=_JSONEncoder,
-                             check_circular=False)
+            yield json.dumps(
+                dict(zip(headers, row)), cls=_JSONEncoder, check_circular=False
+            )
 
-    return Response(_join_lines(respond()), mimetype='application/json')
+    return Response(_join_lines(respond()), mimetype="application/json")
 
 
 def json_formatter(qrun, reader, resultset_id):
     rows = reader.get_rows(resultset_id)
     header = next(rows)
     data = {
-        'meta': {
-            'run_id': qrun.id,
-            'rev_id': qrun.rev.id,
-            'query_id': qrun.rev.query.id,
+        "meta": {
+            "run_id": qrun.id,
+            "rev_id": qrun.rev.id,
+            "query_id": qrun.rev.query.id,
         },
-        'headers': header,
-        'rows': rows
+        "headers": header,
+        "rows": rows,
     }
 
     def respond(stream):
         json.dump(data, stream, cls=_JSONEncoder, check_circular=False)
 
-    return Response(_IterI(respond), mimetype='application/json')
+    return Response(_IterI(respond), mimetype="application/json")
 
 
 def wikitable_formatter(reader, resultset_id):
@@ -160,23 +164,29 @@ def wikitable_formatter(reader, resultset_id):
 
     def respond():
         yield '{| class="wikitable"'
-        yield '!' + '!!'.join(map(str, header))
+        yield "!" + "!!".join(map(str, header))
         for row in rows:
-            yield '|-'
-            yield '|' + '||'.join(map(str, row))
+            yield "|-"
+            yield "|" + "||".join(map(str, row))
 
-        yield '|}'
+        yield "|}"
 
-    return Response(_join_lines(respond()),
-                    content_type='text/plain; charset=utf-8')
+    return Response(
+        _join_lines(respond()), content_type="text/plain; charset=utf-8"
+    )
 
 
 def xlsx_formatter(reader, resultset_id):
-    rows = _stringify_results(_csv_injection_escape(
-        reader.get_rows(resultset_id, )))
+    rows = _stringify_results(
+        _csv_injection_escape(
+            reader.get_rows(
+                resultset_id,
+            )
+        )
+    )
 
     def respond(stream):
-        workbook = xlsxwriter.Workbook(stream, {'constant_memory': True})
+        workbook = xlsxwriter.Workbook(stream, {"constant_memory": True})
         worksheet = workbook.add_worksheet()
 
         for row_num, row in enumerate(rows):
@@ -188,15 +198,18 @@ def xlsx_formatter(reader, resultset_id):
                 # force writing as string type, which has a max of 32767 chars.
                 # This only works when cell is a string, however; so only
                 # string will use fallback.
-                if (worksheet.write(row_num, col_num, cell) < -1 and
-                        isinstance(cell, str)):
+                if worksheet.write(row_num, col_num, cell) < -1 and isinstance(
+                    cell, str
+                ):
                     worksheet.write_string(row_num, col_num, cell)
 
         workbook.close()
 
-    return Response(_IterI(respond),
-                    mimetype='application/vnd.openxmlformats-'
-                             'officedocument.spreadsheetml.sheet')
+    return Response(
+        _IterI(respond),
+        mimetype="application/vnd.openxmlformats-"
+        "officedocument.spreadsheetml.sheet",
+    )
 
 
 def html_formatter(reader, resultset_id):
@@ -204,19 +217,20 @@ def html_formatter(reader, resultset_id):
     header = next(rows)
 
     def respond():
-        yield '<table>\n'
-        yield '<tr>'
+        yield "<table>\n"
+        yield "<tr>"
         for col in header:
             yield '<th scope="col">%s</th>' % escape(col)
-        yield'</tr>\n'
+        yield "</tr>\n"
 
         for row in rows:
-            yield '<tr>'
+            yield "<tr>"
             for col in row:
-                yield '<td>%s</td>' % escape(col)
-            yield'</tr>\n'
+                yield "<td>%s</td>" % escape(col)
+            yield "</tr>\n"
 
-        yield '</table>'
+        yield "</table>"
 
-    return Response(_join_lines(respond()),
-                    content_type='text/html; charset=utf-8')
+    return Response(
+        _join_lines(respond()), content_type="text/html; charset=utf-8"
+    )

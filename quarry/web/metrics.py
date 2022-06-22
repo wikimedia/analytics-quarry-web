@@ -17,20 +17,21 @@ class QuarryQueryRunStatusCollector:
 
     def collect(self):
         with Connections(self.app.config).session() as db_session:
-            queries_per_status = db_session \
-                .query(QueryRun.status, func.count(QueryRun.status)) \
-                .group_by(QueryRun.status).all()
+            queries_per_status = (
+                db_session.query(QueryRun.status, func.count(QueryRun.status))
+                .group_by(QueryRun.status)
+                .all()
+            )
 
         metric_family = GaugeMetricFamily(
             "quarry_query_runs_per_status",
             documentation="Number of query runs per status",
-            labels=["status"]
+            labels=["status"],
         )
 
         for (status_id, query_count) in queries_per_status:
             metric_family.add_metric(
-                [QueryRun.STATUS_MESSAGES[status_id]],
-                query_count
+                [QueryRun.STATUS_MESSAGES[status_id]], query_count
             )
 
         yield metric_family
@@ -41,6 +42,7 @@ def add_custom_metrics(custom_registry: CollectorRegistry):
     Add metrics that we load directly from the database in a way that it works
     even in a 'multiproc' environment like what we do on production with uWSGI.
     """
+
     def wrapper(f):
         @wraps(f)
         def middleware(*args, **kwargs):
@@ -64,7 +66,7 @@ def add_custom_metrics(custom_registry: CollectorRegistry):
 
 
 def metrics_init_app(app):
-    if app.config['TESTING']:
+    if app.config["TESTING"]:
         # cheating!! the sqlalchemy mocking system really dislikes
         # how the prometheus collector accesses databases
         return
@@ -77,10 +79,10 @@ def metrics_init_app(app):
     # Also note, the prometheus exporter package will not do anything if Flask
     # is in debug mode, unless the env variable DEBUG_METRICS is set.
     metrics = PrometheusMetrics.for_app_factory(
-        metrics_endpoint='/metrics',
+        metrics_endpoint="/metrics",
         metrics_decorator=add_custom_metrics(custom_registry),
         # track metrics per route pattern, not per individual url
-        group_by='url_rule',
+        group_by="url_rule",
     )
 
     metrics.init_app(app)

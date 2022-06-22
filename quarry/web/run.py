@@ -28,15 +28,21 @@ def run_status(qrun_id):
     )
 
 
-@run_blueprint.route("/run/<int:qrun_id>/output/<int:resultset_id>/<string:format>")
+@run_blueprint.route(
+    "/run/<int:qrun_id>/output/<int:resultset_id>/<string:format>"
+)
 def output_result(qrun_id, resultset_id=0, format="json"):
     qrun = g.conn.session.query(QueryRun).get(qrun_id)
     if not qrun:
         response = Response("No such query_run id", status=404)
     else:
-        reader = SQLiteResultReader(qrun, current_app.config["OUTPUT_PATH_TEMPLATE"])
+        reader = SQLiteResultReader(
+            qrun, current_app.config["OUTPUT_PATH_TEMPLATE"]
+        )
         try:
-            response = output.get_formatted_response(format, qrun, reader, resultset_id)
+            response = output.get_formatted_response(
+                format, qrun, reader, resultset_id
+            )
         except sqlite3.OperationalError as e:
             if e.args[0].startswith("no such table"):
                 response = Response("No such resultset id", status=404)

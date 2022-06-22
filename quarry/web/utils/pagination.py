@@ -2,8 +2,16 @@ class RangeBasedPagination(object):
     """
     Generic range based pagination.
     """
-    def __init__(self, queryset, page_key, limit, base_url, referrer_url=None,
-                 get_params={}):
+
+    def __init__(
+        self,
+        queryset,
+        page_key,
+        limit,
+        base_url,
+        referrer_url=None,
+        get_params={},
+    ):
         """
         Instantiate RangeBasedPagination.
 
@@ -24,9 +32,9 @@ class RangeBasedPagination(object):
         self.queryset = queryset
         self.page_key = page_key
         self.limit = abs(limit)
-        self.direction = 'next' if limit >= 0 else 'prev'
+        self.direction = "next" if limit >= 0 else "prev"
         self.base_url = base_url
-        self.referrer_url = referrer_url or ''
+        self.referrer_url = referrer_url or ""
         self.get_params = get_params or {}
 
     def paginate(self):
@@ -74,7 +82,7 @@ class RangeBasedPagination(object):
         the list of items in the page, if needed.
         """
         items = self.queryset.all()
-        if self.direction == 'prev':
+        if self.direction == "prev":
             items.reverse()
         return items
 
@@ -95,26 +103,28 @@ class RangeBasedPagination(object):
         """
         page_items_count = len(page_items)
         prev_link = next_link = None
-        if page_items_count == 0 and self.referrer_url.find(
-                self.base_url) >= 0:
-            if self.direction == 'next':
+        if page_items_count == 0 and self.referrer_url.find(self.base_url) >= 0:
+            if self.direction == "next":
                 prev_link = self.referrer_url
-            elif self.direction == 'prev':
+            elif self.direction == "prev":
                 next_link = self.referrer_url
         elif page_items_count <= self.limit:
-            if self.page_key and (self.direction == 'next' or (
-                    self.direction == 'prev' and
-                    page_items_count == self.limit)):
+            if self.page_key and (
+                self.direction == "next"
+                or (self.direction == "prev" and page_items_count == self.limit)
+            ):
 
                 prev_link = self.get_page_link(
                     page_key=self.get_page_key_from_page_item(page_items[0]),
-                    limit=-1 * self.limit)
-            if self.direction == 'prev' or (
-                    self.direction == 'next' and
-                    page_items_count == self.limit):
+                    limit=-1 * self.limit,
+                )
+            if self.direction == "prev" or (
+                self.direction == "next" and page_items_count == self.limit
+            ):
                 next_link = self.get_page_link(
                     page_key=self.get_page_key_from_page_item(page_items[-1]),
-                    limit=self.limit)
+                    limit=self.limit,
+                )
         return prev_link, next_link
 
     def get_page_key_from_page_item(self, page_item):
@@ -147,5 +157,6 @@ class RangeBasedPagination(object):
         Returns:
             A string for the paginated link.
         """
-        return '{url}?from={page_key}&limit={limit}'.format(
-            url=self.base_url, page_key=page_key, limit=limit)
+        return "{url}?from={page_key}&limit={limit}".format(
+            url=self.base_url, page_key=page_key, limit=limit
+        )

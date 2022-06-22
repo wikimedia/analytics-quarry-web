@@ -64,7 +64,9 @@ def api_set_meta():
         return "Authentication required", 401
 
     query = (
-        g.conn.session.query(Query).filter(Query.id == request.form["query_id"]).one()
+        g.conn.session.query(Query)
+        .filter(Query.id == request.form["query_id"])
+        .one()
     )
 
     if query.user_id != get_user().id:
@@ -88,7 +90,9 @@ def api_run_query():
     text = request.form["text"]
     query_database = request.form["query_database"].lower().replace(" ", "")
     query = (
-        g.conn.session.query(Query).filter(Query.id == request.form["query_id"]).one()
+        g.conn.session.query(Query)
+        .filter(Query.id == request.form["query_id"])
+        .one()
     )
     if not valid_dbname(query_database):
         return "Bad database name", 400
@@ -104,7 +108,9 @@ def api_run_query():
 
     # Determine if already run, to update status in case job was killed
     if query.latest_rev and query.latest_rev.latest_run:
-        result = worker.run_query.AsyncResult(query.latest_rev.latest_run.task_id)
+        result = worker.run_query.AsyncResult(
+            query.latest_rev.latest_run.task_id
+        )
         if not result.ready():
             result.revoke(terminate=True)
             query.latest_rev.latest_run.status = QueryRun.STATUS_SUPERSEDED
@@ -145,7 +151,9 @@ def api_stop_query():
     # the db process id of the running job is stored in the query_run table while
     # the job is running. We can take this pid over to the database running the
     # query to stop the job
-    query_run = g.conn.session.query(QueryRun).filter(QueryRun.id == qrun_id).one()
+    query_run = (
+        g.conn.session.query(QueryRun).filter(QueryRun.id == qrun_id).one()
+    )
     result_dictionary = ast.literal_eval(query_run.extra_info)
     if "connection_id" in result_dictionary:
         g.replica.connection = db_of_process
@@ -182,7 +190,8 @@ def pref_get(key):
         )
     else:
         return Response(
-            json.dumps({"key": key, "error": "novalue"}), mimetype="application/json"
+            json.dumps({"key": key, "error": "novalue"}),
+            mimetype="application/json",
         )
 
 
@@ -193,14 +202,18 @@ def pref_set(key, value):
 
     get_preferences()[key] = None if value == "null" else value
     return (
-        Response(json.dumps({"key": key, "success": ""}), mimetype="application/json"),
+        Response(
+            json.dumps({"key": key, "success": ""}), mimetype="application/json"
+        ),
         201,
     )
 
 
 @api_blueprint.route("/api/dbs")
 def get_dbs():
-    known_dbs = g.conn.session.query(QueryRevision.query_database).distinct().all()
+    known_dbs = (
+        g.conn.session.query(QueryRevision.query_database).distinct().all()
+    )
     return Response(
         json.dumps(
             {

@@ -43,11 +43,13 @@ def query_history(query_id):
     return render_template(
         "query/history.html",
         user=get_user(),
-        queries=sorted(query.revs, key=lambda q: q.timestamp, reverse=True)
+        queries=sorted(query.revs, key=lambda q: q.timestamp, reverse=True),
     )
 
 
-@query_blueprint.route("/history/<int:query_id>/<int:rev_id>/<int:latest_run_id>")
+@query_blueprint.route(
+    "/history/<int:query_id>/<int:rev_id>/<int:latest_run_id>"
+)
 @query_blueprint.route("/query/<int:query_id>")
 def query_show(query_id, rev_id=None, latest_run_id=None):
     this_rev_text = None
@@ -126,10 +128,11 @@ def query_runs_all():
     if request.args.get("published") == "true":
         queries = queries.filter(Query.published)
         queries_filter = "published"
-        session['recent_queries_link'] = url_for(
-            'query.query_runs_all', published='true')
+        session["recent_queries_link"] = url_for(
+            "query.query_runs_all", published="true"
+        )
     else:
-        session['recent_queries_link'] = url_for('query.query_runs_all')
+        session["recent_queries_link"] = url_for("query.query_runs_all")
     limit = int(
         request.args.get(
             "limit", current_app.config.get("QUERY_RESULTS_PER_PAGE", 50)
@@ -201,7 +204,10 @@ def output_explain(connection_id):
     else:
         return Response(
             json.dumps(
-                {"headers": [c[0] for c in cur.description], "rows": cur.fetchall()},
+                {
+                    "headers": [c[0] for c in cur.description],
+                    "rows": cur.fetchall(),
+                },
                 default=json_formatter,
             ),
             mimetype="application/json",
@@ -263,7 +269,7 @@ class QueriesRangeBasedPagination(RangeBasedPagination):
         get_params.update({"from": page_key, "limit": limit})
         return url_for(
             "query.query_runs_all",
-            **dict([(key, value) for key, value in list(get_params.items())])
+            **dict([(key, value) for key, value in list(get_params.items())]),
         )
 
     def order_queryset(self):

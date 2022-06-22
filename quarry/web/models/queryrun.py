@@ -1,5 +1,12 @@
 import json
-from sqlalchemy import Column, Integer, ForeignKey, DateTime, String, UnicodeText
+from sqlalchemy import (
+    Column,
+    Integer,
+    ForeignKey,
+    DateTime,
+    String,
+    UnicodeText,
+)
 from sqlalchemy.orm import relationship
 from .base import Base
 from .queryrevision import QueryRevision  # noqa
@@ -16,25 +23,29 @@ class QueryRun(Base):
 
     # TODO (phuedx, 2014/08/08): Make this translatable.
     STATUS_MESSAGES = [
-        'queued',
-        'failed',
-        'running',
-        'killed',
-        'complete',
-        'superseded',
-        'stopped'
+        "queued",
+        "failed",
+        "running",
+        "killed",
+        "complete",
+        "superseded",
+        "stopped",
     ]
 
-    __tablename__ = 'query_run'
+    __tablename__ = "query_run"
 
     id = Column(Integer, primary_key=True)
-    query_rev_id = Column(Integer, ForeignKey('query_revision.id'))
+    query_rev_id = Column(Integer, ForeignKey("query_revision.id"))
     status = Column(Integer)
     timestamp = Column(DateTime)
     task_id = Column(String)
     extra_info = Column(UnicodeText)
 
-    rev = relationship('QueryRevision', uselist=False, primaryjoin='QueryRevision.id == QueryRun.query_rev_id')
+    rev = relationship(
+        "QueryRevision",
+        uselist=False,
+        primaryjoin="QueryRevision.id == QueryRun.query_rev_id",
+    )
 
     @property
     def status_message(self):
@@ -43,23 +54,17 @@ class QueryRun(Base):
     # Stick with "augmented" as common language.
     @property
     def augmented_sql(self):
-        meta = {
-            'qrun': self.id,
-            'user': self.rev.query.user.username
-        }
-        return "/*%s*/ %s" % (
-            json.dumps(meta),
-            self.rev.text
-        )
+        meta = {"qrun": self.id, "user": self.rev.query.user.username}
+        return "/*%s*/ %s" % (json.dumps(meta), self.rev.text)
 
     @property
     def runningtime(self):
-        return json.loads(self.extra_info or '{}').get('runningtime', 'Unknown')
+        return json.loads(self.extra_info or "{}").get("runningtime", "Unknown")
 
     def to_json(self):
         return {
-            'id': self.id,
-            'status': self.status_message,
-            'timestamp': self.timestamp,
-            'extra': json.loads(self.extra_info or '{}'),
+            "id": self.id,
+            "status": self.status_message,
+            "timestamp": self.timestamp,
+            "extra": json.loads(self.extra_info or "{}"),
         }

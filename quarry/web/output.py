@@ -95,6 +95,17 @@ def _csv_injection_escape(rows):
         yield r
 
 
+def _wikitable_escape(rows):
+    for row in rows:
+        r = list(row)
+        for i, v in enumerate(r):
+            if isinstance(v, str):
+                r[i] = v.replace("|", "&#124;")
+            elif isinstance(v, bytes):
+                r[i] = v.replace(b"|", b"&#124;")
+        yield r
+
+
 class _IterI(IterI):
     def write(self, s):
         if s:
@@ -159,7 +170,7 @@ def json_formatter(qrun, reader, resultset_id):
 
 
 def wikitable_formatter(reader, resultset_id):
-    rows = _stringify_results(reader.get_rows(resultset_id))
+    rows = _stringify_results(_wikitable_escape(reader.get_rows(resultset_id)))
     header = next(rows)
 
     def respond():

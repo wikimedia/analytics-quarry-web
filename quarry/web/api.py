@@ -3,6 +3,7 @@ import json
 from pymysql.err import OperationalError
 
 from flask import Blueprint, g, Response, request
+from typing import Tuple, Union
 from sqlalchemy.exc import IntegrityError
 
 from . import worker
@@ -18,7 +19,7 @@ api_blueprint = Blueprint("api", __name__)
 
 
 @api_blueprint.route("/api/query/unstar", methods=["POST"])
-def unstar_query():
+def unstar_query() -> Union[Tuple[str, int], str]:
     if get_user() is None:
         return "Unauthorized access", 403
     query = g.conn.session.query(Query).get(request.form["query_id"])
@@ -37,7 +38,7 @@ def unstar_query():
 
 
 @api_blueprint.route("/api/query/star", methods=["POST"])
-def star_query():
+def star_query() -> Union[Tuple[str, int], str]:
     if get_user() is None:
         return "Unauthorized access", 403
     query = g.conn.session.query(Query).get(request.form["query_id"])
@@ -59,7 +60,7 @@ def star_query():
 
 
 @api_blueprint.route("/api/query/meta", methods=["POST"])
-def api_set_meta():
+def api_set_meta() -> Tuple[Union[str, Response], int]:
     if get_user() is None:
         return "Authentication required", 401
 
@@ -87,7 +88,7 @@ def api_set_meta():
 
 
 @api_blueprint.route("/api/query/run", methods=["POST"])
-def api_run_query():
+def api_run_query() -> Tuple[Union[str, Response], int]:
     if get_user() is None:
         return "Authentication required", 401
     text = request.form["text"]
@@ -150,7 +151,7 @@ def api_run_query():
 
 
 @api_blueprint.route("/api/query/stop", methods=["POST"])
-def api_stop_query():
+def api_stop_query() -> Tuple[Union[str, Response], int]:
     if get_user() is None:
         return "Authentication required", 401
 
@@ -191,7 +192,7 @@ def api_stop_query():
 
 
 @api_blueprint.route("/api/preferences/get/<key>")
-def pref_get(key):
+def pref_get(key) -> Response:
     if get_user() is None:
         return "Authentication required", 401
 
@@ -208,7 +209,7 @@ def pref_get(key):
 
 
 @api_blueprint.route("/api/preferences/set/<key>/<value>")
-def pref_set(key, value):
+def pref_set(key, value) -> Union[Tuple[str, int], Tuple[Response, int]]:
     if get_user() is None:
         return "Authentication required", 401
 
@@ -222,7 +223,7 @@ def pref_set(key, value):
 
 
 @api_blueprint.route("/api/dbs")
-def get_dbs():
+def get_dbs() -> Response:
     known_dbs = (
         g.conn.session.query(QueryRevision.query_database).distinct().all()
     )

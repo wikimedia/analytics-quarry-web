@@ -80,7 +80,10 @@ def api_set_meta():
         query.description = request.form["description"]
     g.conn.session.add(query)
     g.conn.session.commit()
-    return json.dumps({"id": query.id})
+    return (
+        Response(json.dumps({"id": query.id}), mimetype="application/json"),
+        200,
+    )
 
 
 @api_blueprint.route("/api/query/run", methods=["POST"])
@@ -137,7 +140,13 @@ def api_run_query():
     g.conn.session.add(query_rev)
     g.conn.session.add(query_run)
     g.conn.session.commit()
-    return json.dumps({"qrun_id": query_run.id})
+    return (
+        Response(
+            json.dumps({"qrun_id": query_run.id}),
+            mimetype="application/json",
+        ),
+        200,
+    )
 
 
 @api_blueprint.route("/api/query/stop", methods=["POST"])
@@ -175,7 +184,10 @@ def api_stop_query():
     query_run.status = QueryRun.STATUS_STOPPED
     g.conn.session.add(query_run)
     g.conn.session.commit()
-    return json.dumps({"stopped": output})
+    return (
+        Response(json.dumps({"stopped": output}), mimetype="application/json"),
+        200,
+    )
 
 
 @api_blueprint.route("/api/preferences/get/<key>")

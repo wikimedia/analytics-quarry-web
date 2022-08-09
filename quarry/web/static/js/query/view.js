@@ -199,14 +199,13 @@ $( function () {
 			query_id: vars.query_id
 		} )
 			.done( function ( data ) {
-				var d = JSON.parse( data );
-				vars.output_url = d.output_url;
+				vars.output_url = data.output_url;
 				$( '#query-progress' ).show();
 				$( '#query-result-error' ).hide();
 				$( '#query-result-success' ).hide();
 				clearTimeout( window.lastStatusCheck );
-				checkStatus( d.qrun_id, false );
-				vars.qrun_id = d.qrun_id;
+				checkStatus( data.qrun_id, false );
+				vars.qrun_id = data.qrun_id;
 			} )
 			.fail( function ( resp ) {
 				alert( resp.responseText );

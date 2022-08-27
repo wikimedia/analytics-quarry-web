@@ -26,7 +26,7 @@ sqlalchemy==1.4.22
 urllib3==1.26.6
 vine==5.0.0
 werkzeug==0.16.0
-xlsxwriter==1.4.5
+xlsxwriter==3.0.3
 importlib-metadata==4.6.3
 zipp==3.5.0
 typing-extensions==3.10.0.0

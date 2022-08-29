@@ -200,6 +200,10 @@ def xlsx_formatter(reader, resultset_id):
 
         for row_num, row in enumerate(rows):
             for col_num, cell in enumerate(row):
+                # xlsxwriter does not handle invalid utf_8 characters, strip them out
+                if isinstance(cell, str):
+                    cell = cell.encode("utf_8")
+                    cell = cell.decode("utf_8", "ignore")
                 # T175285: xlsx can't do urls longer than 255 chars.
                 # We first try writing it with write(), if it fails due to
                 # type-specific errors (return code < -1; 0 is success and -1
